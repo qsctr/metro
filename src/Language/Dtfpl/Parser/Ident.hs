@@ -11,6 +11,7 @@ import           Text.Megaparsec.Char
 reservedWords :: [String]
 reservedWords = []
 
+{-# ANN reservedChars "HLint: ignore Use String" #-}
 reservedChars :: [Char]
 reservedChars = "()[]{}.,:\\\""
 

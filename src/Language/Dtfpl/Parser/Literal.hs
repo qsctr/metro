@@ -13,15 +13,15 @@ literal :: Parser (Literal ())
 literal = numLit <|> strLit
 
 numLit :: Parser (Literal ())
-numLit = lexeme $ fmap (NumLit () . read) $
-    ((option id $ (:) <$> char '-') <*>
+numLit = lexeme $ NumLit () . read <$>
+    (option id ((:) <$> char '-') <*>
         ((++) <$> digits <*>
-            (option "" $ (:) <$> char '.' <*> digits)))
+            option "" ((:) <$> char '.' <*> digits)))
   where digits = takeWhile1P (Just "digit") isDigit
 
 strLit :: Parser (Literal ())
-strLit = lexeme $ fmap (StrLit ()) $
-    quote *> manyTill (escape <|> anyChar) quote
+strLit = lexeme $ StrLit () <$>
+    (quote *> manyTill (escape <|> anyChar) quote)
   where quote = char '"'
         escape = char '\\' *> choice
             [ char '\\'
