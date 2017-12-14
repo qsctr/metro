@@ -2,10 +2,11 @@ module Language.Dtfpl.Parser.Lexer
     ( Parser
     , lexeme
     , symbol
-    , parens ) where
+    , parens
+    ) where
 
 import           Control.Applicative
-import           Control.Monad
+import           Data.Functor
 import           Data.Void
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
