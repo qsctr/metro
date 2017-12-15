@@ -1,5 +1,14 @@
 module Language.Dtfpl.Syntax where
 
+data Decl a
+    = Def a [Alt a]
+
+data Alt a
+    = Alt a (Pat a) (Expr a)
+
+data Pat a
+    = VarPat a (Ident a)
+
 data Expr a
     = Var a (Ident a)
     | Lit a (Literal a)
