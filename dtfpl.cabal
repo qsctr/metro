@@ -17,6 +17,7 @@ executable dtfpl
   main-is:             Main.hs
   other-modules:       Language.Dtfpl
                      , Language.Dtfpl.Parser
+                     , Language.Dtfpl.Parser.Ident
                      , Language.Dtfpl.Parser.Lexer
                      , Language.Dtfpl.Parser.Literal
                      , Language.Dtfpl.Syntax
