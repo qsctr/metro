@@ -13,14 +13,14 @@ literal :: Parser (Literal ())
 literal = numLit <|> strLit
 
 numLit :: Parser (Literal ())
-numLit = lexeme $ NumLit () . read <$>
+numLit = NumLit () . read <$>
     (option id ((:) <$> char '-') <*>
         ((++) <$> digits <*>
             option "" ((:) <$> char '.' <*> digits)))
   where digits = takeWhile1P (Just "digit") isDigit
 
 strLit :: Parser (Literal ())
-strLit = lexeme $ StrLit () <$>
+strLit = StrLit () <$>
     (quote *> manyTill (escape <|> anyChar) quote)
   where quote = char '"'
         escape = char '\\' *> choice

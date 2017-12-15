@@ -16,7 +16,7 @@ reservedChars :: [Char]
 reservedChars = "()[]{}.,:\\\""
 
 ident :: Parser (Ident ())
-ident = lexeme $ fmap (Ident ()) $ do
+ident = Ident () <$> do
     i <- (:) <$> letterChar <*> takeWhileP Nothing isRestChar
     if i `elem` reservedWords
         then fail $ i ++ " is a reserved word"
