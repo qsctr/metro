@@ -1,7 +1,7 @@
 module Language.Dtfpl.Syntax where
 
 data Decl a
-    = Def a [Alt a]
+    = Def a (Ident a) [Alt a]
 
 data Alt a
     = Alt a (Pat a) (Expr a)
