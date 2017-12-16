@@ -32,8 +32,8 @@ expr i = expr'
   where expr' = app <|> term
         term =  Var () <$> ident
             <|> Lit () <$> literal
-            <|> parens (sc' *> expr' <* sc')
-        app = foldl' (App ()) <$> term <*> many (try $ sc1' *> term)
+            <|> parens (sc' *> expr')
+        app = foldl1' (App ()) <$> term `sepEndBy1` try sc1'
         sc' = isc i
         sc1' = isc1 i
 
