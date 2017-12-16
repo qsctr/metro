@@ -75,7 +75,7 @@ literal = numLit <|> strLit
                     option "" ((:) <$> char '.' <*> digits)))
           where digits = takeWhile1P (Just "digit") isDigit
         strLit = StrLit () <$>
-            (quote *> manyTill (escape <|> anyChar) quote)
+            (quote *> manyTill (escape <|> notChar '\n') quote)
           where quote = char '"'
                 escape = char '\\' *> choice
                     [ char '\\'
