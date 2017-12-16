@@ -1,13 +1,16 @@
 module Language.Dtfpl.Syntax where
 
 data Decl a
-    = Def a (Ident a) [Alt a]
+    = Def a (Ident a) [DefAlt a]
+    deriving Show
 
-data Alt a
-    = Alt a (Pat a) (Expr a)
+data DefAlt a
+    = DefAlt a [Pat a] (Expr a)
+    deriving Show
 
 data Pat a
     = VarPat a (Ident a)
+    deriving Show
 
 data Expr a
     = Var a (Ident a)

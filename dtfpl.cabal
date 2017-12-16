@@ -17,10 +17,6 @@ executable dtfpl
   main-is:             Main.hs
   other-modules:       Language.Dtfpl
                      , Language.Dtfpl.Parser
-                     , Language.Dtfpl.Parser.Expr
-                     , Language.Dtfpl.Parser.Ident
-                     , Language.Dtfpl.Parser.Lexer
-                     , Language.Dtfpl.Parser.Literal
                      , Language.Dtfpl.Syntax
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
