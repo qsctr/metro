@@ -9,15 +9,20 @@ import           Language.Dtfpl.Syntax
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import           Text.Megaparsec.Char.Lexer (IndentOpt (..), indentBlock,
-                                             indentGuard, indentLevel)
+                                             indentGuard, indentLevel,
+                                             nonIndented)
 
 type Parser = Parsec Void String
 
-def :: Parser (Decl ())
-def = indentBlock scn $ do
-    lexeme sdef
-    name <- ident
-    pure $ IndentSome Nothing (pure . Def () name) defAlt
+prog :: Parser (Prog ())
+prog = Prog () <$> many (nonIndented scn decl <* scn) <* eof
+
+decl :: Parser (Decl ())
+decl = def
+  where def = indentBlock scn $ do
+            lexeme sdef
+            name <- ident
+            pure $ IndentSome Nothing (pure . Def () name) defAlt
 
 defAlt :: Parser (DefAlt ())
 defAlt = do

@@ -1,5 +1,9 @@
 module Language.Dtfpl.Syntax where
 
+data Prog a
+    = Prog a [Decl a]
+    deriving Show
+
 data Decl a
     = Def a (Ident a) [DefAlt a]
     deriving Show
