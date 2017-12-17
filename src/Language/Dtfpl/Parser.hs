@@ -4,7 +4,6 @@ import           Control.Category           ((>>>))
 import           Data.Char
 import           Data.Functor
 import           Data.List
-import           Data.Void
 import           Language.Dtfpl.Syntax
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
@@ -12,7 +11,15 @@ import           Text.Megaparsec.Char.Lexer (IndentOpt (..), indentBlock,
                                              indentGuard, indentLevel,
                                              nonIndented)
 
-type Parser = Parsec Void String
+type Parser = Parsec PError String
+
+data PError
+    = ReservedWordIdentError String
+    deriving (Eq, Ord)
+
+instance ShowErrorComponent PError where
+    showErrorComponent (ReservedWordIdentError reservedWord) =
+        reservedWord ++ " is a reserved word"
 
 prog :: Parser (Prog ())
 prog = Prog () <$> many (nonIndented scn decl <* scn) <* eof
@@ -63,10 +70,10 @@ parens = between (string "(") (string ")")
 
 ident :: Parser (Ident ())
 ident = Ident () <$> do
-    i <- (:) <$> letterChar <*> takeWhileP Nothing isIdentTailChar
-    if i `elem` reservedWords
-        then fail $ i ++ " is a reserved word"
-        else return i
+    identifier <- (:) <$> letterChar <*> takeWhileP Nothing isIdentTailChar
+    if identifier `elem` reservedWords
+        then customFailure $ ReservedWordIdentError identifier
+        else return identifier
 
 isIdentTailChar :: Char -> Bool
 isIdentTailChar x = isPrint x
