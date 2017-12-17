@@ -15,7 +15,7 @@ type Parser = Parsec PError String
 
 data PError
     = ReservedWordIdentError String
-    deriving (Eq, Ord)
+    deriving (Eq, Ord, Show)
 
 instance ShowErrorComponent PError where
     showErrorComponent (ReservedWordIdentError reservedWord) =
@@ -25,20 +25,23 @@ prog :: Parser (Prog ())
 prog = Prog () <$> many (nonIndented scn decl <* scn) <* eof
 
 decl :: Parser (Decl ())
-decl = def
+decl = def <|> let_
   where def = indentBlock scn $ do
             lexeme sdef
             name <- ident
             pure $ IndentSome Nothing (pure . Def () name) defAlt
+        let_ = exprBlock $ lexeme slet *> (Let () <$> lexeme ident <* equals)
 
 defAlt :: Parser (DefAlt ())
-defAlt = do
-    i <- indentLevel
-    DefAlt () <$> some (lexeme pat) <*>
-        (arrow *> isc i *> expr i <* lookAhead (scn1 <|> eof))
+defAlt = exprBlock $ DefAlt () <$> (some (lexeme pat) <* arrow)
 
 pat :: Parser (Pat ())
 pat = VarPat () <$> ident
+
+exprBlock :: Parser (Expr () -> a) -> Parser a
+exprBlock header = do
+    i <- indentLevel
+    header <*> (isc i *> expr i <* lookAhead (scn1 <|> eof))
 
 expr :: Pos -> Parser (Expr ())
 expr i = expr'
@@ -51,15 +54,18 @@ expr i = expr'
         sc1' = isc1 i
 
 reservedWords :: [String]
-reservedWords = ["def"]
+reservedWords = ["def", "let"]
 
-sdef :: Parser ()
-[sdef] = map
+sdef, slet :: Parser ()
+[sdef, slet] = map
     (string >>> (*> notFollowedBy (satisfy isIdentTailChar)))
     reservedWords
 
 arrow :: Parser ()
 arrow = void $ string "->"
+
+equals :: Parser ()
+equals = void $ string "="
 
 {-# ANN reservedChars "HLint: ignore Use String" #-}
 reservedChars :: [Char]

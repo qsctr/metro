@@ -6,6 +6,7 @@ data Prog a
 
 data Decl a
     = Def a (Ident a) [DefAlt a]
+    | Let a (Ident a) (Expr a)
     deriving Show
 
 data DefAlt a
