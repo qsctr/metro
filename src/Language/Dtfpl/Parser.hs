@@ -22,7 +22,8 @@ def = indentBlock scn $ do
 defAlt :: Parser (DefAlt ())
 defAlt = do
     i <- indentLevel
-    DefAlt () <$> some (lexeme pat) <*> (arrow *> isc i *> expr i)
+    DefAlt () <$> some (lexeme pat) <*>
+        (arrow *> isc i *> expr i <* lookAhead (scn1 <|> eof))
 
 pat :: Parser (Pat ())
 pat = VarPat () <$> ident
@@ -89,7 +90,7 @@ scn :: Parser ()
 scn = hidden space
 
 scn1 :: Parser ()
-scn1 = space1
+scn1 = hidden space1
 
 isc :: Pos -> Parser ()
 isc = void . indentGuard scn GT
