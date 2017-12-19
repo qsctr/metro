@@ -1,3 +1,5 @@
+{-# LANGUAGE ViewPatterns       #-}
+
 module Language.Dtfpl.Parser where
 
 import           Control.Category           ((>>>))
@@ -13,6 +15,10 @@ import           Text.Megaparsec.Char.Lexer (IndentOpt (..), indentBlock,
 
 type Parser = Parsec PError String
 
+type NodeParser a = Parser (a Loc)
+
+data Loc = Loc SourcePos SourcePos deriving Show
+
 data PError
     = ReservedWordIdentError String
     deriving (Eq, Ord, Show)
@@ -21,35 +27,39 @@ instance ShowErrorComponent PError where
     showErrorComponent (ReservedWordIdentError reservedWord) =
         reservedWord ++ " is a reserved word"
 
-prog :: Parser (Prog ())
-prog = Prog () <$> many (nonIndented scn decl <* scn) <* eof
+prog :: NodeParser Prog
+prog = addLoc (Prog <$> many (nonIndented scn decl <* scn)) <* eof
 
-decl :: Parser (Decl ())
+decl :: NodeParser Decl
 decl = def <|> let_
-  where def = indentBlock scn $ do
+  where def = addLoc $ indentBlock scn $ do
             lexeme sdef
             name <- ident
-            pure $ IndentSome Nothing (pure . Def () name) defAlt
-        let_ = exprBlock $ lexeme slet *> (Let () <$> lexeme ident <* equals)
+            pure $ IndentSome Nothing (pure . Def name) defAlt
+        let_ = exprBlock $
+            lexeme slet *> (Let <$> lexeme ident <* equals)
 
-defAlt :: Parser (DefAlt ())
-defAlt = exprBlock $ DefAlt () <$> (some (lexeme pat) <* arrow)
+defAlt :: NodeParser DefAlt
+defAlt = exprBlock $ DefAlt <$> (some (lexeme pat) <* arrow)
 
-pat :: Parser (Pat ())
-pat = VarPat () <$> ident
+pat :: NodeParser Pat
+pat = addLoc $ VarPat <$> ident
 
-exprBlock :: Parser (Expr () -> a) -> Parser a
-exprBlock header = do
+exprBlock :: Parser (Expr Loc -> Loc -> a) -> Parser a
+exprBlock p = do
     i <- indentLevel
-    header <*> (isc i *> expr i <* lookAhead (scn1 <|> eof))
+    start <- getPosition
+    header <- p
+    e <- isc i *> expr i <* lookAhead (scn1 <|> eof)
+    pure $ header e $ Loc start $ endPos e
 
-expr :: Pos -> Parser (Expr ())
-expr i = expr'
-  where expr' = app <|> term
-        term =  Var () <$> ident
-            <|> Lit () <$> literal
-            <|> parens (sc' *> expr')
-        app = foldl1' (App ()) <$> term `sepEndBy1` try sc1'
+expr :: Pos -> NodeParser Expr
+expr i = app <|> term
+  where term =  addLoc (Var <$> ident)
+            <|> addLoc (Lit <$> literal)
+            <|> parens (sc' *> expr i)
+        app = foldl1' (\f x -> App f x $ Loc (startPos f) (endPos x))
+            <$> term `sepEndBy1` try sc1'
         sc' = isc i
         sc1' = isc1 i
 
@@ -74,8 +84,8 @@ reservedChars = "()[]{}.,:;\\\""
 parens :: Parser a -> Parser a
 parens = between (string "(") (string ")")
 
-ident :: Parser (Ident ())
-ident = Ident () <$> do
+ident :: NodeParser Ident
+ident = addLoc $ Ident <$> do
     identifier <- (:) <$> letterChar <*> takeWhileP Nothing isIdentTailChar
     if identifier `elem` reservedWords
         then customFailure $ ReservedWordIdentError identifier
@@ -86,20 +96,30 @@ isIdentTailChar x = isPrint x
                  && not (isSeparator x)
                  && x `notElem` reservedChars
 
-literal :: Parser (Literal ())
+literal :: NodeParser Literal
 literal = numLit <|> strLit
-  where numLit = NumLit () . read <$>
+  where numLit = addLoc $ NumLit . read <$>
             (option id ((:) <$> char '-') <*>
                 ((++) <$> digits <*>
                     option "" ((:) <$> char '.' <*> digits)))
           where digits = takeWhile1P (Just "digit") isDigit
-        strLit = StrLit () <$>
+        strLit = addLoc $ StrLit <$>
             (quote *> manyTill (escape <|> notChar '\n') quote)
           where quote = char '"'
                 escape = char '\\' *> choice
                     [ char '\\'
                     , char '"'
                     , char 'n' $> '\n' ]
+
+startPos, endPos :: Ann n => n Loc -> SourcePos
+startPos (ann -> Loc start _) = start
+endPos (ann -> Loc _ end) = end
+
+addLoc :: Parser (Loc -> a) -> Parser a
+addLoc p = do
+    start <- getPosition
+    ctor <- p
+    ctor . Loc start <$> getPosition
 
 sc :: Parser ()
 sc = hidden $ void $ takeWhile1P Nothing (== ' ')

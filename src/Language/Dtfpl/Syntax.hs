@@ -1,33 +1,84 @@
+{-# LANGUAGE DefaultSignatures  #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE FlexibleContexts   #-}
+{-# LANGUAGE TypeOperators      #-}
+
 module Language.Dtfpl.Syntax where
 
+import           GHC.Generics
+
+class Ann' n where
+    ann' :: n a -> a
+
+instance (Ann' n) => Ann' (M1 i c n) where
+    ann' (M1 n) = ann' n
+
+instance (Ann' l, Ann' r) => Ann' (l :+: r) where
+    ann' (L1 x) = ann' x
+    ann' (R1 x) = ann' x
+
+instance (Ann' l, Ann' r) => Ann' (l :*: r) where
+    ann' (_ :*: r) = ann' r
+
+instance Ann' Par1 where
+    ann' (Par1 a) = a
+
+instance Ann' (K1 i c) where
+    ann' _ = undefined
+
+instance Ann' (Rec1 f) where
+    ann' _ = undefined
+
+instance Ann' (f :.: g) where
+    ann' _ = undefined
+
+class Ann n where
+    ann :: n a -> a
+    default ann :: (Generic1 n, Ann' (Rep1 n)) => n a -> a
+    ann = ann' . from1
+
 data Prog a
-    = Prog a [Decl a]
-    deriving Show
+    = Prog [Decl a] a
+    deriving (Show, Generic1)
+
+instance Ann Prog
 
 data Decl a
-    = Def a (Ident a) [DefAlt a]
-    | Let a (Ident a) (Expr a)
-    deriving Show
+    = Def (Ident a) [DefAlt a] a
+    | Let (Ident a) (Expr a) a
+    deriving (Show, Generic1)
+
+instance Ann Decl
 
 data DefAlt a
-    = DefAlt a [Pat a] (Expr a)
-    deriving Show
+    = DefAlt [Pat a] (Expr a) a
+    deriving (Show, Generic1)
+
+instance Ann DefAlt
 
 data Pat a
-    = VarPat a (Ident a)
-    deriving Show
+    = VarPat (Ident a) a
+    deriving (Show, Generic1)
+
+instance Ann Pat
 
 data Expr a
-    = Var a (Ident a)
-    | Lit a (Literal a)
-    | App a (Expr a) (Expr a)
-    deriving Show
+    = Var (Ident a) a
+    | Lit (Literal a) a
+    | App (Expr a) (Expr a) a
+    deriving (Show, Generic1)
+
+instance Ann Expr
 
 data Ident a
-    = Ident a String
-    deriving Show
+    = Ident String a
+    deriving (Show, Generic1)
+
+instance Ann Ident
 
 data Literal a
-    = NumLit a Double
-    | StrLit a String
-    deriving Show
+    = NumLit Double a
+    | StrLit String a
+    deriving (Show, Generic1)
+
+instance Ann Literal
