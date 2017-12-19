@@ -1,4 +1,4 @@
-{-# LANGUAGE ViewPatterns       #-}
+{-# LANGUAGE RecordWildCards #-}
 
 module Language.Dtfpl.Parser where
 
@@ -6,18 +6,26 @@ import           Control.Category           ((>>>))
 import           Data.Char
 import           Data.Functor
 import           Data.List
-import           Language.Dtfpl.Syntax
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
 import           Text.Megaparsec.Char.Lexer (IndentOpt (..), indentBlock,
                                              indentGuard, indentLevel,
                                              nonIndented)
 
+import           Language.Dtfpl.Syntax
+
 type Parser = Parsec PError String
 
-type NodeParser a = Parser (a Loc)
+type LocParser n = Parser (A n Loc)
 
-data Loc = Loc SourcePos SourcePos deriving Show
+type LocParser' n = Parser (A' n Loc)
+
+data Loc = Loc { start :: SourcePos, end :: SourcePos }
+
+instance Show Loc where
+    show Loc {..} = showSourcePos start ++ "-" ++ showSourcePos end
+      where showSourcePos SourcePos {..} =
+                show (unPos sourceLine) ++ ":" ++ show (unPos sourceColumn)
 
 data PError
     = ReservedWordIdentError String
@@ -27,39 +35,39 @@ instance ShowErrorComponent PError where
     showErrorComponent (ReservedWordIdentError reservedWord) =
         reservedWord ++ " is a reserved word"
 
-prog :: NodeParser Prog
+prog :: LocParser' Prog
 prog = addLoc (Prog <$> many (nonIndented scn decl <* scn)) <* eof
 
-decl :: NodeParser Decl
+decl :: LocParser' Decl
 decl = def <|> let_
-  where def = addLoc $ indentBlock scn $ do
+  where def = indentBlock scn $ do
+            s <- getPosition
             lexeme sdef
             name <- ident
-            pure $ IndentSome Nothing (pure . Def name) defAlt
-        let_ = exprBlock $
+            let result alts = pure $ A (Def name alts) $
+                    Loc s $ end $ ann $ last alts
+            pure $ IndentSome Nothing result defAlt
+        let_ = addLoc $ exprBlock $
             lexeme slet *> (Let <$> lexeme ident <* equals)
 
-defAlt :: NodeParser DefAlt
-defAlt = exprBlock $ DefAlt <$> (some (lexeme pat) <* arrow)
+defAlt :: LocParser' DefAlt
+defAlt = addLoc $ exprBlock $ DefAlt <$> (some (lexeme pat) <* arrow)
 
-pat :: NodeParser Pat
+pat :: LocParser' Pat
 pat = addLoc $ VarPat <$> ident
 
-exprBlock :: Parser (Expr Loc -> Loc -> a) -> Parser a
+exprBlock :: Parser (A' Expr Loc -> a) -> Parser a
 exprBlock p = do
     i <- indentLevel
-    start <- getPosition
-    header <- p
-    e <- isc i *> expr i <* lookAhead (scn1 <|> eof)
-    pure $ header e $ Loc start $ endPos e
+    p <*> (isc i *> expr i <* lookAhead (scn1 <|> eof))
 
-expr :: Pos -> NodeParser Expr
+expr :: Pos -> LocParser' Expr
 expr i = app <|> term
   where term =  addLoc (Var <$> ident)
             <|> addLoc (Lit <$> literal)
             <|> parens (sc' *> expr i)
-        app = foldl1' (\f x -> App f x $ Loc (startPos f) (endPos x))
-            <$> term `sepEndBy1` try sc1'
+        app = foldl1' combine <$> term `sepEndBy1` try sc1'
+          where combine f x = A (App f x) $ Loc (start (ann f)) (end (ann x))
         sc' = isc i
         sc1' = isc1 i
 
@@ -84,7 +92,7 @@ reservedChars = "()[]{}.,:;\\\""
 parens :: Parser a -> Parser a
 parens = between (string "(") (string ")")
 
-ident :: NodeParser Ident
+ident :: LocParser Ident
 ident = addLoc $ Ident <$> do
     identifier <- (:) <$> letterChar <*> takeWhileP Nothing isIdentTailChar
     if identifier `elem` reservedWords
@@ -96,7 +104,7 @@ isIdentTailChar x = isPrint x
                  && not (isSeparator x)
                  && x `notElem` reservedChars
 
-literal :: NodeParser Literal
+literal :: LocParser Literal
 literal = numLit <|> strLit
   where numLit = addLoc $ NumLit . read <$>
             (option id ((:) <$> char '-') <*>
@@ -111,15 +119,15 @@ literal = numLit <|> strLit
                     , char '"'
                     , char 'n' $> '\n' ]
 
-startPos, endPos :: Ann n => n Loc -> SourcePos
-startPos (ann -> Loc start _) = start
-endPos (ann -> Loc _ end) = end
+-- autoLoc :: forall p n m. (Data (n Loc), Data m) => p m -> n Loc -> A' n Loc
+-- autoLoc _ n = A n $ Loc (start (ann (head xs))) (end (ann (last xs)))
+--   where xs :: [A m Loc]
+--         xs = childrenBi n
 
-addLoc :: Parser (Loc -> a) -> Parser a
+addLoc :: Parser n -> LocParser n
 addLoc p = do
-    start <- getPosition
-    ctor <- p
-    ctor . Loc start <$> getPosition
+    s <- getPosition
+    A <$> p <*> (Loc s <$> getPosition)
 
 sc :: Parser ()
 sc = hidden $ void $ takeWhile1P Nothing (== ' ')
