@@ -28,6 +28,7 @@ data Expr a
     = Var (A Ident a)
     | Lit (A Literal a)
     | App (A' Expr a) (A' Expr a)
+    | If (A' Expr a) (A' Expr a) (A' Expr a)
     deriving Show
 
 data Ident

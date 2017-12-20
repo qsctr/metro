@@ -59,23 +59,28 @@ pat = addLoc $ VarPat <$> ident
 exprBlock :: Parser (A' Expr Loc -> a) -> Parser a
 exprBlock p = do
     i <- indentLevel
-    p <*> (isc i *> expr i <* lookAhead (scn1 <|> eof))
+    p <*> (isc i *> expr i <* lookAhead (scn1 <|> hidden eof))
 
 expr :: Pos -> LocParser' Expr
-expr i = app <|> term
-  where term =  addLoc (Var <$> ident)
-            <|> addLoc (Lit <$> literal)
-            <|> parens (sc' *> expr i)
-        app = foldl1' combine <$> term `sepEndBy1` try sc1'
+expr i = app <|> notApp
+  where notApp = var <|> if_ <|> lit <|> par
+        var = addLoc $ Var <$> try ident
+        lit = addLoc $ Lit <$> literal
+        par = parens (sc' *> expr i)
+        if_ = addLoc $ If
+            <$> (sif *> sc1' *> expr i)
+            <*> (sthen *> sc1' *> expr i)
+            <*> (selse *> sc1' *> expr i)
+        app = foldl1' combine <$> notApp `sepEndBy1` try sc1'
           where combine f x = A (App f x) $ Loc (start (ann f)) (end (ann x))
         sc' = isc i
         sc1' = isc1 i
 
 reservedWords :: [String]
-reservedWords = ["def", "let"]
+reservedWords = ["def", "let", "if", "then", "else"]
 
-sdef, slet :: Parser ()
-[sdef, slet] = map
+sdef, slet, sif, sthen, selse :: Parser ()
+[sdef, slet, sif, sthen, selse] = map
     (string >>> (*> notFollowedBy (satisfy isIdentTailChar)))
     reservedWords
 
