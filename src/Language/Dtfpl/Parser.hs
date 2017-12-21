@@ -35,6 +35,9 @@ instance ShowErrorComponent PError where
     showErrorComponent (ReservedWordIdentError reservedWord) =
         reservedWord ++ " is a reserved word"
 
+parseProgram :: String -> String -> Either (ParseError Char PError) (AProg Loc)
+parseProgram = parse prog
+
 prog :: LocParser' Prog
 prog = addLoc (Prog <$> many (nonIndented scn decl <* scn)) <* eof
 

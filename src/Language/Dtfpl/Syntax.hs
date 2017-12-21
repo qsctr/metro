@@ -7,6 +7,8 @@ type A' n a = A (n a) a
 ann :: A n a -> a
 ann (A _ a) = a
 
+type AProg a = A' Prog a
+
 data Prog a
     = Prog [A' Decl a]
     deriving Show
