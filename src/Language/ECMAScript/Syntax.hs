@@ -217,7 +217,8 @@ instance ToJSON VariableDeclarator where
         , "init" .= value ]
 
 data Expression
-    = LiteralExpression Literal
+    = IdentifierExpression Identifier
+    | LiteralExpression Literal
     | ThisExpression
     | ArrayExpression [Maybe Expression]
     | ObjectExpression [Property]
@@ -235,6 +236,7 @@ data Expression
     | SequenceExpression [Expression]
 
 instance ToJSON Expression where
+    toJSON (IdentifierExpression identifier) = toJSON identifier
     toJSON (LiteralExpression literal) = toJSON literal
     toJSON ThisExpression = node "ThisExpression" []
     toJSON (ArrayExpression elements) = node "ArrayExpression"
