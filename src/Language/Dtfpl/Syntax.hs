@@ -1,4 +1,16 @@
-module Language.Dtfpl.Syntax where
+module Language.Dtfpl.Syntax
+    ( A (..)
+    , A'
+    , ann
+    , AProg
+    , Prog (..)
+    , Decl (..)
+    , DefAlt (..)
+    , Pat (..)
+    , Expr (..)
+    , Ident (..)
+    , Literal (..)
+    ) where
 
 data A n a = A n a deriving Show
 

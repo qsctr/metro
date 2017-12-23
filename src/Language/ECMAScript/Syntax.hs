@@ -1,6 +1,28 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Language.ECMAScript.Syntax where
+module Language.ECMAScript.Syntax
+    ( Identifier (..)
+    , Literal (..)
+    , Program (..)
+    , Statement (..)
+    , Block (..)
+    , SwitchCase (..)
+    , CatchClause (..)
+    , VariableDeclaration (..)
+    , VariableDeclarationKind (..)
+    , VariableDeclarator (..)
+    , Expression (..)
+    , Property (..)
+    , PropertyKind (..)
+    , UnaryOperator (..)
+    , UpdateOperator (..)
+    , PrePostFix (..)
+    , BinaryOperator (..)
+    , AssignmentOperator (..)
+    , LogicalOperator (..)
+    , Member (..)
+    , Pattern (..)
+    ) where
 
 import           Data.Aeson
 import           Data.Aeson.Types

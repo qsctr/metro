@@ -1,6 +1,15 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Language.Dtfpl.Parser where
+module Language.Dtfpl.Parser
+    ( Pos
+    , SourcePos (..)
+    , ErrorItem (..)
+    , ErrorFancy (..)
+    , ParseError (..)
+    , PError (..)
+    , Loc (..)
+    , parseProgram
+    ) where
 
 import           Control.Category           ((>>>))
 import           Data.Char
