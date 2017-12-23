@@ -173,12 +173,18 @@ instance ToJSON CatchClause where
         , "body" .= body ]
 
 data VariableDeclaration
-    = VariableDeclaration [VariableDeclarator] VariableDeclarationKind
+    = VariableDeclaration VariableDeclarationKind [VariableDeclarator]
 
 instance ToJSON VariableDeclaration where
     toJSON (VariableDeclaration kind declarations) = node "VariableDeclaration"
         [ "declarations" .= declarations
         , "kind" .= kind ]
+
+data VariableDeclarationKind
+    = VarVariableDeclaration
+
+instance ToJSON VariableDeclarationKind where
+    toJSON VarVariableDeclaration = "var"
 
 data VariableDeclarator
     = VariableDeclarator Pattern (Maybe Expression)
@@ -187,12 +193,6 @@ instance ToJSON VariableDeclarator where
     toJSON (VariableDeclarator name value) = node "VariableDeclarator"
         [ "id" .= name
         , "init" .= value ]
-
-data VariableDeclarationKind
-    = VarVariableDeclaration
-
-instance ToJSON VariableDeclarationKind where
-    toJSON VarVariableDeclaration = "var"
 
 data Expression
     = ThisExpression
