@@ -27,7 +27,7 @@ module Language.ECMAScript.Syntax
 import           Data.Aeson
 import           Data.Aeson.Types
 import           Data.Or
-import           Data.Text
+import           Data.Text        (Text)
 
 node :: Text -> [Pair] -> Value
 node t props = object $ props ++
