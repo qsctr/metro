@@ -251,7 +251,7 @@ instance ToJSON Expression where
         [ "operator" .= operator
         , "argument" .= argument
         , "prefix" .= case prefix of
-            Prefix -> True
+            Prefix  -> True
             Postfix -> False ]
     toJSON (BinaryExpression operator left right) = node "BinaryExpression"
         [ "operator" .= operator
@@ -297,8 +297,8 @@ data PropertyKind
 
 instance ToJSON PropertyKind where
     toJSON InitProperty = "init"
-    toJSON GetProperty = "get"
-    toJSON SetProperty = "set"
+    toJSON GetProperty  = "get"
+    toJSON SetProperty  = "set"
 
 data UnaryOperator
     = UnaryNegationOperator
@@ -311,12 +311,12 @@ data UnaryOperator
 
 instance ToJSON UnaryOperator where
     toJSON UnaryNegationOperator = "-"
-    toJSON UnaryPlusOperator = "+"
-    toJSON LogicalNotOperator = "!"
-    toJSON BitwiseNotOperator = "~"
-    toJSON TypeofOperator = "typeof"
-    toJSON VoidOperator = "void"
-    toJSON DeleteOperator = "delete"
+    toJSON UnaryPlusOperator     = "+"
+    toJSON LogicalNotOperator    = "!"
+    toJSON BitwiseNotOperator    = "~"
+    toJSON TypeofOperator        = "typeof"
+    toJSON VoidOperator          = "void"
+    toJSON DeleteOperator        = "delete"
 
 data UpdateOperator
     = IncrementOperator
@@ -354,27 +354,27 @@ data BinaryOperator
     | InstanceofOperator
 
 instance ToJSON BinaryOperator where
-    toJSON EqualOperator = "=="
-    toJSON NotEqualOperator = "!="
-    toJSON StrictEqualOperator = "==="
-    toJSON StrictNotEqualOperator = "!=="
-    toJSON LessThanOperator = "<"
-    toJSON LessThanOrEqualOperator = "<="
-    toJSON GreaterThanOperator = ">"
+    toJSON EqualOperator              = "=="
+    toJSON NotEqualOperator           = "!="
+    toJSON StrictEqualOperator        = "==="
+    toJSON StrictNotEqualOperator     = "!=="
+    toJSON LessThanOperator           = "<"
+    toJSON LessThanOrEqualOperator    = "<="
+    toJSON GreaterThanOperator        = ">"
     toJSON GreaterThanOrEqualOperator = ">="
-    toJSON LeftShiftOperator = "<<"
-    toJSON RightShiftOperator = ">>"
+    toJSON LeftShiftOperator          = "<<"
+    toJSON RightShiftOperator         = ">>"
     toJSON UnsignedRightShiftOperator = ">>>"
-    toJSON AdditionOperator = "+"
-    toJSON SubtractionOperator = "-"
-    toJSON MultiplicationOperator = "*"
-    toJSON DivisionOperator = "/"
-    toJSON RemainderOperator = "%"
-    toJSON BitwiseOrOperator = "|"
-    toJSON BitwiseXorOperator = "^"
-    toJSON BitwiseAndOperator = "&"
-    toJSON InOperator = "in"
-    toJSON InstanceofOperator = "instanceof"
+    toJSON AdditionOperator           = "+"
+    toJSON SubtractionOperator        = "-"
+    toJSON MultiplicationOperator     = "*"
+    toJSON DivisionOperator           = "/"
+    toJSON RemainderOperator          = "%"
+    toJSON BitwiseOrOperator          = "|"
+    toJSON BitwiseXorOperator         = "^"
+    toJSON BitwiseAndOperator         = "&"
+    toJSON InOperator                 = "in"
+    toJSON InstanceofOperator         = "instanceof"
 
 data AssignmentOperator
     = AssignmentOperator
@@ -391,25 +391,25 @@ data AssignmentOperator
     | BitwiseAndAssignmentOperator
 
 instance ToJSON AssignmentOperator where
-    toJSON AssignmentOperator = "="
-    toJSON AdditionAssignmentOperator = "+="
-    toJSON SubtractionAssignmentOperator = "-="
-    toJSON MultiplicationAssignmentOperator = "*="
-    toJSON DivisionAssignmentOperator = "/="
-    toJSON RemainderAssignmentOperator = "%="
-    toJSON LeftShiftAssignmentOperator = "<<="
-    toJSON RightShiftAssignmentOperator = ">>="
+    toJSON AssignmentOperator                   = "="
+    toJSON AdditionAssignmentOperator           = "+="
+    toJSON SubtractionAssignmentOperator        = "-="
+    toJSON MultiplicationAssignmentOperator     = "*="
+    toJSON DivisionAssignmentOperator           = "/="
+    toJSON RemainderAssignmentOperator          = "%="
+    toJSON LeftShiftAssignmentOperator          = "<<="
+    toJSON RightShiftAssignmentOperator         = ">>="
     toJSON UnsignedRightShiftAssignmentOperator = ">>>="
-    toJSON BitwiseOrAssignmentOperator = "|="
-    toJSON BitwiseXorAssignmentOperator = "^="
-    toJSON BitwiseAndAssignmentOperator = "&="
+    toJSON BitwiseOrAssignmentOperator          = "|="
+    toJSON BitwiseXorAssignmentOperator         = "^="
+    toJSON BitwiseAndAssignmentOperator         = "&="
 
 data LogicalOperator
     = LogicalOrOperator
     | LogicalAndOperator
 
 instance ToJSON LogicalOperator where
-    toJSON LogicalOrOperator = "||"
+    toJSON LogicalOrOperator  = "||"
     toJSON LogicalAndOperator = "&&"
 
 data Member
@@ -420,7 +420,7 @@ instance ToJSON Member where
         [ "object" .= obj
         , "property" .=| property
         , "computed" .= case property of
-            Left _ -> True
+            Left _  -> True
             Right _ -> False ]
 
 data Pattern
@@ -429,4 +429,4 @@ data Pattern
 
 instance ToJSON Pattern where
     toJSON (IdentifierPattern identifier) = toJSON identifier
-    toJSON (MemberPattern member) = toJSON member
+    toJSON (MemberPattern member)         = toJSON member
