@@ -1,8 +1,5 @@
-module Language.Dtfpl.Syntax
-    ( A (..)
-    , A'
-    , ann
-    , AProg
+module Language.Dtfpl.Syntax.Source
+    ( AProg
     , Prog (..)
     , Decl (..)
     , DefAlt (..)
@@ -12,12 +9,7 @@ module Language.Dtfpl.Syntax
     , Literal (..)
     ) where
 
-data A n a = A n a deriving Show
-
-type A' n a = A (n a) a
-
-ann :: A n a -> a
-ann (A _ a) = a
+import Language.Dtfpl.Syntax.Annotation
 
 type AProg a = A' Prog a
 

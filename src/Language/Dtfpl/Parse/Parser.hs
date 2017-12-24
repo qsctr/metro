@@ -1,27 +1,23 @@
 {-# LANGUAGE RecordWildCards #-}
 
-module Language.Dtfpl.Parser
-    ( Pos
-    , SourcePos (..)
-    , ErrorItem (..)
-    , ErrorFancy (..)
-    , ParseError (..)
-    , PError (..)
+module Language.Dtfpl.Parse.Parser
+    ( PError (..)
     , Loc (..)
     , parseProgram
     ) where
 
-import           Control.Category           ((>>>))
+import           Control.Category                 ((>>>))
 import           Data.Char
 import           Data.Functor
 import           Data.List
 import           Text.Megaparsec
 import           Text.Megaparsec.Char
-import           Text.Megaparsec.Char.Lexer (IndentOpt (..), indentBlock,
-                                             indentGuard, indentLevel,
-                                             nonIndented)
+import           Text.Megaparsec.Char.Lexer       (IndentOpt (..), indentBlock,
+                                                   indentGuard, indentLevel,
+                                                   nonIndented)
 
-import           Language.Dtfpl.Syntax
+import           Language.Dtfpl.Syntax.Annotation
+import           Language.Dtfpl.Syntax.Source
 
 type Parser = Parsec PError String
 
@@ -135,11 +131,6 @@ literal = numLit <|> strLit
                     [ char '\\'
                     , char '"'
                     , char 'n' $> '\n' ]
-
--- autoLoc :: forall p n m. (Data (n Loc), Data m) => p m -> n Loc -> A' n Loc
--- autoLoc _ n = A n $ Loc (start (ann (head xs))) (end (ann (last xs)))
---   where xs :: [A m Loc]
---         xs = childrenBi n
 
 addLoc :: Parser n -> LocParser n
 addLoc p = do

@@ -1,0 +1,7 @@
+{
+  "name": "dtfpl",
+  "version": "1.0.0",
+  "dependencies": {
+    "astring": "^1.2.0"
+  }
+}

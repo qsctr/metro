@@ -16,13 +16,20 @@ executable dtfpl
   hs-source-dirs:      src
   main-is:             Main.hs
   other-modules:       Language.Dtfpl
-                     , Language.Dtfpl.Parser
-                     , Language.Dtfpl.Syntax
+                     , Language.Dtfpl.Generate.Convert
+                     , Language.Dtfpl.Generate.Render
+                     , Language.Dtfpl.Parse.Parser
+                     , Language.Dtfpl.Simplify.Simplifier
+                     , Language.Dtfpl.Syntax.Annotation
+                     , Language.Dtfpl.Syntax.Core
+                     , Language.Dtfpl.Syntax.Source
                      , Language.ECMAScript.Syntax
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                      , aeson
+                     , bytestring
                      , data-or
                      , megaparsec
                      , text
+                     , typed-process
   ghc-options:         -Wall
