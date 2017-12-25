@@ -32,6 +32,10 @@ parse :: String -> String -> M (AProg Loc)
 parse filename input = ExceptT $
     first ParsingErr <$> runParserT prog filename input
 
+testParse :: String -> Either String (AProg Loc)
+testParse input = first parseErrorPretty $
+    runReader (runParserT prog "" input) undefined
+
 prog :: LocParser' Prog
 prog = addLoc (Prog <$> many (nonIndented scn decl <* scn)) <* eof
 
