@@ -112,7 +112,7 @@ isIdentTailChar x = isPrint x
                  && not (isSeparator x)
                  && x `notElem` reservedChars
 
-literal :: LocParser Literal
+literal :: LocParser Lit
 literal = numLit <|> strLit
   where numLit = addLoc $ NumLit . read <$>
             (option id ((:) <$> char '-') <*>
