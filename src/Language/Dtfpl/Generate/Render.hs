@@ -13,13 +13,13 @@ import           System.Process.Typed
 
 import           Language.ECMAScript.Syntax
 
-config :: ProcessConfig Handle Handle ()
-config = setStdin createPipe
-       $ setStdout createPipe
-       $ proc "node" ["js/main"]
+processConfig :: ProcessConfig Handle Handle ()
+processConfig = setStdin createPipe
+              $ setStdout createPipe
+              $ proc "node" ["js/main"]
 
 render :: Program -> IO Text
-render program = withProcess config $ \p -> do
+render program = withProcess processConfig $ \p -> do
     L.hPut (getStdin p) $ encode program `C.snoc` '\n'
     hFlush $ getStdin p
     fromJust . decode . L.fromStrict <$> B.hGetLine (getStdout p)
