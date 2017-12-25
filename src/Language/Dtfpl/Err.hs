@@ -8,3 +8,4 @@ import Language.Dtfpl.Parse.CustomError
 
 data Err
     = ParsingErr (ParseError Char CustomError)
+    deriving Show
