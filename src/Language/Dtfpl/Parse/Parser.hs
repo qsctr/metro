@@ -20,8 +20,7 @@ import           Language.Dtfpl.Err
 import           Language.Dtfpl.M
 import           Language.Dtfpl.Parse.CustomError
 import           Language.Dtfpl.Parse.Loc
-import           Language.Dtfpl.Syntax.A
-import           Language.Dtfpl.Syntax.Source
+import           Language.Dtfpl.Syntax
 
 type Parser = ParsecT CustomError String (Reader Config)
 

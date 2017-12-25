@@ -1,5 +1,7 @@
-module Language.Dtfpl.Syntax.Source
-    ( AProg
+module Language.Dtfpl.Syntax
+    ( A (..)
+    , A'
+    , AProg
     , Prog (..)
     , Decl (..)
     , DefAlt (..)
@@ -9,7 +11,9 @@ module Language.Dtfpl.Syntax.Source
     , Literal (..)
     ) where
 
-import Language.Dtfpl.Syntax.A
+data A n a = A { node :: n, ann :: a } deriving Show
+
+type A' n a = A (n a) a
 
 type AProg a = A' Prog a
 
