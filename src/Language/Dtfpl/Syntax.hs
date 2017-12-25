@@ -32,6 +32,7 @@ data DefAlt a
 
 data Pat a
     = VarPat (A Ident a)
+    | LitPat (A Literal a)
     deriving Show
 
 data Expr a
