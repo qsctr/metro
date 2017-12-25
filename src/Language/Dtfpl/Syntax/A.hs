@@ -1,4 +1,4 @@
-module Language.Dtfpl.Syntax.Annotation
+module Language.Dtfpl.Syntax.A
     ( A (..)
     , A'
     ) where

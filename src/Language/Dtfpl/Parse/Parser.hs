@@ -1,47 +1,37 @@
-{-# LANGUAGE RecordWildCards #-}
-
 module Language.Dtfpl.Parse.Parser
-    ( PError (..)
-    , Loc (..)
-    , parseProgram
+    ( parse
     ) where
 
 import           Control.Category                 ((>>>))
+import           Control.Monad.Except
+import           Control.Monad.Reader
+import           Data.Bifunctor
 import           Data.Char
 import           Data.Functor
 import           Data.List
-import           Text.Megaparsec
+import           Text.Megaparsec                  hiding (parse)
 import           Text.Megaparsec.Char
 import           Text.Megaparsec.Char.Lexer       (IndentOpt (..), indentBlock,
                                                    indentGuard, indentLevel,
                                                    nonIndented)
 
-import           Language.Dtfpl.Syntax.Annotation
+import           Language.Dtfpl.Config
+import           Language.Dtfpl.Err
+import           Language.Dtfpl.M
+import           Language.Dtfpl.Parse.CustomError
+import           Language.Dtfpl.Parse.Loc
+import           Language.Dtfpl.Syntax.A
 import           Language.Dtfpl.Syntax.Source
 
-type Parser = Parsec PError String
+type Parser = ParsecT CustomError String (Reader Config)
 
 type LocParser n = Parser (A n Loc)
 
 type LocParser' n = Parser (A' n Loc)
 
-data Loc = Loc { start :: SourcePos, end :: SourcePos }
-
-instance Show Loc where
-    show Loc {..} = showSourcePos start ++ "-" ++ showSourcePos end
-      where showSourcePos SourcePos {..} =
-                show (unPos sourceLine) ++ ":" ++ show (unPos sourceColumn)
-
-data PError
-    = ReservedWordIdentError String
-    deriving (Eq, Ord, Show)
-
-instance ShowErrorComponent PError where
-    showErrorComponent (ReservedWordIdentError reservedWord) =
-        reservedWord ++ " is a reserved word"
-
-parseProgram :: String -> String -> Either (ParseError Char PError) (AProg Loc)
-parseProgram = parse prog
+parse :: String -> String -> M (AProg Loc)
+parse filename input = ExceptT $
+    first ParsingErr <$> runParserT prog filename input
 
 prog :: LocParser' Prog
 prog = addLoc (Prog <$> many (nonIndented scn decl <* scn)) <* eof

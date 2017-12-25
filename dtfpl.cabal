@@ -16,11 +16,16 @@ executable dtfpl
   hs-source-dirs:      src
   main-is:             Main.hs
   other-modules:       Language.Dtfpl
+                     , Language.Dtfpl.Config
+                     , Language.Dtfpl.Err
                      , Language.Dtfpl.Generate.Convert
                      , Language.Dtfpl.Generate.Render
+                     , Language.Dtfpl.M
+                     , Language.Dtfpl.Parse.CustomError
+                     , Language.Dtfpl.Parse.Loc
                      , Language.Dtfpl.Parse.Parser
                      , Language.Dtfpl.Simplify.Simplifier
-                     , Language.Dtfpl.Syntax.Annotation
+                     , Language.Dtfpl.Syntax.A
                      , Language.Dtfpl.Syntax.Core
                      , Language.Dtfpl.Syntax.Source
                      , Language.ECMAScript.Syntax
@@ -30,6 +35,7 @@ executable dtfpl
                      , bytestring
                      , data-or
                      , megaparsec
+                     , mtl
                      , text
                      , typed-process
   ghc-options:         -Wall

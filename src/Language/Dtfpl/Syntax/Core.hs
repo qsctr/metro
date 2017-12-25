@@ -9,7 +9,7 @@ module Language.Dtfpl.Syntax.Core
     , Literal (..)
     ) where
 
-import Language.Dtfpl.Syntax.Annotation
+import Language.Dtfpl.Syntax.A
 
 type AProg a = A' Prog a
 
