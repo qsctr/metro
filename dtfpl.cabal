@@ -16,8 +16,6 @@ executable dtfpl
   hs-source-dirs:      src
   main-is:             Main.hs
   other-modules:       Language.Dtfpl
-                     , Language.Dtfpl.Config
-                     , Language.Dtfpl.Err
                      , Language.Dtfpl.Generate.Convert
                      , Language.Dtfpl.Generate.Render
                      , Language.Dtfpl.M
