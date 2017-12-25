@@ -48,7 +48,7 @@ decl = def <|> let_
             lexeme slet *> (Let <$> lexeme ident <* equals)
 
 defAlt :: LocParser' DefAlt
-defAlt = addLoc $ exprBlock $ DefAlt <$> (some (lexeme (try pat)) <* arrow)
+defAlt = addLoc $ exprBlock $ DefAlt <$> (some (lexeme $ try pat) <* arrow)
 
 pat :: LocParser' Pat
 pat = varPat <|> litPat
