@@ -3,8 +3,6 @@ module Language.Dtfpl.Parse.Parser
     ) where
 
 import           Control.Category                 ((>>>))
-import           Control.Monad.Except
-import           Control.Monad.Reader
 import           Data.Bifunctor
 import           Data.Char
 import           Data.Functor
@@ -15,8 +13,6 @@ import           Text.Megaparsec.Char.Lexer       (IndentOpt (..), indentBlock,
                                                    indentGuard, indentLevel,
                                                    nonIndented)
 
-import           Language.Dtfpl.Config
-import           Language.Dtfpl.Err
 import           Language.Dtfpl.M
 import           Language.Dtfpl.Parse.CustomError
 import           Language.Dtfpl.Parse.Loc
