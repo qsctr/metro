@@ -64,9 +64,9 @@ exprBlock p = do
 
 expr :: Pos -> LocParser' Expr
 expr i = app <|> notApp
-  where notApp = var <|> if_ <|> lit <|> par
-        var = addLoc $ Var <$> try ident
-        lit = addLoc $ Lit <$> literal
+  where notApp = varExpr <|> if_ <|> litExpr <|> par
+        varExpr = addLoc $ VarExpr <$> try ident
+        litExpr = addLoc $ LitExpr <$> literal
         par = parens (sc' *> expr i)
         if_ = addLoc $ If
             <$> (sif *> sc1' *> expr i)
