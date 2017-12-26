@@ -26,7 +26,7 @@ type LocParser' n = Parser (A' n Loc)
 
 parse :: String -> String -> M (AProg Loc)
 parse filename input = ExceptT $
-    first ParsingErr <$> runParserT prog filename input
+    first ParseErr <$> runParserT prog filename input
 
 testParse :: String -> Either String (AProg Loc)
 testParse input = first parseErrorPretty $

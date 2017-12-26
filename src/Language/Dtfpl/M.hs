@@ -1,22 +1,21 @@
 module Language.Dtfpl.M
     ( module Control.Monad.Except
     , module Control.Monad.Reader
+    , module Language.Dtfpl.Config
+    , module Language.Dtfpl.Err
     , M
-    , Err (..)
-    , Config (..)
+    , debugErrIf
     ) where
 
 import           Control.Monad.Except
 import           Control.Monad.Reader
-import           Text.Megaparsec.Error
 
-import           Language.Dtfpl.Parse.CustomError
+import           Language.Dtfpl.Config
+import           Language.Dtfpl.Err
 
 type M = ExceptT Err (Reader Config)
 
-data Err
-    = ParsingErr (ParseError Char CustomError)
-    deriving Show
-
-data Config = Config
-    { debug :: Bool }
+debugErrIf :: Bool -> InternalErr -> M ()
+debugErrIf cond err = do
+    d <- asks debug
+    when (d && cond) $ throwError $ InternalErr err

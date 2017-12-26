@@ -16,7 +16,11 @@ executable dtfpl
   hs-source-dirs:      src
   main-is:             Main.hs
   other-modules:       Language.Dtfpl
+                     , Language.Dtfpl.Config
+                     , Language.Dtfpl.Err
+                     , Language.Dtfpl.Err.ShowErr
                      , Language.Dtfpl.Generate.Convert
+                     , Language.Dtfpl.Generate.ConvertErr
                      , Language.Dtfpl.Generate.Render
                      , Language.Dtfpl.M
                      , Language.Dtfpl.Parse.CustomError
@@ -24,6 +28,7 @@ executable dtfpl
                      , Language.Dtfpl.Parse.Parser
                      , Language.Dtfpl.Syntax
                      , Language.ECMAScript.Syntax
+                     , Util
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                      , aeson
