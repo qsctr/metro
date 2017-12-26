@@ -40,9 +40,8 @@ decl = def <|> let_
   where def = indentBlock scn $ do
             s <- getPosition
             name <- lexeme sdef *> ident
-            let result alts = pure $ A (Def name alts) $
-                    Loc s $ end $ ann $ last alts
-            pure $ IndentSome Nothing result defAlt
+            pure $ flip (IndentSome Nothing) defAlt $ \alts ->
+                pure $ A (Def name alts) $ Loc s $ end $ ann $ last alts
         let_ = addLoc $ exprBlock $
             lexeme slet *> (Let <$> lexeme ident <* equals)
 
