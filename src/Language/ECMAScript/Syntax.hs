@@ -1,7 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.ECMAScript.Syntax
-    ( Identifier (..)
+    ( Identifier
+    , mkIdentifier
     , Literal (..)
     , Program (..)
     , Statement (..)
@@ -27,7 +28,11 @@ module Language.ECMAScript.Syntax
 import           Data.Aeson
 import           Data.Aeson.Types
 import           Data.Or
-import           Data.Text        (Text)
+import           Data.Text                          (Text)
+
+import           Language.Dtfpl.Generate.ConvertErr
+import           Language.Dtfpl.M
+import           Language.ECMAScript.Syntax.Verify
 
 estree :: Text -> [Pair] -> Value
 estree t props = object $ props ++
@@ -57,6 +62,13 @@ infixr 8 .=?|
 
 data Identifier
     = Identifier String
+
+mkIdentifier :: String -> M Identifier
+mkIdentifier s = do
+    debugErrIf (not $ isValidIdentifier s) $
+        InternalConvertErr $ InternalInvalidTargetASTErr $
+            errQuote s ++ " is not a valid ECMAScript identifier"
+    return $ Identifier s
 
 instance ToJSON Identifier where
     toJSON (Identifier name) = estree "Identifier"
