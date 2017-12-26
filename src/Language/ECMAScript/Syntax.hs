@@ -68,7 +68,7 @@ mkIdentifier s = do
     debugErrIf (not $ isValidIdentifier s) $
         InternalConvertErr $ InternalInvalidTargetASTErr $
             errQuote s ++ " is not a valid ECMAScript identifier"
-    return $ Identifier s
+    pure $ Identifier s
 
 instance ToJSON Identifier where
     toJSON (Identifier name) = estree "Identifier"

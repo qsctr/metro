@@ -100,7 +100,7 @@ ident = addLoc $ Ident <$> do
     identifier <- (:) <$> letterChar <*> takeWhileP Nothing isIdentTailChar
     if identifier `elem` reservedWords
         then customFailure $ ReservedWordIdentError identifier
-        else return identifier
+        else pure identifier
 
 isIdentTailChar :: Char -> Bool
 isIdentTailChar x = isPrint x
