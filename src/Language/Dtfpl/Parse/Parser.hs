@@ -39,8 +39,7 @@ decl :: LocParser' Decl
 decl = def <|> let_
   where def = indentBlock scn $ do
             s <- getPosition
-            lexeme sdef
-            name <- ident
+            name <- lexeme sdef *> ident
             let result alts = pure $ A (Def name alts) $
                     Loc s $ end $ ann $ last alts
             pure $ IndentSome Nothing result defAlt
