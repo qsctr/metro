@@ -7,6 +7,7 @@ module Language.Dtfpl.Syntax
     , DefAlt (..)
     , Pat (..)
     , Expr (..)
+    , CaseAlt (..)
     , Ident (..)
     , Lit (..)
     ) where
@@ -40,6 +41,11 @@ data Expr a
     | LitExpr (A Lit a)
     | App (A' Expr a) (A' Expr a)
     | If (A' Expr a) (A' Expr a) (A' Expr a)
+    | Case (A' Expr a) [A' CaseAlt a]
+    deriving Show
+
+data CaseAlt a
+    = CaseAlt (A' Pat a) (A' Expr a)
     deriving Show
 
 data Ident

@@ -9,8 +9,7 @@ import           Data.Functor
 import           Data.List
 import           Text.Megaparsec                  hiding (parse)
 import           Text.Megaparsec.Char
-import           Text.Megaparsec.Char.Lexer       (IndentOpt (..), indentBlock,
-                                                   indentGuard, indentLevel,
+import           Text.Megaparsec.Char.Lexer       (indentGuard, indentLevel,
                                                    nonIndented)
 
 import           Language.Dtfpl.M
@@ -37,11 +36,9 @@ prog = addLoc (Prog <$> many (nonIndented scn decl <* scn)) <* eof
 
 decl :: LocParser' Decl
 decl = def <|> let_
-  where def = indentBlock scn $ do
-            s <- getPosition
-            name <- lexeme sdef *> ident
-            pure $ flip (IndentSome Nothing) defAlt $ \alts ->
-                pure $ A (Def name alts) $ Loc s $ end $ ann $ last alts
+  where def = addLoc $ do
+            i <- indentLevel
+            Def <$> (lexeme sdef *> ident) <*> indentBlock' i defAlt
         let_ = addLoc $ exprBlock $
             lexeme slet *> (Let <$> lexeme ident <* equals)
 
@@ -59,8 +56,8 @@ exprBlock p = do
     p <*> (isc i *> expr i <* lookAhead (scn1 <|> hidden eof))
 
 expr :: Pos -> LocParser' Expr
-expr i = app <|> notApp
-  where notApp = varExpr <|> if_ <|> litExpr <|> par
+expr i = app
+  where notApp = varExpr <|> if_ <|> case_ <|> litExpr <|> par
         varExpr = addLoc $ VarExpr <$> try ident
         litExpr = addLoc $ LitExpr <$> literal
         par = parens (sc' *> expr i)
@@ -68,16 +65,22 @@ expr i = app <|> notApp
             <$> (sif *> sc1' *> expr i)
             <*> (sthen *> sc1' *> expr i)
             <*> (selse *> sc1' *> expr i)
+        case_ = addLoc $ Case
+            <$> (scase *> sc1' *> expr i <* sof)
+            <*> indentBlock' i caseAlt
         app = foldl1' combine <$> notApp `sepEndBy1` try sc1'
           where combine f x = A (App f x) $ Loc (start (ann f)) (end (ann x))
         sc' = isc i
         sc1' = isc1 i
 
-reservedWords :: [String]
-reservedWords = ["def", "let", "if", "then", "else"]
+caseAlt :: LocParser' CaseAlt
+caseAlt = addLoc $ exprBlock $ CaseAlt <$> (lexeme pat <* arrow)
 
-sdef, slet, sif, sthen, selse :: Parser ()
-[sdef, slet, sif, sthen, selse] = map
+reservedWords :: [String]
+reservedWords = ["def", "let", "if", "then", "else", "case", "of"]
+
+sdef, slet, sif, sthen, selse, scase, sof :: Parser ()
+[sdef, slet, sif, sthen, selse, scase, sof] = map
     (string >>> (*> notFollowedBy (satisfy isIdentTailChar)))
     reservedWords
 
@@ -126,6 +129,15 @@ addLoc p = do
     s <- getPosition
     A <$> p <*> (Loc s <$> getPosition)
 
+indentBlock' :: Pos -> Parser a -> Parser [a]
+indentBlock' i p = isc1 i >>= rest
+  where rest i' = do
+            a <- p
+            hasNext *> ((a :) <$> rest i') <|> noMore $> [a]
+          where hasNext = try $ indentGuard scn1 EQ i'
+                noMore = lookAhead $
+                    try (scn *> eof) <|> (void $ indentGuard scn1 LT i')
+
 sc :: Parser ()
 sc = hidden $ void $ takeWhile1P Nothing (== ' ')
 
@@ -135,11 +147,11 @@ scn = hidden space
 scn1 :: Parser ()
 scn1 = hidden space1
 
-isc :: Pos -> Parser ()
-isc = void . indentGuard scn GT
+isc :: Pos -> Parser Pos
+isc = indentGuard scn GT
 
-isc1 :: Pos -> Parser ()
-isc1 = void . indentGuard scn1 GT
+isc1 :: Pos -> Parser Pos
+isc1 = indentGuard scn1 GT
 
 lexeme :: Parser a -> Parser a
 lexeme = (<* sc)
