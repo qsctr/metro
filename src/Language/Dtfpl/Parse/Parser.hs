@@ -56,8 +56,9 @@ exprBlock p = do
     p <*> (isc i *> expr i <* lookAhead (scn1 <|> hidden eof))
 
 expr :: Pos -> LocParser' Expr
-expr i = app
-  where notApp = varExpr <|> if_ <|> case_ <|> litExpr <|> par
+expr i = foldl1' combine <$> term `sepEndBy1` try sc1'
+  where combine f x = A (App f x) $ Loc (start (ann f)) (end (ann x))
+        term = varExpr <|> if_ <|> case_ <|> litExpr <|> par
         varExpr = addLoc $ VarExpr <$> try ident
         litExpr = addLoc $ LitExpr <$> literal
         par = parens (sc' *> expr i)
@@ -68,8 +69,6 @@ expr i = app
         case_ = addLoc $ Case
             <$> (scase *> sc1' *> expr i <* sof)
             <*> indentBlock' i caseAlt
-        app = foldl1' combine <$> notApp `sepEndBy1` try sc1'
-          where combine f x = A (App f x) $ Loc (start (ann f)) (end (ann x))
         sc' = isc i
         sc1' = isc1 i
 
