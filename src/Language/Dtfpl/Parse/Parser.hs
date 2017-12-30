@@ -7,6 +7,7 @@ import           Data.Bifunctor
 import           Data.Char
 import           Data.Functor
 import           Data.List
+import           Data.List.NonEmpty               (NonEmpty (..), some1, (<|))
 import           Text.Megaparsec                  hiding (parse)
 import           Text.Megaparsec.Char
 import           Text.Megaparsec.Char.Lexer       (indentGuard, indentLevel,
@@ -43,7 +44,7 @@ decl = def <|> let_
             lexeme slet *> (Let <$> lexeme ident <* equals)
 
 defAlt :: LocParser' DefAlt
-defAlt = addLoc $ exprBlock $ DefAlt <$> (some (lexeme $ try pat) <* arrow)
+defAlt = addLoc $ exprBlock $ DefAlt <$> (some1 (lexeme $ try pat) <* arrow)
 
 pat :: LocParser' Pat
 pat = varPat <|> litPat
@@ -128,11 +129,11 @@ addLoc p = do
     s <- getPosition
     A <$> p <*> (Loc s <$> getPosition)
 
-indentBlock' :: Pos -> Parser a -> Parser [a]
+indentBlock' :: Pos -> Parser a -> Parser (NonEmpty a)
 indentBlock' i p = isc1 i >>= rest
   where rest i' = do
             a <- p
-            hasNext *> ((a :) <$> rest i') <|> noMore $> [a]
+            hasNext *> ((a <|) <$> rest i') <|> noMore $> a :| []
           where hasNext = try $ indentGuard scn1 EQ i'
                 noMore = lookAhead $
                     try (scn *> eof) <|> (void $ indentGuard scn1 LT i')

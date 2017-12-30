@@ -12,6 +12,8 @@ module Language.Dtfpl.Syntax
     , Lit (..)
     ) where
 
+import           Data.List.NonEmpty (NonEmpty)
+
 data A n a = A { node :: n, ann :: a } deriving Show
 
 type A' n a = A (n a) a
@@ -23,12 +25,12 @@ data Prog a
     deriving Show
 
 data Decl a
-    = Def (A Ident a) [A' DefAlt a]
+    = Def (A Ident a) (NonEmpty (A' DefAlt a))
     | Let (A Ident a) (A' Expr a)
     deriving Show
 
 data DefAlt a
-    = DefAlt [A' Pat a] (A' Expr a)
+    = DefAlt (NonEmpty (A' Pat a)) (A' Expr a)
     deriving Show
 
 data Pat a
@@ -41,7 +43,7 @@ data Expr a
     | LitExpr (A Lit a)
     | App (A' Expr a) (A' Expr a)
     | If (A' Expr a) (A' Expr a) (A' Expr a)
-    | Case (A' Expr a) [A' CaseAlt a]
+    | Case (A' Expr a) (NonEmpty (A' CaseAlt a))
     deriving Show
 
 data CaseAlt a
