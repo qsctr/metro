@@ -3,6 +3,7 @@ module Language.Dtfpl.Parse.Parser
     ) where
 
 import           Control.Category                 ((>>>))
+import           Control.Monad.State
 import           Data.Bifunctor
 import           Data.Char
 import           Data.Functor
@@ -18,7 +19,7 @@ import           Language.Dtfpl.Parse.CustomError
 import           Language.Dtfpl.Parse.Loc
 import           Language.Dtfpl.Syntax
 
-type Parser = ParsecT CustomError String (Reader Config)
+type Parser = ParsecT CustomError String (StateT Pos (Reader Config))
 
 type LocParser n = Parser (A n Loc)
 
@@ -26,20 +27,19 @@ type LocParser' n = Parser (A' n Loc)
 
 parse :: String -> String -> M (AProg Loc)
 parse filename input = ExceptT $
-    first ParseErr <$> runParserT prog filename input
+    first ParseErr <$> evalStateT (runParserT prog filename input) pos1
 
 testParse :: String -> Either String (AProg Loc)
 testParse input = first parseErrorPretty $
-    runReader (runParserT prog "" input) undefined
+    runReader (evalStateT (runParserT prog "" input) pos1)
+        Config { debug = True }
 
 prog :: LocParser' Prog
 prog = addLoc (Prog <$> many (nonIndented scn decl <* scn)) <* eof
 
 decl :: LocParser' Decl
 decl = def <|> let_
-  where def = addLoc $ do
-            i <- indentLevel
-            Def <$> (lexeme sdef *> ident) <*> indentBlock' i defAlt
+  where def = addLoc $ Def <$> (lexeme sdef *> ident) <*> indentBlock' defAlt
         let_ = addLoc $ exprBlock $
             lexeme slet *> (Let <$> lexeme ident <* equals)
 
@@ -69,7 +69,7 @@ expr i = foldl1' combine <$> term `sepEndBy1` try sc1'
             <*> (selse *> sc1' *> expr i)
         case_ = addLoc $ Case
             <$> (scase *> sc1' *> expr i <* sof)
-            <*> indentBlock' i caseAlt
+            <*> indentBlock' caseAlt
         sc' = isc i
         sc1' = isc1 i
 
@@ -129,8 +129,8 @@ addLoc p = do
     s <- getPosition
     A <$> p <*> (Loc s <$> getPosition)
 
-indentBlock' :: Pos -> Parser a -> Parser (NonEmpty a)
-indentBlock' i p = isc1 i >>= rest
+indentBlock' :: Parser a -> Parser (NonEmpty a)
+indentBlock' p = get >>= isc1 >>= rest
   where rest i' = do
             a <- p
             hasNext *> ((a <|) <$> rest i') <|> noMore $> a :| []
@@ -142,10 +142,17 @@ sc :: Parser ()
 sc = hidden $ void $ takeWhile1P Nothing (== ' ')
 
 scn :: Parser ()
-scn = hidden space
+scn = scnWith space
 
 scn1 :: Parser ()
-scn1 = hidden space1
+scn1 = scnWith space1
+
+scnWith :: Parser () -> Parser ()
+scnWith p = do
+    s <- getPosition
+    hidden p
+    e <- getPosition
+    when (sourceLine s /= sourceLine e) $ put $ sourceColumn e
 
 isc :: Pos -> Parser Pos
 isc = indentGuard scn GT
