@@ -40,26 +40,32 @@ prog = addLoc (Prog <$> many (nonIndented scn decl <* scn)) <* eof
 decl :: LocParser' Decl
 decl = def <|> let_
   where def = addLoc $ Def <$> (lexeme sdef *> ident) <*> indentBlock' defAlt
-        let_ = addLoc $ exprBlock $
+        let_ = addLoc $ exprBlockMid $
             lexeme slet *> (Let <$> lexeme ident <* equals)
 
 defAlt :: LocParser' DefAlt
-defAlt = addLoc $ exprBlock $ DefAlt <$> (some1 (lexeme $ try pat) <* arrow)
+defAlt = addLoc $ exprBlockMid $ DefAlt <$> (some1 (lexeme $ try pat) <* arrow)
 
 pat :: LocParser' Pat
 pat = varPat <|> litPat
   where varPat = addLoc $ VarPat <$> ident
         litPat = addLoc $ LitPat <$> literal
 
-exprBlock :: Parser (A' Expr Loc -> a) -> Parser a
-exprBlock p = do
-    i <- indentLevel
-    p <*> (isc i *> expr i <* lookAhead (scn1 <|> hidden eof))
+exprBlockMid :: Parser (A' Expr Loc -> a) -> Parser a
+exprBlockMid = exprBlockWith indentLevel
+
+exprBlockStart :: Parser (A' Expr Loc -> a) -> Parser a
+exprBlockStart = exprBlockWith get
+
+exprBlockWith :: Parser Pos -> Parser (A' Expr Loc -> a) -> Parser a
+exprBlockWith ip p = do
+    i <- ip
+    p <*> (isc i *> expr i)
 
 expr :: Pos -> LocParser' Expr
 expr i = foldl1' combine <$> term `sepEndBy1` try sc1'
   where combine f x = A (App f x) $ Loc (start (ann f)) (end (ann x))
-        term = varExpr <|> if_ <|> case_ <|> litExpr <|> par
+        term = varExpr <|> if_ <|> case_ <|> lam <|> litExpr <|> par
         varExpr = addLoc $ VarExpr <$> try ident
         litExpr = addLoc $ LitExpr <$> literal
         par = parens (sc' *> expr i)
@@ -70,11 +76,13 @@ expr i = foldl1' combine <$> term `sepEndBy1` try sc1'
         case_ = addLoc $ Case
             <$> (scase *> sc1' *> expr i <* sof)
             <*> indentBlock' caseAlt
+        lam = addLoc $ exprBlockStart $ Lam
+            <$> (lambda *> sc' *> some1 (lexeme $ try pat) <* arrow)
         sc' = isc i
         sc1' = isc1 i
 
 caseAlt :: LocParser' CaseAlt
-caseAlt = addLoc $ exprBlock $ CaseAlt <$> (lexeme pat <* arrow)
+caseAlt = addLoc $ exprBlockMid $ CaseAlt <$> (lexeme pat <* arrow)
 
 reservedWords :: [String]
 reservedWords = ["def", "let", "if", "then", "else", "case", "of"]
@@ -89,6 +97,9 @@ arrow = void $ string "->"
 
 equals :: Parser ()
 equals = void $ string "="
+
+lambda :: Parser ()
+lambda = void $ string "\\"
 
 {-# ANN reservedChars "HLint: ignore Use String" #-}
 reservedChars :: [Char]

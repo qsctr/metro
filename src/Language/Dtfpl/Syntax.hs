@@ -44,6 +44,7 @@ data Expr a
     | App (A' Expr a) (A' Expr a)
     | If (A' Expr a) (A' Expr a) (A' Expr a)
     | Case (A' Expr a) (NonEmpty (A' CaseAlt a))
+    | Lam (NonEmpty (A' Pat a)) (A' Expr a)
     deriving Show
 
 data CaseAlt a
