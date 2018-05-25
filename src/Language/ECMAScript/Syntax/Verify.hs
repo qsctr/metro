@@ -1,5 +1,8 @@
 module Language.ECMAScript.Syntax.Verify
     ( isValidIdentifier
+    , isValidIdentifierStart
+    , isValidIdentifierPart
+    , reservedWords
     ) where
 
 import           Data.Char

@@ -1,68 +1,67 @@
-module Language.Dtfpl.Parse.Parser
+{-# LANGUAGE DataKinds    #-}
+{-# LANGUAGE TypeFamilies #-}
+
+module Language.Dtfpl.Parser
     ( parse
     ) where
 
-import           Control.Category                 ((>>>))
+import           Control.Category                  ((>>>))
 import           Control.Monad.State
 import           Data.Bifunctor
 import           Data.Char
 import           Data.Functor
 import           Data.List
-import           Data.List.NonEmpty               (NonEmpty (..), some1, (<|))
-import           Text.Megaparsec                  hiding (parse)
+import           Data.List.NonEmpty                (NonEmpty (..), some1, (<|))
+import           Text.Megaparsec                   hiding (parse)
 import           Text.Megaparsec.Char
-import           Text.Megaparsec.Char.Lexer       (indentGuard, indentLevel,
-                                                   nonIndented)
+import           Text.Megaparsec.Char.Lexer        (indentGuard, indentLevel,
+                                                    nonIndented)
 
 import           Language.Dtfpl.M
-import           Language.Dtfpl.Parse.CustomError
-import           Language.Dtfpl.Parse.Loc
+import           Language.Dtfpl.Parser.CustomError
+import           Language.Dtfpl.Parser.Loc
 import           Language.Dtfpl.Syntax
 
 type Parser = ParsecT CustomError String (StateT Pos (Reader Config))
 
-type LocParser n = Parser (A n Loc)
-
-type LocParser' n = Parser (A' n Loc)
-
-parse :: String -> String -> M (AProg Loc)
+parse :: String -> String -> M (A Prog 'Source)
 parse filename input = ExceptT $
     first ParseErr <$> evalStateT (runParserT prog filename input) pos1
 
-testParse :: String -> Either String (AProg Loc)
+testParse :: String -> Either String (A Prog 'Source)
 testParse input = first parseErrorPretty $
     runReader (evalStateT (runParserT prog "" input) pos1)
         Config { debug = True }
 
-prog :: LocParser' Prog
+prog :: Parser (A Prog 'Source)
 prog = addLoc (Prog <$> many (nonIndented scn decl <* scn)) <* eof
 
-decl :: LocParser' Decl
+decl :: Parser (A Decl 'Source)
 decl = def <|> let_
   where def = addLoc $ Def <$> (lexeme sdef *> ident) <*> indentBlock' defAlt
         let_ = addLoc $ exprBlockMid $
             lexeme slet *> (Let <$> lexeme ident <* equals)
 
-defAlt :: LocParser' DefAlt
+defAlt :: Parser (A DefAlt 'Source)
 defAlt = addLoc $ exprBlockMid $ DefAlt <$> (some1 (lexeme $ try pat) <* arrow)
 
-pat :: LocParser' Pat
+pat :: Parser (A Pat 'Source)
 pat = varPat <|> litPat
   where varPat = addLoc $ VarPat <$> ident
         litPat = addLoc $ LitPat <$> literal
 
-exprBlockMid :: Parser (A' Expr Loc -> a) -> Parser a
+exprBlockMid :: Parser (A Expr 'Source -> a) -> Parser a
 exprBlockMid = exprBlockWith indentLevel
 
-exprBlockStart :: Parser (A' Expr Loc -> a) -> Parser a
+exprBlockStart :: Parser (A Expr 'Source -> a) -> Parser a
 exprBlockStart = exprBlockWith get
 
-exprBlockWith :: Parser Pos -> Parser (A' Expr Loc -> a) -> Parser a
+exprBlockWith :: Parser Pos -> Parser (A Expr 'Source -> a) -> Parser a
 exprBlockWith ip p = do
     i <- ip
     p <*> (isc i *> expr i)
 
-expr :: Pos -> LocParser' Expr
+expr :: Pos -> Parser (A Expr 'Source)
 expr i = foldl1' combine <$> term `sepEndBy1` try sc1'
   where combine f x = A (App f x) $ Loc (start (ann f)) (end (ann x))
         term = varExpr <|> if_ <|> case_ <|> lam <|> litExpr <|> par
@@ -81,7 +80,7 @@ expr i = foldl1' combine <$> term `sepEndBy1` try sc1'
         sc' = isc i
         sc1' = isc1 i
 
-caseAlt :: LocParser' CaseAlt
+caseAlt :: Parser (A CaseAlt 'Source)
 caseAlt = addLoc $ exprBlockMid $ CaseAlt <$> (lexeme pat <* arrow)
 
 reservedWords :: [String]
@@ -108,7 +107,7 @@ reservedChars = "()[]{}.,:;\\\""
 parens :: Parser a -> Parser a
 parens = between (string "(") (string ")")
 
-ident :: LocParser Ident
+ident :: Parser (A Ident 'Source)
 ident = addLoc $ Ident <$> do
     identifier <- (:) <$> letterChar <*> takeWhileP Nothing isIdentTailChar
     if identifier `elem` reservedWords
@@ -120,7 +119,7 @@ isIdentTailChar x = isPrint x
                  && not (isSeparator x)
                  && x `notElem` reservedChars
 
-literal :: LocParser Lit
+literal :: Parser (A Lit 'Source)
 literal = numLit <|> strLit
   where numLit = addLoc $ NumLit . read <$>
             (option id ((:) <$> char '-') <*>
@@ -135,7 +134,7 @@ literal = numLit <|> strLit
                     , char '"'
                     , char 'n' $> '\n' ]
 
-addLoc :: Parser n -> LocParser n
+addLoc :: Parser (n 'Source) -> Parser (A n 'Source)
 addLoc p = do
     s <- getPosition
     A <$> p <*> (Loc s <$> getPosition)

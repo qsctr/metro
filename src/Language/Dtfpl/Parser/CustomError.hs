@@ -1,4 +1,4 @@
-module Language.Dtfpl.Parse.CustomError
+module Language.Dtfpl.Parser.CustomError
     ( CustomError (..)
     ) where
 

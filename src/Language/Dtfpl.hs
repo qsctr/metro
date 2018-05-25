@@ -1,6 +1,6 @@
 module Language.Dtfpl where
 
-import Language.Dtfpl.Parse.Parser
+import Language.Dtfpl.Parser
 import Language.Dtfpl.Generate.Convert
 import Language.Dtfpl.Generate.Render
 

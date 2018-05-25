@@ -23,11 +23,12 @@ executable dtfpl
                      , Language.Dtfpl.Generate.ConvertErr
                      , Language.Dtfpl.Generate.Render
                      , Language.Dtfpl.M
-                     , Language.Dtfpl.Parse.CustomError
-                     , Language.Dtfpl.Parse.Loc
-                     , Language.Dtfpl.Parse.Parser
+                     , Language.Dtfpl.Parser.CustomError
+                     , Language.Dtfpl.Parser.Loc
+                     , Language.Dtfpl.Parser
                      , Language.Dtfpl.Syntax
                      , Language.ECMAScript.Syntax
+                     , Language.ECMAScript.Syntax.Verify
                      , Util
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
@@ -36,6 +37,11 @@ executable dtfpl
                      , data-or
                      , megaparsec
                      , mtl
+                     , singletons
                      , text
                      , typed-process
   ghc-options:         -Wall
+                       -Wcompat
+                       -Wincomplete-record-updates
+                       -Wincomplete-uni-patterns
+                       -Wredundant-constraints

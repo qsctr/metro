@@ -10,7 +10,7 @@ import           Text.Megaparsec.Error
 
 import           Language.Dtfpl.Err.ShowErr
 import           Language.Dtfpl.Generate.ConvertErr
-import           Language.Dtfpl.Parse.CustomError
+import           Language.Dtfpl.Parser.CustomError
 
 data Err
     = InternalErr InternalErr
