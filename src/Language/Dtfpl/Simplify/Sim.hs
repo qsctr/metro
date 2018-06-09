@@ -35,7 +35,8 @@ type family SameChildren (ns :: [Node]) (sns :: [Node]) where
     SameChildren '[n] '[sn] = n ~ sn
     SameChildren (n : ns) (sn : sns) = (n ~ sn, SameChildren ns sns)
 
-instance (Sim n p, Ann (Pred p) ~ Ann p) => Sim (A n) p where
+instance {-# OVERLAPPABLE #-}
+    (Sim n p, Ann (Pred p) ~ Ann p) => Sim (A n) p where
     sim (A n a) = flip A a <$> sim n
 
 instance (Sim n p, Traversable t) => Sim (T t n) p where
