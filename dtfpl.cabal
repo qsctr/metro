@@ -26,6 +26,7 @@ executable dtfpl
                      , Language.Dtfpl.Parser.CustomError
                      , Language.Dtfpl.Parser.Loc
                      , Language.Dtfpl.Parser
+                     , Language.Dtfpl.Simplify
                      , Language.Dtfpl.Syntax
                      , Language.ECMAScript.Syntax
                      , Language.ECMAScript.Syntax.Verify

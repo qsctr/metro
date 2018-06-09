@@ -34,7 +34,7 @@ testParse input = first parseErrorPretty $
         Config { debug = True }
 
 prog :: Parser (A Prog 'Source)
-prog = addLoc (Prog <$> many (nonIndented scn decl <* scn)) <* eof
+prog = addLoc (Prog . T <$> many (nonIndented scn decl <* scn)) <* eof
 
 decl :: Parser (A Decl 'Source)
 decl = def <|> let_
@@ -43,7 +43,7 @@ decl = def <|> let_
             lexeme slet *> (Let <$> lexeme ident <* equals)
 
 defAlt :: Parser (A DefAlt 'Source)
-defAlt = addLoc $ exprBlockMid $ DefAlt <$> (some1 (lexeme $ try pat) <* arrow)
+defAlt = addLoc $ exprBlockMid $ DefAlt . T <$> (some1 (lexeme $ try pat) <* arrow)
 
 pat :: Parser (A Pat 'Source)
 pat = varPat <|> litPat
@@ -75,7 +75,7 @@ expr i = foldl1' combine <$> term `sepEndBy1` try sc1'
         case_ = addLoc $ Case
             <$> (scase *> sc1' *> expr i <* sof)
             <*> indentBlock' caseAlt
-        lam = addLoc $ exprBlockStart $ Lam
+        lam = addLoc $ exprBlockStart $ Lam . T
             <$> (lambda *> sc' *> some1 (lexeme $ try pat) <* arrow)
         sc' = isc i
         sc1' = isc1 i
@@ -139,8 +139,8 @@ addLoc p = do
     s <- getPosition
     A <$> p <*> (Loc s <$> getPosition)
 
-indentBlock' :: Parser a -> Parser (NonEmpty a)
-indentBlock' p = get >>= isc1 >>= rest
+indentBlock' :: Parser (n p) -> Parser (T NonEmpty n p)
+indentBlock' p = T <$> (get >>= isc1 >>= rest)
   where rest i' = do
             a <- p
             hasNext *> ((a <|) <$> rest i') <|> noMore $> a :| []
