@@ -43,6 +43,7 @@ import           Language.Dtfpl.Parser.Loc
 $(promote [d|
     data Pass
         = Source
+        | GenLoc
         | MultiCase
         | NoDef
         | NoLamMatch
@@ -91,7 +92,7 @@ deriving instance (Typeable n, Typeable p, Data (n p), Data (Ann p))
 
 type Ann (p :: Pass) = When p
     Loc
-    '[ 'NoDef ==> Maybe Loc ]
+    '[ 'GenLoc ==> Maybe Loc ]
 
 data Prog (p :: Pass)
     = Prog (T [] (A Decl) p)
