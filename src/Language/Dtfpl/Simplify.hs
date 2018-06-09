@@ -55,7 +55,7 @@ instance AutoSim Pat p => Sim Pat p where
     sim (VarPat ident) = VarPat <$> sim ident
     sim (LitPat lit)   = LitPat <$> sim lit
 
-instance {-# OVERLAPPABLE #-} AutoSim Expr p => Sim Expr p where
+instance AutoSim Expr p => Sim Expr p where
     sim (VarExpr ident)      = VarExpr <$> sim ident
     sim (LitExpr lit)        = LitExpr <$> sim lit
     sim (App f x)            = App <$> sim f <*> sim x
@@ -63,13 +63,11 @@ instance {-# OVERLAPPABLE #-} AutoSim Expr p => Sim Expr p where
     sim (Case caseHead alts) = Case <$> sim caseHead <*> sim alts
     sim (Lam lamHead expr)   = Lam <$> sim lamHead <*> sim expr
 
-instance Sim Expr 'Source where
-    sim (VarExpr ident)      = VarExpr <$> sim ident
-    sim (LitExpr lit)        = LitExpr <$> sim lit
-    sim (App f x)            = App <$> sim f <*> sim x
-    sim (If cond true false) = If <$> sim cond <*> sim true <*> sim false
-    sim (Case caseHead alts) = Case . T . pure <$> sim caseHead <*> sim alts
-    sim (Lam lamHead expr)   = Lam <$> sim lamHead <*> sim expr
+instance {-# OVERLAPPABLE #-} AutoSim CaseHead p => Sim CaseHead p where
+    sim (CaseHead x) = CaseHead <$> sim x
+
+instance Sim CaseHead 'Source where
+    sim (CaseHead x) = CaseHead . T . pure <$> sim x
 
 instance {-# OVERLAPPABLE #-} AutoSim CaseAlt p => Sim CaseAlt p where
     sim (CaseAlt altHead expr) = CaseAlt <$> sim altHead <*> sim expr

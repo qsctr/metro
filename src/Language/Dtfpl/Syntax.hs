@@ -24,6 +24,7 @@ module Language.Dtfpl.Syntax
     , DefAlt (..)
     , Pat (..)
     , Expr (..)
+    , CaseHead (..)
     , CaseAlt (..)
     , Ident (..)
     , Lit (..)
@@ -149,7 +150,7 @@ data Expr (p :: Pass)
     | LitExpr (A Lit p)
     | App (A Expr p) (A Expr p)
     | If (A Expr p) (A Expr p) (A Expr p)
-    | Case (CaseHead p p) (T NonEmpty (A CaseAlt) p)
+    | Case (CaseHead p) (T NonEmpty (A CaseAlt) p)
     | Lam (LamHead p p) (A Expr p)
     deriving Typeable
 
@@ -157,14 +158,25 @@ type instance Children Expr p =
     '[ A Ident
      , A Lit
      , A Expr
-     , CaseHead p, T NonEmpty (A CaseAlt)
+     , CaseHead, T NonEmpty (A CaseAlt)
      , LamHead p ]
 
 deriving instance Forall Eq Expr p => Eq (Expr p)
 deriving instance Forall Show Expr p => Show (Expr p)
 deriving instance (Forall Data Expr p, Typeable p) => Data (Expr p)
 
-type CaseHead (p :: Pass) = When p
+data CaseHead (p :: Pass)
+    = CaseHead (CaseHead' p p)
+    deriving Typeable
+
+type instance Children CaseHead p =
+    '[ CaseHead' p ]
+
+deriving instance Forall Eq CaseHead p => Eq (CaseHead p)
+deriving instance Forall Show CaseHead p => Show (CaseHead p)
+deriving instance (Forall Data CaseHead p, Typeable p) => Data (CaseHead p)
+
+type CaseHead' (p :: Pass) = When p
     (A Expr)
     '[ 'MultiCase ==> T NonEmpty (A Expr) ]
 
