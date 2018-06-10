@@ -9,19 +9,25 @@
 {-# LANGUAGE UndecidableInstances  #-}
 
 module Language.Dtfpl.Simplify.Sim
-    ( Sim (..)
+    ( SimState (..)
+    , SimM
+    , Sim (..)
     ) where
 
 import           Control.Monad.State
 import           Data.Promotion.Prelude.Enum
-import           Data.List.NonEmpty
+import           Numeric.Natural
 
 import           Language.Dtfpl.Syntax
 
-type SimState = State Int
+data SimState = SimState
+    { nextGenIdentFullNum :: Natural }
+    deriving (Eq, Show)
+
+type SimM = State SimState
 
 class Sim (n :: Node) (p :: Pass) where
-    sim :: n (Pred p) -> SimState (n p)
+    sim :: n (Pred p) -> SimM (n p)
 
 type AutoSim (n :: Node) (p :: Pass) =
     ( SimChildren (Children n p) p
@@ -39,13 +45,16 @@ instance {-# OVERLAPPABLE #-}
     (Sim n p, Ann (Pred p) ~ Ann p) => Sim (A n) p where
     sim (A n a) = flip A a <$> sim n
 
+instance Sim (P t) p where
+    sim (P x) = pure $ P x
+
 instance (Sim n p, Traversable t) => Sim (T t n) p where
     sim (T t) = T <$> traverse sim t
 
 instance AutoSim Prog p => Sim Prog p where
     sim (Prog decls) = Prog <$> sim decls
 
-instance AutoSim Decl p => Sim Decl p where
+instance {-# OVERLAPPABLE #-} AutoSim Decl p => Sim Decl p where
     sim (Def name alts) = Def <$> sim name <*> sim alts
     sim (Let name expr) = Let <$> sim name <*> sim expr
 
@@ -70,8 +79,10 @@ instance {-# OVERLAPPABLE #-} AutoSim CaseHead p => Sim CaseHead p where
 instance {-# OVERLAPPABLE #-} AutoSim CaseAlt p => Sim CaseAlt p where
     sim (CaseAlt altHead expr) = CaseAlt <$> sim altHead <*> sim expr
 
-instance Sim Ident p where
-    sim (Ident str) = pure $ Ident str
+instance AutoSim Ident p => Sim Ident p where
+    sim (Ident str)               = pure $ Ident str
+    sim (GenIdentPart prefix num) = GenIdentPart <$> sim prefix <*> sim num
+    sim (GenIdentFull num)        = GenIdentFull <$> sim num
 
 instance Sim Lit p where
     sim (NumLit n) = pure $ NumLit n

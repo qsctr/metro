@@ -15,6 +15,7 @@ module Language.Dtfpl.Syntax
     ( Pass (..)
     , Core
     , Node
+    , P (..)
     , T (..)
     , Children
     , A (..)
@@ -27,6 +28,9 @@ module Language.Dtfpl.Syntax
     , CaseHead (..)
     , CaseAlt (..)
     , Ident (..)
+    , GenIdentPartPrefix
+    , GenIdentPartNum
+    , GenIdentFullNum
     , Lit (..)
     ) where
 
@@ -36,7 +40,9 @@ import           Data.List.NonEmpty
 import           Data.Promotion.Prelude      ((:==$))
 import           Data.Promotion.Prelude.Enum
 import           Data.Promotion.TH
+import           Data.Void
 import           GHC.Exts
+import           Numeric.Natural
 
 import           Language.Dtfpl.Parser.Loc
 
@@ -57,10 +63,16 @@ type Node = Pass -> Type
 
 type Class = Type -> Constraint
 
-data VoidP (p :: Pass)
-
-data T (t :: * -> *) (n :: Node) (p :: Pass) = T (t (n p))
+data P t (p :: Pass) = P t
     deriving (Eq, Show, Typeable, Data)
+
+data T (t :: * -> *) (n :: Node) (p :: Pass) = T { unT :: t (n p) }
+    deriving (Eq, Show, Typeable, Data)
+
+-- tmap, (<#>) :: (t (n p) -> t (n' p)) -> T t n p -> T t n' p
+-- tmap f (T x) = T $ f x
+-- (<#>) = tmap
+-- infixl 4 <#>
 
 data WhenAlt = forall t. WhenAlt Pass t
 
@@ -70,8 +82,12 @@ type family When (p :: Pass) t (xs :: [WhenAlt]) where
     When _ t '[] = t
     When p t ((p' ==> t') : xs) = If (p :< p') t (When p t' xs)
 
+type family IfNotSource (p :: Pass) t where
+    IfNotSource 'Source _ = P Void
+    IfNotSource _ t = t
+
 type VoidAfter (p' :: Pass) (p :: Pass) t =
-    When p t '[ p' ==> VoidP ]
+    When p t '[ p' ==> P Void ]
 
 type family Children (n :: Node) (p :: Pass) :: [Node]
 
@@ -119,7 +135,6 @@ deriving instance Forall Show Decl p => Show (Decl p)
 deriving instance (Forall Data Decl p, Typeable p) => Data (Decl p)
 
 type DefHead (p :: Pass) = VoidAfter 'NoDef p (A Ident)
-
 type DefBody (p :: Pass) = VoidAfter 'NoDef p (T NonEmpty (A DefAlt))
 
 data DefAlt (p :: Pass)
@@ -203,7 +218,21 @@ type LamHead (p :: Pass) = When p
 
 data Ident (p :: Pass)
     = Ident String
-    deriving (Eq, Show, Typeable, Data)
+    | GenIdentPart (GenIdentPartPrefix p p) (GenIdentPartNum p p)
+    | GenIdentFull (GenIdentFullNum p p)
+    deriving Typeable
+
+type instance Children Ident p =
+    '[ GenIdentPartPrefix p, GenIdentPartNum p
+     , GenIdentFullNum p ]
+
+deriving instance Forall Eq Ident p => Eq (Ident p)
+deriving instance Forall Show Ident p => Show (Ident p)
+deriving instance (Forall Data Ident p, Typeable p) => Data (Ident p)
+
+type GenIdentPartPrefix (p :: Pass) = IfNotSource p (A Ident)
+type GenIdentPartNum (p :: Pass) = IfNotSource p (P Natural)
+type GenIdentFullNum (p :: Pass) = IfNotSource p (P Natural)
 
 data Lit (p :: Pass)
     = NumLit Double
