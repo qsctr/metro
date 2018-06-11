@@ -20,6 +20,7 @@ module Language.Dtfpl.Syntax
     , Children
     , A (..)
     , Ann
+    , mapNode
     , Prog (..)
     , Decl (..)
     , DefAlt (..)
@@ -110,6 +111,9 @@ type Ann (p :: Pass) = When p
     Loc
     '[ 'GenLoc ==> Maybe Loc ]
 
+mapNode :: (n p -> n' p) -> A n p -> A n' p
+mapNode f (A n a) = A (f n) a
+
 data Prog (p :: Pass)
     = Prog (T [] (A Decl) p)
     deriving Typeable
@@ -151,6 +155,7 @@ deriving instance (Forall Data DefAlt p, Typeable p) => Data (DefAlt p)
 data Pat (p :: Pass)
     = VarPat (A Ident p)
     | LitPat (A Lit p)
+    | WildPat
     deriving Typeable
 
 type instance Children Pat p =

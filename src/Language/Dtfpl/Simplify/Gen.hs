@@ -1,5 +1,6 @@
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeFamilies    #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE RecordWildCards       #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 module Language.Dtfpl.Simplify.Gen
     ( genLoc
@@ -7,10 +8,12 @@ module Language.Dtfpl.Simplify.Gen
     , GenIdentPartM
     , runGenIdentPart
     , genIdentPart
+    , liftSim
     ) where
 
 import           Control.Monad.Reader
 import           Control.Monad.State
+import           Data.Promotion.Prelude.Enum
 import           Numeric.Natural
 
 import           Language.Dtfpl.Simplify.Sim
@@ -43,3 +46,6 @@ genIdentPart = do
     put $ succ n
     prefix <- ask
     pure $ genLoc $ GenIdentPart prefix $ P n
+
+liftSim :: Sim n p => n (Pred p) -> GenIdentPartM p (n p)
+liftSim = lift . lift . sim
