@@ -41,7 +41,8 @@ instance Sim Decl 'NoDef where
                 let caseAlts = [ A (CaseAlt (T pats) expr) loc
                         | pats <- simRows | expr <- simExprs | A _ loc <- alts ]
                 pure $ genLoc $ Case caseHead $ T caseAlts
-        pure $ Let simName $ genLoc $ Lam (T lamParams) lamBody
+        pure $ Let simName $ genLoc $ LamExpr $
+            genLoc $ Lam (T lamParams) lamBody
       where nodeIsVarPat (A (VarPat _) _) = True
             nodeIsVarPat _                = False
             varPatToWildPat (VarPat _) = WildPat
