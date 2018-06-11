@@ -2,7 +2,6 @@
 {-# LANGUAGE MonadComprehensions   #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ParallelListComp      #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE ViewPatterns          #-}
 
 module Language.Dtfpl.Simplify.UnDef () where
