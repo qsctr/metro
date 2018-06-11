@@ -28,6 +28,7 @@ module Language.Dtfpl.Syntax
     , Expr (..)
     , CaseHead (..)
     , CaseAlt (..)
+    , Lam (..)
     , Ident (..)
     , GenIdentPartPrefix
     , GenIdentPartNum
@@ -69,11 +70,6 @@ data P t (p :: Pass) = P t
 
 data T (t :: * -> *) (n :: Node) (p :: Pass) = T { unT :: t (n p) }
     deriving (Eq, Show, Typeable, Data)
-
--- tmap, (<#>) :: (t (n p) -> t (n' p)) -> T t n p -> T t n' p
--- tmap f (T x) = T $ f x
--- (<#>) = tmap
--- infixl 4 <#>
 
 data WhenAlt = forall t. WhenAlt Pass t
 
@@ -172,7 +168,7 @@ data Expr (p :: Pass)
     | App (A Expr p) (A Expr p)
     | If (A Expr p) (A Expr p) (A Expr p)
     | Case (CaseHead p) (T NonEmpty (A CaseAlt) p)
-    | Lam (LamHead p p) (A Expr p)
+    | LamExpr (A Lam p)
     deriving Typeable
 
 type instance Children Expr p =
@@ -180,7 +176,7 @@ type instance Children Expr p =
      , A Lit
      , A Expr
      , CaseHead, T NonEmpty (A CaseAlt)
-     , LamHead p ]
+     , A Lam ]
 
 deriving instance Forall Eq Expr p => Eq (Expr p)
 deriving instance Forall Show Expr p => Show (Expr p)
@@ -215,6 +211,17 @@ deriving instance (Forall Data CaseAlt p, Typeable p) => Data (CaseAlt p)
 type CaseAltHead (p :: Pass) = When p
     (A Pat)
     '[ 'MultiCase ==> T NonEmpty (A Pat) ]
+
+data Lam (p :: Pass)
+    = Lam (LamHead p p) (A Expr p)
+    deriving Typeable
+
+type instance Children Lam p =
+    '[ LamHead p, A Expr ]
+
+deriving instance Forall Eq Lam p => Eq (Lam p)
+deriving instance Forall Show Lam p => Show (Lam p)
+deriving instance (Forall Data Lam p, Typeable p) => Data (Lam p)
 
 type LamHead (p :: Pass) = When p
     (T NonEmpty (A Pat))

@@ -75,7 +75,7 @@ expr i = foldl1' combine <$> term `sepEndBy1` try sc1'
         case_ = addLoc $ Case
             <$> (CaseHead <$> (scase *> sc1' *> expr i <* sof))
             <*> indentBlock' caseAlt
-        lam = addLoc $ exprBlockStart $ Lam . T
+        lam = addLoc $ fmap LamExpr $ addLoc $ exprBlockStart $ Lam . T
             <$> (lambda *> sc' *> some1 (lexeme $ try pat) <* arrow)
         sc' = isc i
         sc1' = isc1 i

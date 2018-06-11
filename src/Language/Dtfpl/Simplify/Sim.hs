@@ -71,13 +71,16 @@ instance AutoSim Expr p => Sim Expr p where
     sim (App f x)            = App <$> sim f <*> sim x
     sim (If cond true false) = If <$> sim cond <*> sim true <*> sim false
     sim (Case caseHead alts) = Case <$> sim caseHead <*> sim alts
-    sim (Lam lamHead expr)   = Lam <$> sim lamHead <*> sim expr
+    sim (LamExpr lam)        = LamExpr <$> sim lam
 
 instance {-# OVERLAPPABLE #-} AutoSim CaseHead p => Sim CaseHead p where
     sim (CaseHead x) = CaseHead <$> sim x
 
 instance {-# OVERLAPPABLE #-} AutoSim CaseAlt p => Sim CaseAlt p where
     sim (CaseAlt altHead expr) = CaseAlt <$> sim altHead <*> sim expr
+
+instance {-# OVERLAPPABLE #-} AutoSim Lam p => Sim Lam p where
+    sim (Lam lamHead expr) = Lam <$> sim lamHead <*> sim expr
 
 instance AutoSim Ident p => Sim Ident p where
     sim (Ident str)               = pure $ Ident str
