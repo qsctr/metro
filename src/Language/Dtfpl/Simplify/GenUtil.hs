@@ -2,7 +2,7 @@
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE TypeFamilies          #-}
 
-module Language.Dtfpl.Simplify.Gen
+module Language.Dtfpl.Simplify.GenUtil
     ( genLoc
     , genIdentFull
     , GenIdentPartM

@@ -12,7 +12,7 @@ import           Data.Foldable
 import qualified Data.List.NonEmpty          as N
 import           Data.Traversable
 
-import           Language.Dtfpl.Simplify.Gen
+import           Language.Dtfpl.Simplify.GenUtil
 import           Language.Dtfpl.Simplify.Sim
 import           Language.Dtfpl.Syntax
 
