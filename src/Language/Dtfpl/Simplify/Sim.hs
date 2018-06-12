@@ -11,6 +11,7 @@
 module Language.Dtfpl.Simplify.Sim
     ( SimState (..)
     , SimM
+    , runSim
     , Sim (..)
     ) where
 
@@ -24,7 +25,14 @@ data SimState = SimState
     { nextGenIdentFullNum :: Natural }
     deriving (Eq, Show)
 
+initSimState :: SimState
+initSimState = SimState
+    { nextGenIdentFullNum = 0 }
+
 type SimM = State SimState
+
+runSim :: SimM a -> a
+runSim = flip evalState initSimState
 
 class Sim (n :: Node) (p :: Pass) where
     sim :: n (Pred p) -> SimM (n p)
