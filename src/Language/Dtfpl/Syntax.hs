@@ -168,7 +168,7 @@ data Expr (p :: Pass)
     | App (A Expr p) (A Expr p)
     | If (A Expr p) (A Expr p) (A Expr p)
     | Case (CaseHead p) (T NonEmpty (A CaseAlt) p)
-    | LamExpr (A Lam p)
+    | LamExpr (Lam p)
     deriving Typeable
 
 type instance Children Expr p =
@@ -176,7 +176,7 @@ type instance Children Expr p =
      , A Lit
      , A Expr
      , CaseHead, T NonEmpty (A CaseAlt)
-     , A Lam ]
+     , Lam ]
 
 deriving instance Forall Eq Expr p => Eq (Expr p)
 deriving instance Forall Show Expr p => Show (Expr p)
