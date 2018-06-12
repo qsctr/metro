@@ -64,7 +64,7 @@ $(promote [d|
         deriving (Eq, Ord, Enum, Bounded)
     |])
 
-type Core = MaxBound Pass
+type Core = (MaxBound :: Pass)
 
 type Node = Pass -> Type
 
