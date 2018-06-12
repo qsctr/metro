@@ -27,6 +27,13 @@ executable dtfpl
                      , Language.Dtfpl.Parser.Loc
                      , Language.Dtfpl.Parser
                      , Language.Dtfpl.Simplify
+                     , Language.Dtfpl.Simplify.Curry
+                     , Language.Dtfpl.Simplify.GenUtil
+                     , Language.Dtfpl.Simplify.InitGen
+                     , Language.Dtfpl.Simplify.MultiCase
+                     , Language.Dtfpl.Simplify.Sim
+                     , Language.Dtfpl.Simplify.UnDef
+                     , Language.Dtfpl.Simplify.UnLamMatch
                      , Language.Dtfpl.Syntax
                      , Language.ECMAScript.Syntax
                      , Language.ECMAScript.Syntax.Verify
