@@ -3,7 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ViewPatterns          #-}
 
-module Language.Dtfpl.Simplify.MultiCase () where
+module Language.Dtfpl.Simplify.UnLamMatch () where
 
 import qualified Data.List.NonEmpty              as N
 import           Data.Traversable
