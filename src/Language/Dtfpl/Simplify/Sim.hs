@@ -82,7 +82,7 @@ instance {-# OVERLAPPABLE #-} AutoSim CaseAlt p => Sim CaseAlt p where
 instance {-# OVERLAPPABLE #-} AutoSim Lam p => Sim Lam p where
     sim (Lam lamHead expr) = Lam <$> sim lamHead <*> sim expr
 
-instance AutoSim Ident p => Sim Ident p where
+instance {-# OVERLAPPABLE #-} AutoSim Ident p => Sim Ident p where
     sim (Ident str)               = pure $ Ident str
     sim (GenIdentPart prefix num) = GenIdentPart <$> sim prefix <*> sim num
     sim (GenIdentFull num)        = GenIdentFull <$> sim num
