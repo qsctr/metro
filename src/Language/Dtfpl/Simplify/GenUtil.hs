@@ -27,8 +27,8 @@ genIdentFull ::
     , Ann p ~ Maybe a )
     => SimM (A Ident p)
 genIdentFull = do
-    state@SimState{..} <- get
-    put $ state { nextGenIdentFullNum = succ nextGenIdentFullNum }
+    s@SimState{..} <- get
+    put $ s { nextGenIdentFullNum = succ nextGenIdentFullNum }
     pure $ genLoc $ GenIdentFull $ P nextGenIdentFullNum
 
 type GenIdentPartM p = ReaderT (A Ident p) (StateT Natural SimM)

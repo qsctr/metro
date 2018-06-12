@@ -1,6 +1,8 @@
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Language.Dtfpl.Simplify.MultiCase () where
 
 import           Language.Dtfpl.Simplify.Sim

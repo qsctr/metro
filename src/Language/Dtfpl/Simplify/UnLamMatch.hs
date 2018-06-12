@@ -3,6 +3,8 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ViewPatterns          #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Language.Dtfpl.Simplify.UnLamMatch () where
 
 import qualified Data.List.NonEmpty              as N

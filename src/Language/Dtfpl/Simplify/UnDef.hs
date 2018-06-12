@@ -4,11 +4,13 @@
 {-# LANGUAGE ParallelListComp      #-}
 {-# LANGUAGE ViewPatterns          #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans                 #-}
+{-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
+
 module Language.Dtfpl.Simplify.UnDef () where
 
-import           Control.Monad.State
 import           Data.Foldable
-import qualified Data.List.NonEmpty          as N
+import qualified Data.List.NonEmpty              as N
 import           Data.Traversable
 
 import           Language.Dtfpl.Simplify.GenUtil

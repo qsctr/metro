@@ -48,7 +48,6 @@ import           Data.Promotion.Prelude      ((:==$))
 import           Data.Promotion.Prelude.Enum
 import           Data.Promotion.TH
 import           Data.Void
-import           GHC.Exts
 import           Numeric.Natural
 
 import           Language.Dtfpl.Parser.Loc

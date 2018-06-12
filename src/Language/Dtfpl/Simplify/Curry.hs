@@ -1,6 +1,8 @@
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
+{-# OPTIONS_GHC -fno-warn-orphans #-}
+
 module Language.Dtfpl.Simplify.Curry () where
 
 import qualified Data.List.NonEmpty              as N
