@@ -23,12 +23,17 @@ module Language.Dtfpl.Syntax
     , mapNode
     , Prog (..)
     , Decl (..)
+    , DefHead
+    , DefBody
     , DefAlt (..)
     , Pat (..)
     , Expr (..)
     , CaseHead (..)
+    , CaseHead'
     , CaseAlt (..)
+    , CaseAltHead
     , Lam (..)
+    , LamHead
     , Ident (..)
     , GenIdentPartPrefix
     , GenIdentPartNum
