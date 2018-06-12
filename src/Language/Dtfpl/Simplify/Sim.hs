@@ -64,6 +64,7 @@ instance AutoSim DefAlt p => Sim DefAlt p where
 instance AutoSim Pat p => Sim Pat p where
     sim (VarPat ident) = VarPat <$> sim ident
     sim (LitPat lit)   = LitPat <$> sim lit
+    sim WildPat        = pure WildPat
 
 instance AutoSim Expr p => Sim Expr p where
     sim (VarExpr ident)      = VarExpr <$> sim ident
