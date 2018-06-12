@@ -56,7 +56,7 @@ import           Language.Dtfpl.Parser.Loc
 $(promote [d|
     data Pass
         = Source
-        | GenLoc
+        | InitGen
         | MultiCase
         | NoDef
         | NoLamMatch
@@ -84,9 +84,7 @@ type family When (p :: Pass) t (xs :: [WhenAlt]) where
     When _ t '[] = t
     When p t ((p' ==> t') : xs) = If (p :< p') t (When p t' xs)
 
-type family IfNotSource (p :: Pass) t where
-    IfNotSource 'Source _ = P Void
-    IfNotSource _ t = t
+type FromInitGen (p :: Pass) t = If (p :< 'InitGen) (P Void) t
 
 type VoidAfter (p' :: Pass) (p :: Pass) t =
     When p t '[ p' ==> P Void ]
@@ -110,7 +108,7 @@ deriving instance (Typeable n, Typeable p, Data (n p), Data (Ann p))
 
 type Ann (p :: Pass) = When p
     Loc
-    '[ 'GenLoc ==> Maybe Loc ]
+    '[ 'InitGen ==> Maybe Loc ]
 
 mapNode :: (n p -> n' p) -> A n p -> A n' p
 mapNode f (A n a) = A (f n) a
@@ -247,9 +245,9 @@ deriving instance Forall Eq Ident p => Eq (Ident p)
 deriving instance Forall Show Ident p => Show (Ident p)
 deriving instance (Forall Data Ident p, Typeable p) => Data (Ident p)
 
-type GenIdentPartPrefix (p :: Pass) = IfNotSource p (A Ident)
-type GenIdentPartNum (p :: Pass) = IfNotSource p (P Natural)
-type GenIdentFullNum (p :: Pass) = IfNotSource p (P Natural)
+type GenIdentPartPrefix (p :: Pass) = FromInitGen p (A Ident)
+type GenIdentPartNum (p :: Pass) = FromInitGen p (P Natural)
+type GenIdentFullNum (p :: Pass) = FromInitGen p (P Natural)
 
 data Lit (p :: Pass)
     = NumLit Double
