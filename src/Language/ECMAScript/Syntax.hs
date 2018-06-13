@@ -70,8 +70,9 @@ mkIdentifier s = do
     pure $ Identifier s
 
 instance ToJSON Identifier where
-    toJSON (Identifier name) = estree "Identifier"
-        [ "name" .= name ]
+    toJSON (Identifier name) =
+        estree "Identifier"
+            [ "name" .= name ]
 
 data Literal
     = StringLiteral String
@@ -81,27 +82,29 @@ data Literal
     | RegExpLiteral String String
 
 instance ToJSON Literal where
-    toJSON literal = estree "Literal" $
-        case literal of
-            StringLiteral s ->
-                [ "value" .= s ]
-            BooleanLiteral b ->
-                [ "value" .= b ]
-            NullLiteral ->
-                [ "value" .= Null ]
-            NumberLiteral n ->
-                [ "value" .= n ]
-            RegExpLiteral pattern flags ->
-                [ "value" .= Null
-                , "regex" .= object
-                    [ "pattern" .= pattern
-                    , "flags" .= flags ] ]
+    toJSON literal =
+        estree "Literal" $
+            case literal of
+                StringLiteral s ->
+                    [ "value" .= s ]
+                BooleanLiteral b ->
+                    [ "value" .= b ]
+                NullLiteral ->
+                    [ "value" .= Null ]
+                NumberLiteral n ->
+                    [ "value" .= n ]
+                RegExpLiteral pattern flags ->
+                    [ "value" .= Null
+                    , "regex" .= object
+                        [ "pattern" .= pattern
+                        , "flags" .= flags ] ]
 
 newtype Program = Program [Statement]
 
 instance ToJSON Program where
-    toJSON (Program body) = estree "Program"
-        [ "body" .= body ]
+    toJSON (Program body) =
+        estree "Program"
+            [ "body" .= body ]
 
 data Statement
     = ExpressionStatement Expression
@@ -127,81 +130,102 @@ data Statement
     | VariableDeclarationStatement VariableDeclaration
 
 instance ToJSON Statement where
-    toJSON (ExpressionStatement expression) = estree "ExpressionStatement"
-        [ "expression" .= expression ]
-    toJSON (DirectiveStatement directive) = estree "ExpressionStatement"
-        [ "expression" .= StringLiteral directive
-        , "directive" .= directive ]
+    toJSON (ExpressionStatement expression) =
+        estree "ExpressionStatement"
+            [ "expression" .= expression ]
+    toJSON (DirectiveStatement directive) =
+        estree "ExpressionStatement"
+            [ "expression" .= StringLiteral directive
+            , "directive" .= directive ]
     toJSON (BlockStatement block) = toJSON block
-    toJSON EmptyStatement = estree "EmptyStatement" []
-    toJSON DebuggerStatement = estree "DebuggerStatement" []
-    toJSON (WithStatement expression body) = estree "WithStatement"
-        [ "object" .= expression
-        , "body" .= body ]
-    toJSON (ReturnStatement argument) = estree "ReturnStatement"
-        [ "argument" .= argument ]
-    toJSON (LabeledStatement label body) = estree "LabeledStatement"
-        [ "label" .= label
-        , "body" .= body ]
-    toJSON (BreakStatement label) = estree "BreakStatement"
-        [ "label" .= label ]
-    toJSON (ContinueStatement label) = estree "ContinueStatement"
-        [ "label" .= label ]
-    toJSON (IfStatement test consequent alternate) = estree "IfStatement"
-        [ "test" .= test
-        , "consequent" .= consequent
-        , "alternate" .= alternate ]
-    toJSON (SwitchStatement discriminant cases) = estree "SwitchStatement"
-        [ "discriminant" .= discriminant
-        , "cases" .= cases ]
-    toJSON (ThrowStatement argument) = estree "ThrowStatement"
-        [ "argument" .= argument ]
-    toJSON (TryStatement block handlerOrFinalizer) = estree "TryStatement" $
-        [ "block" .= block ]
-        ++ orToPairs "handler" "finalizer" handlerOrFinalizer
-    toJSON (WhileStatement test body) = estree "WhileStatement"
-        [ "test" .= test
-        , "body" .= body ]
-    toJSON (DoWhileStatement body test) = estree "DoWhileStatement"
-        [ "body" .= body
-        , "test" .= test ]
-    toJSON (ForStatement initializer test update body) = estree "ForStatement"
-        [ "init" .=?| initializer
-        , "test" .= test
-        , "update" .= update
-        , "body" .= body ]
-    toJSON (ForInStatement left right body) = estree "ForInStatement"
-        [ "left" .=| left
-        , "right" .= right
-        , "body" .= body ]
-    toJSON (FunctionDeclaration name params body) = estree "FunctionDeclaration"
-        [ "id" .= name
-        , "params" .= params
-        , "body" .= body ]
+    toJSON EmptyStatement =
+        estree "EmptyStatement" []
+    toJSON DebuggerStatement =
+        estree "DebuggerStatement" []
+    toJSON (WithStatement expression body) =
+        estree "WithStatement"
+            [ "object" .= expression
+            , "body" .= body ]
+    toJSON (ReturnStatement argument) =
+        estree "ReturnStatement"
+            [ "argument" .= argument ]
+    toJSON (LabeledStatement label body) =
+        estree "LabeledStatement"
+            [ "label" .= label
+            , "body" .= body ]
+    toJSON (BreakStatement label) =
+        estree "BreakStatement"
+            [ "label" .= label ]
+    toJSON (ContinueStatement label) =
+        estree "ContinueStatement"
+            [ "label" .= label ]
+    toJSON (IfStatement test consequent alternate) =
+        estree "IfStatement"
+            [ "test" .= test
+            , "consequent" .= consequent
+            , "alternate" .= alternate ]
+    toJSON (SwitchStatement discriminant cases) =
+        estree "SwitchStatement"
+            [ "discriminant" .= discriminant
+            , "cases" .= cases ]
+    toJSON (ThrowStatement argument) =
+        estree "ThrowStatement"
+            [ "argument" .= argument ]
+    toJSON (TryStatement block handlerOrFinalizer) =
+        estree "TryStatement" $
+            [ "block" .= block ]
+            ++ orToPairs "handler" "finalizer" handlerOrFinalizer
+    toJSON (WhileStatement test body) =
+        estree "WhileStatement"
+            [ "test" .= test
+            , "body" .= body ]
+    toJSON (DoWhileStatement body test) =
+        estree "DoWhileStatement"
+            [ "body" .= body
+            , "test" .= test ]
+    toJSON (ForStatement initializer test update body) =
+        estree "ForStatement"
+            [ "init" .=?| initializer
+            , "test" .= test
+            , "update" .= update
+            , "body" .= body ]
+    toJSON (ForInStatement left right body) =
+        estree "ForInStatement"
+            [ "left" .=| left
+            , "right" .= right
+            , "body" .= body ]
+    toJSON (FunctionDeclaration name params body) =
+        estree "FunctionDeclaration"
+            [ "id" .= name
+            , "params" .= params
+            , "body" .= body ]
     toJSON (VariableDeclarationStatement variableDeclaration) =
         toJSON variableDeclaration
 
 newtype Block = Block [Statement]
 
 instance ToJSON Block where
-    toJSON (Block body) = estree "BlockStatement"
-        [ "body" .= body ]
+    toJSON (Block body) =
+        estree "BlockStatement"
+            [ "body" .= body ]
 
 data SwitchCase
     = SwitchCase (Maybe Expression) [Statement]
 
 instance ToJSON SwitchCase where
-    toJSON (SwitchCase test consequent) = estree "SwitchCase"
-        [ "test" .= test
-        , "consequent" .= consequent ]
+    toJSON (SwitchCase test consequent) =
+        estree "SwitchCase"
+            [ "test" .= test
+            , "consequent" .= consequent ]
 
 data CatchClause
     = CatchClause Pattern Block
 
 instance ToJSON CatchClause where
-    toJSON (CatchClause param body) = estree "CatchClause"
-        [ "param" .= param
-        , "body" .= body ]
+    toJSON (CatchClause param body) =
+        estree "CatchClause"
+            [ "param" .= param
+            , "body" .= body ]
 
 data VariableDeclaration
     = VariableDeclaration VariableDeclarationKind [VariableDeclarator]
@@ -222,9 +246,10 @@ data VariableDeclarator
     = VariableDeclarator Pattern (Maybe Expression)
 
 instance ToJSON VariableDeclarator where
-    toJSON (VariableDeclarator name value) = estree "VariableDeclarator"
-        [ "id" .= name
-        , "init" .= value ]
+    toJSON (VariableDeclarator name value) =
+        estree "VariableDeclarator"
+            [ "id" .= name
+            , "init" .= value ]
 
 data Expression
     = IdentifierExpression Identifier
@@ -248,19 +273,24 @@ data Expression
 instance ToJSON Expression where
     toJSON (IdentifierExpression identifier) = toJSON identifier
     toJSON (LiteralExpression literal) = toJSON literal
-    toJSON ThisExpression = estree "ThisExpression" []
-    toJSON (ArrayExpression elements) = estree "ArrayExpression"
-        [ "elements" .= elements ]
-    toJSON (ObjectExpression properties) = estree "ObjectExpression"
-        [ "properties" .= properties ]
-    toJSON (FunctionExpression name params body) = estree "FunctionExpression"
-        [ "id" .= name
-        , "params" .= params
-        , "body" .= body ]
-    toJSON (UnaryExpression operator argument) = estree "UnaryExpression"
-        [ "operator" .= operator
-        , "argument" .= argument
-        , "prefix" .= True ]
+    toJSON ThisExpression =
+        estree "ThisExpression" []
+    toJSON (ArrayExpression elements) =
+        estree "ArrayExpression"
+            [ "elements" .= elements ]
+    toJSON (ObjectExpression properties) =
+        estree "ObjectExpression"
+            [ "properties" .= properties ]
+    toJSON (FunctionExpression name params body) =
+        estree "FunctionExpression"
+            [ "id" .= name
+            , "params" .= params
+            , "body" .= body ]
+    toJSON (UnaryExpression operator argument) =
+        estree "UnaryExpression"
+            [ "operator" .= operator
+            , "argument" .= argument
+            , "prefix" .= True ]
     toJSON (UpdateExpression operator prefix argument) =
         estree "UpdateExpression"
             [ "operator" .= operator
@@ -268,42 +298,48 @@ instance ToJSON Expression where
             , "prefix" .= case prefix of
                 Prefix  -> True
                 Postfix -> False ]
-    toJSON (BinaryExpression operator left right) = estree "BinaryExpression"
-        [ "operator" .= operator
-        , "left" .= left
-        , "right" .= right ]
+    toJSON (BinaryExpression operator left right) =
+        estree "BinaryExpression"
+            [ "operator" .= operator
+            , "left" .= left
+            , "right" .= right ]
     toJSON (AssignmentExpression operator left right) =
         estree "AssignmentExpression"
             [ "operator" .= operator
             , "left" .=| left
             , "right" .= right ]
-    toJSON (LogicalExpression operator left right) = estree "LogicalExpression"
-        [ "operator" .= operator
-        , "left" .= left
-        , "right" .= right ]
+    toJSON (LogicalExpression operator left right) =
+        estree "LogicalExpression"
+            [ "operator" .= operator
+            , "left" .= left
+            , "right" .= right ]
     toJSON (MemberExpression member) = toJSON member
     toJSON (ConditionalExpression test consequent alternate) =
         estree "ConditionalExpression"
             [ "test" .= test
             , "alternate" .= alternate
             , "consequent" .= consequent ]
-    toJSON (CallExpression callee arguments) = estree "CallExpression"
-        [ "callee" .= callee
-        , "arguments" .= arguments ]
-    toJSON (NewExpression callee arguments) = estree "NewExpression"
-        [ "callee" .= callee
-        , "arguments" .= arguments ]
-    toJSON (SequenceExpression expressions) = estree "SequenceExpression"
-        [ "expressions" .= expressions ]
+    toJSON (CallExpression callee arguments) =
+        estree "CallExpression"
+            [ "callee" .= callee
+            , "arguments" .= arguments ]
+    toJSON (NewExpression callee arguments) =
+        estree "NewExpression"
+            [ "callee" .= callee
+            , "arguments" .= arguments ]
+    toJSON (SequenceExpression expressions) =
+        estree "SequenceExpression"
+            [ "expressions" .= expressions ]
 
 data Property
     = Property PropertyKind (Either Literal Identifier) Expression
 
 instance ToJSON Property where
-    toJSON (Property kind key value) = estree "Property"
-        [ "key" .=| key
-        , "value" .= value
-        , "kind" .= kind ]
+    toJSON (Property kind key value) =
+        estree "Property"
+            [ "key" .=| key
+            , "value" .= value
+            , "kind" .= kind ]
 
 data PropertyKind
     = InitProperty
@@ -431,12 +467,13 @@ data Member
     = Member Expression (Either Expression Identifier)
 
 instance ToJSON Member where
-    toJSON (Member obj property) = estree "MemberExpression"
-        [ "object" .= obj
-        , "property" .=| property
-        , "computed" .= case property of
-            Left _  -> True
-            Right _ -> False ]
+    toJSON (Member obj property) =
+        estree "MemberExpression"
+            [ "object" .= obj
+            , "property" .=| property
+            , "computed" .= case property of
+                Left _  -> True
+                Right _ -> False ]
 
 data Pattern
     = IdentifierPattern Identifier
