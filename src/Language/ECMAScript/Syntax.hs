@@ -60,8 +60,7 @@ k .=?| Nothing = k .= Null
 k .=?| Just x = k .=| x
 infixr 8 .=?|
 
-data Identifier
-    = Identifier String
+newtype Identifier = Identifier String
 
 mkIdentifier :: String -> M Identifier
 mkIdentifier s = do
@@ -98,8 +97,7 @@ instance ToJSON Literal where
                     [ "pattern" .= pattern
                     , "flags" .= flags ] ]
 
-data Program
-    = Program [Statement]
+newtype Program = Program [Statement]
 
 instance ToJSON Program where
     toJSON (Program body) = estree "Program"
@@ -183,8 +181,7 @@ instance ToJSON Statement where
     toJSON (VariableDeclarationStatement variableDeclaration) =
         toJSON variableDeclaration
 
-data Block
-    = Block [Statement]
+newtype Block = Block [Statement]
 
 instance ToJSON Block where
     toJSON (Block body) = estree "BlockStatement"
