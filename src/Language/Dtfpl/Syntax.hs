@@ -69,10 +69,9 @@ type Node = Pass -> Type
 
 type Class = Type -> Constraint
 
-data P t (p :: Pass) = P t
-    deriving (Eq, Show, Typeable, Data)
+newtype P t (p :: Pass) = P t deriving (Eq, Show, Typeable, Data)
 
-data T (t :: * -> *) (n :: Node) (p :: Pass) = T { unT :: t (n p) }
+newtype T (t :: * -> *) (n :: Node) (p :: Pass) = T { unT :: t (n p) }
     deriving (Eq, Show, Typeable, Data)
 
 data WhenAlt = forall t. WhenAlt Pass t
@@ -112,9 +111,7 @@ type Ann (p :: Pass) = When p
 mapNode :: (n p -> n' p) -> A n p -> A n' p
 mapNode f (A n a) = A (f n) a
 
-data Prog (p :: Pass)
-    = Prog (T [] (A Decl) p)
-    deriving Typeable
+newtype Prog (p :: Pass) = Prog (T [] (A Decl) p) deriving Typeable
 
 type instance Children Prog p =
     '[ T [] (A Decl) ]
@@ -184,9 +181,7 @@ deriving instance Forall Eq Expr p => Eq (Expr p)
 deriving instance Forall Show Expr p => Show (Expr p)
 deriving instance (Forall Data Expr p, Typeable p) => Data (Expr p)
 
-data CaseHead (p :: Pass)
-    = CaseHead (CaseHead' p p)
-    deriving Typeable
+newtype CaseHead (p :: Pass) = CaseHead (CaseHead' p p) deriving Typeable
 
 type instance Children CaseHead p =
     '[ CaseHead' p ]
