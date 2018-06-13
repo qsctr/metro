@@ -65,7 +65,7 @@ infixr 8 .=..|
 
 (.=||) :: (ToJSON a, ToJSON b, ToJSON c) =>
     Text -> Either a (Either b c) -> Pair
-k .=|| x = k .= eitherToJSON $ fmap eitherToJSON x
+k .=|| x = k .= eitherToJSON (fmap eitherToJSON x)
 infixr 8 .=||
 
 (.=..||) :: (ToJSON a, ToJSON b, ToJSON c) =>
@@ -716,7 +716,7 @@ instance ToJSON ModuleDeclaration where
     toJSON (ExportNamedDeclarationDeclaration declaration) =
         estree "ExportNamedDeclaration"
             [ "declaration" .= declaration
-            , "specifiers" .= []
+            , "specifiers" .= ([] :: [ExportSpecifier])
             , "source" .= Null ]
     toJSON (ExportNamedSpecifiersDeclaration specifiers source) =
         estree "ExportNamedDeclaration"
