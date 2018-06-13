@@ -27,6 +27,7 @@ module Language.ECMAScript.Syntax
 
 import           Data.Aeson
 import           Data.Aeson.Types
+import           Data.Either
 import           Data.Or
 import           Data.Text                          (Text)
 
@@ -50,15 +51,35 @@ orToPairs fstKey sndKey (Both a b) =
     [ fstKey .= a
     , sndKey .= b ]
 
+eitherToJSON :: (ToJSON a, ToJSON b) => Either a b -> Value
+eitherToJSON (Left a)  = toJSON a
+eitherToJSON (Right b) = toJSON b
+
 (.=|) :: (ToJSON a, ToJSON b) => Text -> Either a b -> Pair
-k .=| Left a = k .= a
-k .=| Right b = k .= b
+k .=| x = k .= eitherToJSON x
 infixr 8 .=|
 
+(.=..|) :: (ToJSON a, ToJSON b) => Text -> [Either a b] -> Pair
+k .=..| xs = k .= map eitherToJSON xs
+infixr 8 .=..|
+
+(.=||) :: (ToJSON a, ToJSON b, ToJSON c) =>
+    Text -> Either a (Either b c) -> Pair
+k .=|| x = k .= eitherToJSON $ fmap eitherToJSON x
+infixr 8 .=||
+
+(.=..||) :: (ToJSON a, ToJSON b, ToJSON c) =>
+    Text -> [Either a (Either b c)] -> Pair
+k .=..|| xs = k .= map (eitherToJSON . fmap eitherToJSON) xs
+infixr 8 .=..||
+
 (.=?|) :: (ToJSON a, ToJSON b) => Text -> Maybe (Either a b) -> Pair
-k .=?| Nothing = k .= Null
-k .=?| Just x = k .=| x
+k .=?| x = k .= fmap eitherToJSON x
 infixr 8 .=?|
+
+(.=..?|) :: (ToJSON a, ToJSON b) => Text -> [Maybe (Either a b)] -> Pair
+k .=..?| xs = k .= map (fmap eitherToJSON) xs
+infixr 8 .=..?|
 
 newtype Identifier = Identifier String
 
@@ -93,18 +114,27 @@ instance ToJSON Literal where
                     [ "value" .= Null ]
                 NumberLiteral n ->
                     [ "value" .= n ]
-                RegExpLiteral pattern flags ->
+                RegExpLiteral pat flags ->
                     [ "value" .= Null
                     , "regex" .= object
-                        [ "pattern" .= pattern
+                        [ "pattern" .= pat
                         , "flags" .= flags ] ]
 
-newtype Program = Program [Statement]
+data Program = Program SourceType [Either Statement ModuleDeclaration]
 
 instance ToJSON Program where
-    toJSON (Program body) =
+    toJSON (Program sourceType body) =
         estree "Program"
-            [ "body" .= body ]
+            [ "sourceType" .= sourceType
+            , "body" .=..| body ]
+
+data SourceType
+    = ScriptSourceType
+    | ModuleSourceType
+
+instance ToJSON SourceType where
+    toJSON ScriptSourceType = "script"
+    toJSON ModuleSourceType = "module"
 
 data Statement
     = ExpressionStatement Expression
@@ -126,8 +156,8 @@ data Statement
     | ForStatement (Maybe (Either VariableDeclaration Expression))
         (Maybe Expression) (Maybe Expression) Statement
     | ForInStatement (Either VariableDeclaration Pattern) Expression Statement
-    | FunctionDeclaration Identifier [Pattern] Block
-    | VariableDeclarationStatement VariableDeclaration
+    | ForOfStatement (Either VariableDeclaration Pattern) Expression Statement
+    | DeclarationStatement Declaration
 
 instance ToJSON Statement where
     toJSON (ExpressionStatement expression) =
@@ -194,13 +224,12 @@ instance ToJSON Statement where
             [ "left" .=| left
             , "right" .= right
             , "body" .= body ]
-    toJSON (FunctionDeclaration name params body) =
-        estree "FunctionDeclaration"
-            [ "id" .= name
-            , "params" .= params
+    toJSON (ForOfStatement left right body) =
+        estree "ForOfStatement"
+            [ "left" .=| left
+            , "right" .= right
             , "body" .= body ]
-    toJSON (VariableDeclarationStatement variableDeclaration) =
-        toJSON variableDeclaration
+    toJSON (DeclarationStatement declaration) = toJSON declaration
 
 newtype Block = Block [Statement]
 
@@ -227,6 +256,26 @@ instance ToJSON CatchClause where
             [ "param" .= param
             , "body" .= body ]
 
+data Declaration
+    = FunctionDeclaration Bool Identifier [Pattern] Block
+    | VariableDeclarationDeclaration VariableDeclaration
+    | ClassDeclaration Identifier (Maybe Expression) ClassBody
+
+instance ToJSON Declaration where
+    toJSON (FunctionDeclaration generator name params body) =
+        estree "FunctionDeclaration"
+            [ "generator" .= generator
+            , "id" .= name
+            , "params" .= params
+            , "body" .= body ]
+    toJSON (VariableDeclarationDeclaration variableDeclaration) =
+        toJSON variableDeclaration
+    toJSON (ClassDeclaration name superClass body) =
+        estree "ClassDeclaration"
+            [ "id" .= name
+            , "superClass" .= superClass
+            , "body" .= body ]
+
 data VariableDeclaration
     = VariableDeclaration VariableDeclarationKind [VariableDeclarator]
 
@@ -238,9 +287,13 @@ instance ToJSON VariableDeclaration where
 
 data VariableDeclarationKind
     = VarVariableDeclaration
+    | LetVariableDeclaration
+    | ConstVariableDeclaration
 
 instance ToJSON VariableDeclarationKind where
-    toJSON VarVariableDeclaration = "var"
+    toJSON VarVariableDeclaration   = "var"
+    toJSON LetVariableDeclaration   = "let"
+    toJSON ConstVariableDeclaration = "const"
 
 data VariableDeclarator
     = VariableDeclarator Pattern (Maybe Expression)
@@ -251,41 +304,111 @@ instance ToJSON VariableDeclarator where
             [ "id" .= name
             , "init" .= value ]
 
+newtype ClassBody = ClassBody [MethodDefinition]
+
+instance ToJSON ClassBody where
+    toJSON (ClassBody body) =
+        estree "ClassBody"
+            [ "body" .= body ]
+
+data MethodDefinition
+    = MethodDefinition Bool MethodDefinitionKind
+        (Either Expression Identifier) Function
+
+instance ToJSON MethodDefinition where
+    toJSON (MethodDefinition static kind key value) =
+        estree "MethodDefinition"
+            [ "key" .=| key
+            , "value" .= value
+            , "kind" .= kind
+            , "computed" .= isLeft key
+            , "static" .= static ]
+
+data MethodDefinitionKind
+    = ConstructorMethodDefinition
+    | MethodMethodDefinition
+    | GetMethodDefinition
+    | SetMethodDefinition
+
+instance ToJSON MethodDefinitionKind where
+    toJSON ConstructorMethodDefinition = "constructor"
+    toJSON MethodMethodDefinition      = "method"
+    toJSON GetMethodDefinition         = "get"
+    toJSON SetMethodDefinition         = "set"
+
+data Super
+    = Super
+
+instance ToJSON Super where
+    toJSON Super =
+        estree "Super" []
+
+data SpreadElement
+    = SpreadElement Expression
+
+instance ToJSON SpreadElement where
+    toJSON (SpreadElement argument) =
+        estree "SpreadElement"
+            [ "argument" .= argument ]
+
+data Function = Function Bool (Maybe Identifier) [Pattern] Block
+
+instance ToJSON Function where
+    toJSON (Function generator name params body) =
+        estree "FunctionExpression"
+            [ "generator" .= generator
+            , "id" .= name
+            , "params" .= params
+            , "body" .= body ]
+
 data Expression
     = IdentifierExpression Identifier
     | LiteralExpression Literal
+    | TemplateLiteralExpression TemplateLiteral
+    | TaggedTemplateExpression Expression TemplateLiteral
     | ThisExpression
-    | ArrayExpression [Maybe Expression]
+    | ArrayExpression [Maybe (Either Expression SpreadElement)]
     | ObjectExpression [Property]
-    | FunctionExpression (Maybe Identifier) [Pattern] Block
+    | FunctionExpression Function
+    | ArrowFunctionExpression [Pattern] (Either Block Expression)
     | UnaryExpression UnaryOperator Expression
     | UpdateExpression UpdateOperator PrePostFix Expression
     | BinaryExpression BinaryOperator Expression Expression
-    | AssignmentExpression AssignmentOperator
-        (Either Pattern Expression) Expression
+    | AssignmentExpression AssignmentOperator Pattern Expression
     | LogicalExpression LogicalOperator Expression Expression
     | MemberExpression Member
     | ConditionalExpression Expression Expression Expression
-    | CallExpression Expression [Expression]
-    | NewExpression Expression [Expression]
+    | CallExpression (Either Expression Super) [Either Expression SpreadElement]
+    | NewExpression Expression [Either Expression SpreadElement]
     | SequenceExpression [Expression]
+    | YieldExpression Bool (Maybe Expression)
+    | ClassExpression (Maybe Identifier) (Maybe Expression) ClassBody
+    | MetaProperty
 
 instance ToJSON Expression where
     toJSON (IdentifierExpression identifier) = toJSON identifier
     toJSON (LiteralExpression literal) = toJSON literal
+    toJSON (TemplateLiteralExpression templateLiteral) = toJSON templateLiteral
+    toJSON (TaggedTemplateExpression tag quasi) =
+        estree "TaggedTemplateExpression"
+            [ "tag" .= tag
+            , "quasi" .= quasi ]
     toJSON ThisExpression =
         estree "ThisExpression" []
     toJSON (ArrayExpression elements) =
         estree "ArrayExpression"
-            [ "elements" .= elements ]
+            [ "elements" .=..?| elements ]
     toJSON (ObjectExpression properties) =
         estree "ObjectExpression"
             [ "properties" .= properties ]
-    toJSON (FunctionExpression name params body) =
-        estree "FunctionExpression"
-            [ "id" .= name
+    toJSON (FunctionExpression function) = toJSON function
+    toJSON (ArrowFunctionExpression params body) =
+        estree "ArrowFunctionExpression"
+            [ "generator" .= False
+            , "id" .= Null
             , "params" .= params
-            , "body" .= body ]
+            , "body" .= body
+            , "expression" .= isRight body ]
     toJSON (UnaryExpression operator argument) =
         estree "UnaryExpression"
             [ "operator" .= operator
@@ -306,7 +429,7 @@ instance ToJSON Expression where
     toJSON (AssignmentExpression operator left right) =
         estree "AssignmentExpression"
             [ "operator" .= operator
-            , "left" .=| left
+            , "left" .= left
             , "right" .= right ]
     toJSON (LogicalExpression operator left right) =
         estree "LogicalExpression"
@@ -321,25 +444,82 @@ instance ToJSON Expression where
             , "consequent" .= consequent ]
     toJSON (CallExpression callee arguments) =
         estree "CallExpression"
-            [ "callee" .= callee
-            , "arguments" .= arguments ]
+            [ "callee" .=| callee
+            , "arguments" .=..| arguments ]
     toJSON (NewExpression callee arguments) =
         estree "NewExpression"
             [ "callee" .= callee
-            , "arguments" .= arguments ]
+            , "arguments" .=..| arguments ]
     toJSON (SequenceExpression expressions) =
         estree "SequenceExpression"
             [ "expressions" .= expressions ]
+    toJSON (YieldExpression delegate argument) =
+        estree "YieldExpression"
+            [ "argument" .= argument
+            , "delegate" .= delegate ]
+    toJSON (ClassExpression name superClass body) =
+        estree "ClassExpression"
+            [ "id" .= name
+            , "superClass" .= superClass
+            , "body" .= body ]
+    toJSON MetaProperty =
+        estree "MetaProperty"
+            [ "meta" .= ("new" :: Text)
+            , "property" .= ("target" :: Text) ]
+
+data TemplateLiteral
+    = TemplateLiteral [TemplateElement] [Expression]
+
+instance ToJSON TemplateLiteral where
+    toJSON (TemplateLiteral quasis expressions) =
+        estree "TemplateLiteral"
+            [ "quasis" .= quasis
+            , "expressions" .= expressions ]
+
+newtype TemplateElement = TemplateElement String
+
+instance ToJSON TemplateElement where
+    toJSON (TemplateElement raw) =
+        estree "TemplateElement"
+            [ "tail" .= False -- not actually sure what this is for
+            , "value" .= object
+                [ "cooked" .= raw -- cooked doesn't matter
+                , "raw" .= raw ] ]
 
 data Property
-    = Property PropertyKind (Either Literal Identifier) Expression
+    = Property PropertyKey Expression
+    | ShorthandProperty Identifier
+    | MethodProperty PropertyKind PropertyKey Function
+
+type PropertyKey = Either Expression (Either Literal Identifier)
 
 instance ToJSON Property where
-    toJSON (Property kind key value) =
+    toJSON (Property key value) =
         estree "Property"
-            [ "key" .=| key
+            [ "key" .=|| key
             , "value" .= value
-            , "kind" .= kind ]
+            , "kind" .= InitProperty
+            , "method" .= False
+            , "shorthand" .= False
+            , "computed" .= isLeft key ]
+    toJSON (ShorthandProperty key) =
+        estree "Property"
+            [ "key" .= key
+            , "value" .= key
+            , "kind" .= InitProperty
+            , "method" .= False
+            , "shorthand" .= True
+            , "computed" .= False ]
+    toJSON (MethodProperty kind key value) =
+        estree "Property"
+            [ "key" .=|| key
+            , "value" .= value
+            , "kind" .= kind
+            , "method" .= case kind of
+                InitProperty -> True
+                _            -> False
+            , "shorthand" .= False
+            , "computed" .= isLeft key ]
 
 data PropertyKind
     = InitProperty
@@ -464,21 +644,130 @@ instance ToJSON LogicalOperator where
     toJSON LogicalAndOperator = "&&"
 
 data Member
-    = Member Expression (Either Expression Identifier)
+    = Member (Either Expression Super) (Either Expression Identifier)
 
 instance ToJSON Member where
     toJSON (Member obj property) =
         estree "MemberExpression"
-            [ "object" .= obj
+            [ "object" .=| obj
             , "property" .=| property
-            , "computed" .= case property of
-                Left _  -> True
-                Right _ -> False ]
+            , "computed" .= isLeft property ]
 
 data Pattern
     = IdentifierPattern Identifier
     | MemberPattern Member
+    | ObjectPattern [AssignmentProperty]
+    | ArrayPattern [Maybe Pattern]
+    | RestElement Pattern
+    | AssignmentPattern Pattern Expression
 
 instance ToJSON Pattern where
     toJSON (IdentifierPattern identifier) = toJSON identifier
-    toJSON (MemberPattern member)         = toJSON member
+    toJSON (MemberPattern member) = toJSON member
+    toJSON (ObjectPattern properties) =
+        estree "ObjectPattern"
+            [ "properties" .= properties ]
+    toJSON (ArrayPattern elements) =
+        estree "ArrayPattern"
+            [ "elements" .= elements ]
+    toJSON (RestElement argument) =
+        estree "RestElement"
+            [ "argument" .= argument ]
+    toJSON (AssignmentPattern left right) =
+        estree "AssignmentPattern"
+            [ "left" .= left
+            , "right" .= right ]
+
+data AssignmentProperty
+    = AssignmentProperty PropertyKey Pattern
+    | ShorthandAssignmentProperty Pattern
+
+instance ToJSON AssignmentProperty where
+    toJSON (AssignmentProperty key value) =
+        estree "Property"
+            [ "key" .=|| key
+            , "value" .= value
+            , "kind" .= InitProperty
+            , "method" .= False
+            , "shorthand" .= False
+            , "computed" .= isLeft key ]
+    toJSON (ShorthandAssignmentProperty key) =
+        estree "Property"
+            [ "key" .= key
+            , "value" .= key
+            , "kind" .= InitProperty
+            , "method" .= False
+            , "shorthand" .= True
+            , "computed" .= False ]
+
+data ModuleDeclaration
+    = ImportDeclaration [Either ImportSpecifier
+        (Either ImportDefaultSpecifier ImportNamespaceSpecifier)] Literal
+    | ExportNamedDeclarationDeclaration Declaration
+    | ExportNamedSpecifiersDeclaration [ExportSpecifier] (Maybe Literal)
+    | ExportDefaultDeclaration (Either Declaration Expression)
+    | ExportAllDeclaration Literal
+
+instance ToJSON ModuleDeclaration where
+    toJSON (ImportDeclaration specifiers source) =
+        estree "ImportDeclaration"
+            [ "specifiers" .=..|| specifiers
+            , "source" .= source ]
+    toJSON (ExportNamedDeclarationDeclaration declaration) =
+        estree "ExportNamedDeclaration"
+            [ "declaration" .= declaration
+            , "specifiers" .= []
+            , "source" .= Null ]
+    toJSON (ExportNamedSpecifiersDeclaration specifiers source) =
+        estree "ExportNamedDeclaration"
+            [ "declaration" .= Null
+            , "specifiers" .= specifiers
+            , "source" .= source ]
+    toJSON (ExportDefaultDeclaration declaration) =
+        estree "ExportDefaultDeclaration"
+            [ "declaration" .= declaration ]
+    toJSON (ExportAllDeclaration source) =
+        estree "ExportAllDeclaration"
+            [ "source" .= source ]
+
+data ImportSpecifier
+    = ImportSpecifier Identifier
+    | AliasedImportSpecifier Identifier Identifier
+
+instance ToJSON ImportSpecifier where
+    toJSON (ImportSpecifier imported) =
+        estree "ImportSpecifier"
+            [ "imported" .= imported
+            , "local" .= imported ]
+    toJSON (AliasedImportSpecifier imported local) =
+        estree "ImportSpecifier"
+            [ "imported" .= imported
+            , "local" .= local ]
+
+newtype ImportDefaultSpecifier = ImportDefaultSpecifier Identifier
+
+instance ToJSON ImportDefaultSpecifier where
+    toJSON (ImportDefaultSpecifier local) =
+        estree "ImportDefaultSpecifier"
+            [ "local" .= local ]
+
+newtype ImportNamespaceSpecifier = ImportNamespaceSpecifier Identifier
+
+instance ToJSON ImportNamespaceSpecifier where
+    toJSON (ImportNamespaceSpecifier local) =
+        estree "ImportNamespaceSpecifier"
+            [ "local" .= local ]
+
+data ExportSpecifier
+    = ExportSpecifier Identifier
+    | AliasedExportSpecifier Identifier Identifier
+
+instance ToJSON ExportSpecifier where
+    toJSON (ExportSpecifier local) =
+        estree "ExportSpecifier"
+            [ "local" .= local
+            , "exported" .= local ]
+    toJSON (AliasedExportSpecifier local exported) =
+        estree "ExportSpecifier"
+            [ "local" .= local
+            , "exported" .= exported ]
