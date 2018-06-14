@@ -1,18 +1,29 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.ECMAScript.Syntax
-    ( Identifier
+    ( Either' (..)
+    , Identifier
     , mkIdentifier
     , Literal (..)
     , Program (..)
+    , SourceType (..)
     , Statement (..)
     , Block (..)
     , SwitchCase (..)
     , CatchClause (..)
+    , Declaration (..)
     , VariableDeclaration (..)
     , VariableDeclarationKind (..)
     , VariableDeclarator (..)
+    , ClassBody (..)
+    , MethodDefinition (..)
+    , MethodDefinitionKind (..)
+    , Super (..)
+    , SpreadElement (..)
+    , Function (..)
     , Expression (..)
+    , TemplateLiteral (..)
+    , TemplateElement (..)
     , Property (..)
     , PropertyKind (..)
     , UnaryOperator (..)
@@ -23,6 +34,12 @@ module Language.ECMAScript.Syntax
     , LogicalOperator (..)
     , Member (..)
     , Pattern (..)
+    , AssignmentProperty (..)
+    , ModuleDeclaration (..)
+    , ImportSpecifier (..)
+    , ImportDefaultSpecifier (..)
+    , ImportNamespaceSpecifier (..)
+    , ExportSpecifier (..)
     ) where
 
 import           Data.Aeson
