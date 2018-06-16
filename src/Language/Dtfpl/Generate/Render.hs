@@ -7,7 +7,7 @@ import qualified Data.ByteString            as B
 import qualified Data.ByteString.Lazy       as L
 import qualified Data.ByteString.Lazy.Char8 as C
 import           Data.Maybe
-import           Data.Text
+import           Data.Text                  (Text)
 import           System.IO
 import           System.Process.Typed
 
