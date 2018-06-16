@@ -85,6 +85,9 @@ instance AutoSim Expr p => Sim Expr p where
 instance {-# OVERLAPPABLE #-} AutoSim CaseHead p => Sim CaseHead p where
     sim (CaseHead x) = CaseHead <$> sim x
 
+instance AutoSim AliExpr p => Sim AliExpr p where
+    sim (AliExpr pat ident) = AliExpr <$> sim pat <*> sim ident
+
 instance {-# OVERLAPPABLE #-} AutoSim CaseAlt p => Sim CaseAlt p where
     sim (CaseAlt altHead expr) = CaseAlt <$> sim altHead <*> sim expr
 

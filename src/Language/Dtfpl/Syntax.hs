@@ -31,6 +31,7 @@ module Language.Dtfpl.Syntax
     , Expr (..)
     , CaseHead (..)
     , CaseHead'
+    , AliExpr (..)
     , CaseAlt (..)
     , CaseAltHead
     , Lam (..)
@@ -61,6 +62,7 @@ $(promote [d|
         | NoDef
         | NoLamMatch
         | Curried
+        | AliasCase
         deriving (Eq, Ord, Enum, Bounded)
     |])
 
@@ -196,7 +198,19 @@ deriving instance (Forall Data CaseHead p, Typeable p) => Data (CaseHead p)
 
 type CaseHead' (p :: Pass) = When p
     (A Expr)
-    '[ 'MultiCase ==> T NonEmpty (A Expr) ]
+    '[ 'MultiCase ==> T NonEmpty (A Expr)
+    ,  'AliasCase ==> T NonEmpty AliExpr ]
+
+data AliExpr (p :: Pass)
+    = AliExpr (A Expr p) (T Maybe Ident p)
+    deriving Typeable
+
+type instance Children AliExpr p =
+    '[ A Expr, T Maybe Ident ]
+
+deriving instance Forall Eq AliExpr p => Eq (AliExpr p)
+deriving instance Forall Show AliExpr p => Show (AliExpr p)
+deriving instance (Forall Data AliExpr p, Typeable p) => Data (AliExpr p)
 
 data CaseAlt (p :: Pass)
     = CaseAlt (CaseAltHead p p) (A Expr p)
