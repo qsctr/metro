@@ -27,6 +27,7 @@ executable dtfpl
                      , Language.Dtfpl.Parser.Loc
                      , Language.Dtfpl.Parser
                      , Language.Dtfpl.Simplify
+                     , Language.Dtfpl.Simplify.AliasCase
                      , Language.Dtfpl.Simplify.Curry
                      , Language.Dtfpl.Simplify.GenUtil
                      , Language.Dtfpl.Simplify.InitGen
@@ -36,6 +37,7 @@ executable dtfpl
                      , Language.Dtfpl.Simplify.UnLamMatch
                      , Language.Dtfpl.Syntax
                      , Language.ECMAScript.Syntax
+                     , Language.ECMAScript.Syntax.Util
                      , Language.ECMAScript.Syntax.Verify
                      , Util
   default-language:    Haskell2010
