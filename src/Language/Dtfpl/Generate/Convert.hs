@@ -57,7 +57,8 @@ instance ToJS Expr Expression where
                   where needsCheck (VarPat _) = False
                         needsCheck (LitPat _) = True
                         needsCheck WildPat    = False
-            binds <- forMaybe checkPairs $ \(headExpr, A pat _) -> case pat of
+            binds <- forMaybe nonCheckPairs $ \(headExpr, A pat _) ->
+                case pat of
                     VarPat ident -> Just $
                         DeclarationStatement . flip constDecl headExpr
                             <$> toJS ident
@@ -65,10 +66,10 @@ instance ToJS Expr Expression where
                     _ -> undefined
             ret <- ReturnStatement . Just <$> toJS altExpr
             let body = BlockStatement $ Block $ binds ++ [ret]
-            case nonCheckPairs of
+            case checkPairs of
                 [] -> pure body
                 _ -> do
-                    conds <- for nonCheckPairs $ \(headExpr, A pat _) ->
+                    conds <- for checkPairs $ \(headExpr, A pat _) ->
                         case pat of
                             LitPat lit ->
                                 BinaryExpression StrictEqualOperator headExpr
