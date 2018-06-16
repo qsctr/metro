@@ -50,7 +50,8 @@ executable dtfpl
                      , singletons
                      , text
                      , typed-process
-  ghc-options:         -Wall
+  ghc-options:         -threaded
+                       -Wall
                        -Wcompat
                        -Wincomplete-record-updates
                        -Wincomplete-uni-patterns
