@@ -9,5 +9,5 @@ main = do
     filename <- head <$> getArgs
     program <- readFile $ filename ++ ".dtfpl"
     case compile (Config { debug = True }) program of
-        Left err -> putStrLn $ unlines $ showErr err
+        Left err -> putStr $ unlines err
         Right js -> js >>= T.writeFile (filename ++ ".js")
