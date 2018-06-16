@@ -76,7 +76,7 @@ instance ToJS Expr Expression where
                         (foldr1 (LogicalExpression LogicalAndOperator) conds)
                         body Nothing
         pure $ CallExpression (Left' $ ArrowFunctionExpression [] $
-            Left' $ Block $ N.toList altStmts) []
+            Left' $ Block $ aliStmts ++ N.toList altStmts) []
     toJS (LamExpr (Lam ident expr)) =
         ArrowFunctionExpression . pure . IdentifierPattern
             <$> toJS ident <*> (Right' <$> toJS expr)
