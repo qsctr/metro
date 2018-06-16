@@ -27,7 +27,7 @@ instance Sim Decl 'NoDef where
         lamParams <- runGenIdentPart simName $ for patCols $ \col ->
             case find nodeIsVarPat col of
                 Just varPat -> liftSim varPat
-                Nothing     -> genLoc . VarPat <$> genIdentPart
+                Nothing     -> genLoc . VarPat <$> genLocIdentPart
         let lamParamIdents = N.map (\(A (VarPat ident) _) -> ident) lamParams
             nonVarPat = N.filter (any (not . nodeIsVarPat) . snd) $
                 N.zip lamParamIdents patCols

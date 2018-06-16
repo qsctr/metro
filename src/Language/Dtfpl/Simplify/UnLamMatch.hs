@@ -18,7 +18,7 @@ instance Sim Lam 'NoLamMatch where
     sim (Lam (T pats) expr) = do
         idents <- for pats $ \case
             A (VarPat ident) _ -> sim ident
-            _ -> genIdentFull
+            _ -> genLocIdentFull
         Lam (T idents) <$>
             case N.filter (isGenIdentFull . node . fst) $ N.zip idents pats of
                 [] -> sim expr

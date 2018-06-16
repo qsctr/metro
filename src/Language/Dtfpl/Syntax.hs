@@ -21,6 +21,7 @@ module Language.Dtfpl.Syntax
     , A (..)
     , Ann
     , mapNode
+    , genLoc
     , Prog (..)
     , Decl (..)
     , DefHead
@@ -110,6 +111,9 @@ type Ann (p :: Pass) = When p
 
 mapNode :: (n p -> n' p) -> A n p -> A n' p
 mapNode f (A n a) = A (f n) a
+
+genLoc :: Ann p ~ Maybe a => n p -> A n p
+genLoc = flip A Nothing
 
 newtype Prog (p :: Pass) = Prog (T [] (A Decl) p) deriving Typeable
 
