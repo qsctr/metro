@@ -6,6 +6,8 @@ module Language.Dtfpl.Parser
     ) where
 
 import           Control.Category                  ((>>>))
+import           Control.Monad.Except
+import           Control.Monad.Reader
 import           Control.Monad.State
 import           Data.Bifunctor
 import           Data.Char
@@ -17,6 +19,8 @@ import           Text.Megaparsec.Char
 import           Text.Megaparsec.Char.Lexer        (indentGuard, indentLevel,
                                                     nonIndented)
 
+import           Language.Dtfpl.Config
+import           Language.Dtfpl.Err
 import           Language.Dtfpl.M
 import           Language.Dtfpl.Parser.CustomError
 import           Language.Dtfpl.Parser.Loc

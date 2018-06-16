@@ -1,9 +1,5 @@
 module Language.Dtfpl.M
-    ( module Control.Monad.Except
-    , module Control.Monad.Reader
-    , module Language.Dtfpl.Config
-    , module Language.Dtfpl.Err
-    , M
+    ( M
     , debugErrIf
     ) where
 

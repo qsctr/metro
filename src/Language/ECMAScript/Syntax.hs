@@ -47,6 +47,7 @@ import           Data.Aeson.Types
 import           Data.Or
 import           Data.Text                          (Text)
 
+import           Language.Dtfpl.Err
 import           Language.Dtfpl.Generate.ConvertErr
 import           Language.Dtfpl.M
 import           Language.ECMAScript.Syntax.Verify
