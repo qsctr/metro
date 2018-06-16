@@ -17,7 +17,7 @@ import           Language.ECMAScript.Syntax.Util
 import           Language.ECMAScript.Syntax.Verify
 import           Util
 
-convert :: Prog Core -> M Program
+convert :: A Prog Core -> M Program
 convert = toJS
 
 class ToJS n js where
