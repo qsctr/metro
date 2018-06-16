@@ -9,5 +9,4 @@ class ShowErr a where
 
 instance (Ord t, ShowToken t, ShowErrorComponent e) =>
          ShowErr (ParseError t e) where
-    showErr parseError =
-        ["Parse error", parseErrorPretty parseError]
+    showErr parseError = [parseErrorPretty parseError]
