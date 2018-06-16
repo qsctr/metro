@@ -1,6 +1,8 @@
 {-# LANGUAGE DataKinds #-}
 
-module Language.Dtfpl.Simplify where
+module Language.Dtfpl.Simplify
+    ( simplify
+    ) where
 
 import           Language.Dtfpl.Simplify.Sim
 import           Language.Dtfpl.Syntax
