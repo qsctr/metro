@@ -6,7 +6,6 @@ module Language.Dtfpl.Generate.Convert
     ( convert
     ) where
 
-import           Control.Monad
 import qualified Data.List.NonEmpty                as N
 import           Data.Traversable
 
@@ -32,6 +31,7 @@ instance ToJS Prog Program where
 
 instance ToJS Decl Declaration where
     toJS (Let ident expr) = constDecl <$> toJS ident <*> toJS expr
+    toJS (Def _ _)        = undefined
 
 instance ToJS Expr Expression where
     toJS (VarExpr ident) = IdentifierExpression <$> toJS ident
@@ -62,6 +62,7 @@ instance ToJS Expr Expression where
                         DeclarationStatement . flip constDecl headExpr
                             <$> toJS ident
                     WildPat -> Nothing
+                    _ -> undefined
             ret <- ReturnStatement . Just <$> toJS altExpr
             let body = BlockStatement $ Block $ binds ++ [ret]
             case nonCheckPairs of
@@ -72,6 +73,7 @@ instance ToJS Expr Expression where
                             LitPat lit ->
                                 BinaryExpression StrictEqualOperator headExpr
                                 . LiteralExpression <$> toJS lit
+                            _ -> undefined
                     pure $ IfStatement
                         (foldr1 (LogicalExpression LogicalAndOperator) conds)
                         body Nothing
