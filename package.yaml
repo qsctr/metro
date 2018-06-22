@@ -1,0 +1,43 @@
+name: dtfpl
+version: 0.1.0
+synopsis: Dynamically typed functional programming language
+description: A dynamically typed functional programming language that compiles to JavaScript, with a syntax similar to Haskell.
+category: Language
+author: Bretton Chen
+maintainer: Bretton Chen
+copyright: (c) 2017-18 Bretton Chen
+license: MIT
+github: qsctr/dtfpl
+extra-source-files:
+  - js/**/*.js
+  - stack.yaml
+  - README.md
+  - docs/**/*.md
+dependencies:
+  - base >= 4.7 && < 5
+  - aeson
+  - bytestring
+  - data-or
+  - megaparsec
+  - mtl
+  - singletons
+  - text
+  - typed-process
+ghc-options:
+  - -Wall
+  - -Wcompat
+  - -Wincomplete-record-updates
+  - -Wincomplete-uni-patterns
+  - -Wredundant-constraints
+
+library:
+  source-dirs: src
+  exposed-modules:
+    - Language.Dtfpl
+
+executable:
+  source-dirs: app
+  main: Main.hs
+  dependencies:
+    - dtfpl
+  ghc-options: -threaded

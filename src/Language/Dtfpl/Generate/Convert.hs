@@ -14,7 +14,7 @@ import           Language.Dtfpl.Syntax
 import           Language.ECMAScript.Syntax
 import           Language.ECMAScript.Syntax.Util
 import           Language.ECMAScript.Syntax.Verify
-import           Util
+import           Language.Dtfpl.Util
 
 convert :: A Prog Core -> M Program
 convert = toJS

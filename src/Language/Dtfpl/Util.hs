@@ -1,4 +1,4 @@
-module Util
+module Language.Dtfpl.Util
     ( (.:)
     , traverseMaybe
     , forMaybe
