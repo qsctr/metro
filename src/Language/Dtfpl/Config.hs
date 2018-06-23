@@ -1,6 +1,11 @@
+-- | Compiler configuration.
 module Language.Dtfpl.Config
     ( Config (..)
     ) where
 
-data Config = Config
-    { debug :: Bool }
+-- | Data type for compiler configuration.
+data Config = Config {
+    -- | Debug mode (i.e. not production).
+    -- Compiler may be slower and perform extra checks.
+    debug :: Bool
+}

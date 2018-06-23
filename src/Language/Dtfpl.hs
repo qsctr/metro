@@ -1,3 +1,4 @@
+-- | Main dtfpl module.
 module Language.Dtfpl
     ( module Language.Dtfpl.Config
     , compile
@@ -17,9 +18,11 @@ import           Language.Dtfpl.M
 import           Language.Dtfpl.Parser
 import           Language.Dtfpl.Simplify
 
+-- | Compile a program.
 compile :: Config -> String -> Either [String] (IO Text)
 compile config program = first showErr $
     runReader (runExceptT (compileM program)) config
 
+-- | Run the full compilation process in the 'M' monad.
 compileM :: String -> M (IO Text)
 compileM = parse "" >=> simplify >>> convert >>> fmap render

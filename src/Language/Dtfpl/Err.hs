@@ -1,5 +1,8 @@
-{-# LANGUAGE FlexibleInstances #-}
-
+-- | The main, non phase-specific error types.
+--
+-- All errors (including internal errors) in the compiler are strongly typed.
+--
+-- Errors for specifc phases are located within their module hierarchies.
 module Language.Dtfpl.Err
     ( Err (..)
     , InternalErr (..)
@@ -12,6 +15,7 @@ import           Language.Dtfpl.Err.ShowErr
 import           Language.Dtfpl.Generate.ConvertErr
 import           Language.Dtfpl.Parser.CustomError
 
+-- | Main error type. Represents all errors that the compiler may output.
 data Err
     = InternalErr InternalErr
     | ParseErr (ParseError Char CustomError)
@@ -20,11 +24,14 @@ instance ShowErr Err where
     showErr (InternalErr e) = "Internal error" : showErr e
     showErr (ParseErr e)    = "Parse error" : showErr e
 
+-- | Internal errors, i.e. it's not the user's fault.
 data InternalErr
     = InternalConvertErr InternalConvertErr
 
 instance ShowErr InternalErr where
     showErr (InternalConvertErr e) = "Convert error" : showErr e
 
+-- | Wrap a string with backticks.
+-- Useful for showing pieces of code in error messages.
 errQuote :: String -> String
 errQuote = ('`' :) . (++ "`")
