@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6dc4b36a1403718465f5bf5a040bc7ceae6f9c91fccf2e48289770a93c6048f4
+-- hash: ffdc5027c86a08eb770ead263a33e29ced7725327407392c309538f9707c5262
 
 name:           dtfpl
 version:        0.1.0
@@ -47,7 +47,6 @@ library
     , typed-process
   exposed-modules:
       Language.Dtfpl
-  other-modules:
       Language.Dtfpl.Config
       Language.Dtfpl.Err
       Language.Dtfpl.Err.ShowErr
@@ -72,6 +71,7 @@ library
       Language.ECMAScript.Syntax
       Language.ECMAScript.Syntax.Util
       Language.ECMAScript.Syntax.Verify
+  other-modules:
       Paths_dtfpl
   default-language: Haskell2010
 
