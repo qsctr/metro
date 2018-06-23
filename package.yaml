@@ -32,8 +32,8 @@ ghc-options:
 
 library:
   source-dirs: src
-  exposed-modules:
-    - Language.Dtfpl
+  other-modules:
+    - Paths_dtfpl
 
 executable:
   source-dirs: app
