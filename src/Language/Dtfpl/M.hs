@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
@@ -24,6 +23,7 @@ type MConfig = MonadReader Config
 -- | The core monad transformer stack.
 -- 
 -- - ExceptT for signaling errors
--- - Reader for accessing config
-newtype M a = M { runM :: ExceptT Err (Reader Config) a }
-    deriving (Functor, Applicative, Monad, MError, MConfig)
+-- - ReaderT for accessing config
+-- - IO as base monad
+newtype M a = M { runM :: ExceptT Err (ReaderT Config IO) a }
+    deriving (Functor, Applicative, Monad, MError, MConfig, MonadIO)

@@ -1,3 +1,5 @@
+{-# LANGUAGE LambdaCase #-}
+
 module Main where
 
 import qualified Data.Text.IO       as T
@@ -7,7 +9,8 @@ import           System.Environment
 main :: IO ()
 main = do
     filename <- head <$> getArgs
-    program <- readFile $ filename ++ ".dtfpl"
-    case compile (Config { debug = True }) program of
-        Left err -> putStr $ unlines err
-        Right js -> js >>= T.writeFile (filename ++ ".js")
+    readFile (filename ++ ".dtfpl")
+        >>= compile (Config { debug = True })
+        >>= \case
+            Left err -> putStr $ unlines err
+            Right js -> T.writeFile (filename ++ ".js") js

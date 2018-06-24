@@ -19,10 +19,10 @@ import           Language.Dtfpl.Parser
 import           Language.Dtfpl.Simplify
 
 -- | Compile a program.
-compile :: Config -> String -> Either [String] (IO Text)
-compile config = first showErr .
-    flip runReader config . runExceptT . runM . compileM
+compile :: Config -> String -> IO (Either [String] Text)
+compile config = fmap (first showErr) .
+    flip runReaderT config . runExceptT . runM . compileM
 
 -- | Run the full compilation process in the 'M' monad.
-compileM :: String -> M (IO Text)
-compileM = parse "" >=> simplify >>> convert >>> fmap render
+compileM :: String -> M Text
+compileM = parse "" >=> simplify >>> convert >=> render >>> liftIO
