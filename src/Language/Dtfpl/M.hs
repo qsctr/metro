@@ -1,7 +1,12 @@
--- | The core monad 'M' and some related functions.
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
+-- | The core monad 'M' and associated constraints.
 module Language.Dtfpl.M
-    ( M
-    , debugErrIf
+    ( M (..)
+    , MError
+    , MConfig
     ) where
 
 import           Control.Monad.Except
@@ -14,10 +19,11 @@ import           Language.Dtfpl.Err
 -- 
 -- - ExceptT for signaling errors
 -- - Reader for accessing config
-type M = ExceptT Err (Reader Config)
+newtype M a = M { runM :: ExceptT Err (Reader Config) a }
+    deriving (Functor, Applicative, Monad, MError, MConfig)
 
--- | Throw an internal error if the condition is true and debug mode is enabled.
-debugErrIf :: Bool -> InternalErr -> M ()
-debugErrIf cond err = do
-    d <- asks debug
-    when (d && cond) $ throwError $ InternalErr err
+-- | Monad that can throw 'Err'.
+type MError = MonadError Err
+
+-- | Monad that can read 'Config'.
+type MConfig = MonadReader Config

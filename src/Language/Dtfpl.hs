@@ -4,7 +4,7 @@ module Language.Dtfpl
     , compile
     ) where
 
-import           Control.Category
+import           Control.Category                ((>>>))
 import           Control.Monad.Except
 import           Control.Monad.Reader
 import           Data.Bifunctor
@@ -20,8 +20,8 @@ import           Language.Dtfpl.Simplify
 
 -- | Compile a program.
 compile :: Config -> String -> Either [String] (IO Text)
-compile config program = first showErr $
-    runReader (runExceptT (compileM program)) config
+compile config = first showErr .
+    flip runReader config . runExceptT . runM . compileM
 
 -- | Run the full compilation process in the 'M' monad.
 compileM :: String -> M (IO Text)

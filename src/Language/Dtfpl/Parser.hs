@@ -29,7 +29,7 @@ import           Language.Dtfpl.Syntax
 type Parser = ParsecT CustomError String (StateT Pos (Reader Config))
 
 parse :: String -> String -> M (A Prog 'Source)
-parse filename input = ExceptT $
+parse filename input = M $ ExceptT $
     first ParseErr <$> evalStateT (runParserT prog filename input) pos1
 
 testParse :: String -> Either String (A Prog 'Source)

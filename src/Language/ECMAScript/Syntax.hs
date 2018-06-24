@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Language.ECMAScript.Syntax
@@ -50,6 +51,7 @@ import           Data.Text                          (Text)
 import           Language.Dtfpl.Err
 import           Language.Dtfpl.Generate.ConvertErr
 import           Language.Dtfpl.M
+import           Language.Dtfpl.M.Util
 import           Language.ECMAScript.Syntax.Verify
 
 estree :: Text -> [Pair] -> Value
@@ -84,7 +86,7 @@ instance (ToJSON a, ToJSON b) => ToJSON (Either' a b) where
 
 newtype Identifier = Identifier String
 
-mkIdentifier :: String -> M Identifier
+mkIdentifier :: (MConfig m, MError m) => String -> m Identifier
 mkIdentifier s = do
     debugErrIf (not $ isValidIdentifier s) $
         InternalConvertErr $ InternalInvalidTargetASTErr $

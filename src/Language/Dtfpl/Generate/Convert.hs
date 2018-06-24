@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies          #-}
@@ -11,16 +12,16 @@ import           Data.Traversable
 
 import           Language.Dtfpl.M
 import           Language.Dtfpl.Syntax
+import           Language.Dtfpl.Util
 import           Language.ECMAScript.Syntax
 import           Language.ECMAScript.Syntax.Util
 import           Language.ECMAScript.Syntax.Verify
-import           Language.Dtfpl.Util
 
-convert :: A Prog Core -> M Program
+convert :: (MConfig m, MError m) => A Prog Core -> m Program
 convert = toJS
 
 class ToJS n js where
-    toJS :: n Core -> M js
+    toJS :: (MConfig m, MError m) => n Core -> m js
 
 instance ToJS n js => ToJS (A n) js where
     toJS (A n _) = toJS n
