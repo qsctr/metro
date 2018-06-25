@@ -8,6 +8,12 @@
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
+-- | 'Sim' typeclass and related types and functions.
+--
+-- Overlappable instances are required in this module to specify generic
+-- simplification code which applies to all passes where the children of the
+-- node do not change, which can be overridden by specific instances for
+-- specific passes.
 module Language.Dtfpl.Simplify.Sim
     ( SimState (..)
     , SimM
@@ -21,30 +27,52 @@ import           Numeric.Natural
 
 import           Language.Dtfpl.Syntax
 
-data SimState = SimState
-    { nextGenIdentFullNum :: Natural }
-    deriving (Eq, Show)
+-- | State used in the simplification process.
+data SimState = SimState {
+    -- | The next number for 'GenIdentFull'.
+    -- Fully generated identifiers are numbered in order of node traversal
+    -- for the whole program.
+    nextGenIdentFullNum :: Natural
+} deriving (Eq, Show)
 
+-- | Initial 'SimState' value.
 initSimState :: SimState
 initSimState = SimState
     { nextGenIdentFullNum = 0 }
 
+-- | Simplification monad.
+-- Uses 'State' monad to keep track of simplification state.
 type SimM = State SimState
 
+-- | Run a simplification with the initial simplification state.
+-- This should only be used on a complete program, not on parts of it,
+-- as combining those parts would result in a possibly invalid program.
 runSim :: SimM a -> a
 runSim = flip evalState initSimState
 
+-- | A node that can be simplified by a given pass.
 class Sim (n :: Node) (p :: Pass) where
+    -- | Single simplification pass.
+    -- Simplifies from the previous pass to the current pass.
     sim :: n (Pred p) -> SimM (n p)
 
+-- | Constraint which ensures that all the children of some node at the previous
+-- pass and at the current pass remain nominally equal, and that the children at
+-- the current pass have 'Sim' instances, so that the node can be generically
+-- simplified for all passes that satisfy this constraint.
 type AutoSim (n :: Node) (p :: Pass) =
     ( SimChildren (Children n p) p
     , SameChildren (Children n (Pred p)) (Children n p) )
 
+-- | Ensures @Sim n p@ for all nodes @n@ in the given list for the given pass
+-- @p@.
 type family SimChildren (ns :: [Node]) (p :: Pass) where
     SimChildren '[n] p = Sim n p
     SimChildren (n : ns) p = (Sim n p, SimChildren ns p)
 
+-- | Ensures that each node in the first list is nominally equal to the
+-- corresponding node in the second list.
+-- Basically @zipWith (~)@ at the type level.
 type family SameChildren (ns :: [Node]) (sns :: [Node]) where
     SameChildren '[n] '[sn] = n ~ sn
     SameChildren (n : ns) (sn : sns) = (n ~ sn, SameChildren ns sns)

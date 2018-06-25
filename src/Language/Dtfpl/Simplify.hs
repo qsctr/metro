@@ -1,5 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 
+-- | Simplification phase.
 module Language.Dtfpl.Simplify
     ( simplify
     ) where
@@ -14,5 +15,6 @@ import           Language.Dtfpl.Simplify.MultiCase  ()
 import           Language.Dtfpl.Simplify.UnDef      ()
 import           Language.Dtfpl.Simplify.UnLamMatch ()
 
+-- | Simplify a complete program from source-form to core-form.
 simplify :: A Prog 'Source -> A Prog Core
 simplify prog = runSim $ sim prog >>= sim >>= sim >>= sim >>= sim >>= sim
