@@ -5,7 +5,6 @@ module Language.Dtfpl.Parser.Loc
     ( Loc (..)
     ) where
 
-import           Data.Data
 import           Text.Megaparsec.Pos
 
 -- | Source location of a node.
