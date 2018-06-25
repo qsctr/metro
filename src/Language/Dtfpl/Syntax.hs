@@ -11,6 +11,10 @@
 {-# LANGUAGE UndecidableInstances      #-}
 
 -- | Abstract syntax tree and related types and functions.
+--
+-- Using type families and data kinds, we can represent all forms of the syntax
+-- tree in each stage of the simplification process with a single set of ADTs.
+-- Each AST node is parameterized by the current simplification pass.
 module Language.Dtfpl.Syntax
     ( Pass (..)
     , Core
