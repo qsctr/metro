@@ -7,6 +7,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans                 #-}
 {-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
 
+-- | Desugar 'Def' declarations.
 module Language.Dtfpl.Simplify.UnDef () where
 
 import           Data.Foldable
@@ -17,6 +18,40 @@ import           Language.Dtfpl.Simplify.GenUtil
 import           Language.Dtfpl.Simplify.Sim
 import           Language.Dtfpl.Syntax
 
+-- | Replace all 'Def' declarations with 'Let' and 'LamExpr's.
+--
+-- For example, replaces
+--
+-- > def func
+-- >     x -> y
+--
+-- with
+--
+-- > let func = \x -> y
+--
+-- If there is any pattern-matching done in the 'Def', it will be desugared into
+-- a 'Case' expression.
+--
+-- For example, replaces
+--
+-- > def func
+-- >     1 2 -> a
+-- >     3 4 -> b
+-- >     x y -> c
+--
+-- with
+--
+-- > let func = \x y -> case x, y of
+-- >     1, 2 -> a
+-- >     3, 4 -> b
+-- >     _, _ -> c
+--
+-- (Note that this isn't actually valid source for now since multi-expression
+-- case and wildcard patterns aren't supported yet.)
+--
+-- The first 'VarPat' in each column of the 'DefAlt's will be used as the lambda
+-- parameter name for that parameter. If there is no 'VarPat' in that column,
+-- a 'GenIdentPart' based on the name of the function will be used.
 instance Sim Decl 'NoDef where
     sim (Def name (T alts)) = do
         simName <- sim name

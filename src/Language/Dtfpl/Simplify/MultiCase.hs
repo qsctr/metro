@@ -3,6 +3,10 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
+-- | Switches to multi-expression case expressions.
+--
+-- Currently the source only allows single-expression case expressions,
+-- but the core supports multi-expression case expressions.
 module Language.Dtfpl.Simplify.MultiCase () where
 
 import           Language.Dtfpl.Simplify.Sim

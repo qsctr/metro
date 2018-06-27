@@ -4,6 +4,10 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
+-- | Initial generated AST pass.
+--
+-- Enables the constructors for generated nodes which were disabled for 'Source'
+-- pass.
 module Language.Dtfpl.Simplify.InitGen () where
 
 import           Language.Dtfpl.Simplify.Sim
