@@ -29,6 +29,7 @@ ghc-options:
   - -Wincomplete-record-updates
   - -Wincomplete-uni-patterns
   - -Wredundant-constraints
+  - -O2
 
 library:
   source-dirs: src
