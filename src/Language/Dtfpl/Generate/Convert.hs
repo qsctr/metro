@@ -3,6 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies          #-}
 
+-- | Convert Dtfpl Core to JS
 module Language.Dtfpl.Generate.Convert
     ( convert
     ) where
@@ -17,12 +18,17 @@ import           Language.ECMAScript.Syntax
 import           Language.ECMAScript.Syntax.Util
 import           Language.ECMAScript.Syntax.Verify
 
+-- | Convert a dtfpl Core program to a JS program
 convert :: (MConfig m, MError m) => A Prog Core -> m Program
 convert = toJS
 
+-- | Typeclass for dtfpl core node @n@ which can be converted to JS node @js@.
 class ToJS n js where
+    -- | Convert a dtfpl core node to a js node.
     toJS :: (MConfig m, MError m) => n Core -> m js
 
+-- | Currently we just throw away the annotations.
+-- Might add source maps later on.
 instance ToJS n js => ToJS (A n) js where
     toJS (A n _) = toJS n
 
@@ -34,6 +40,9 @@ instance ToJS Decl Declaration where
     toJS (Let ident expr) = constDecl <$> toJS ident <*> toJS expr
     toJS (Def _ _)        = undefined
 
+-- | For the 'Case' expression:
+-- Converts each 'Case' into an IIFE where inside the function body there are
+-- if statements corresponding to each pattern match.
 instance ToJS Expr Expression where
     toJS (VarExpr ident) = IdentifierExpression <$> toJS ident
     toJS (LitExpr lit) = LiteralExpression <$> toJS lit
@@ -85,6 +94,8 @@ instance ToJS Expr Expression where
         ArrowFunctionExpression . pure . IdentifierPattern
             <$> toJS ident <*> (Right' <$> toJS expr)
 
+-- | Convert dtfpl 'Ident' to JS 'Identifier', trying to preserve as much of the
+-- original name as possible.
 instance ToJS Ident Identifier where
     toJS = mkIdentifier . convertIdent
       where convertIdent (Ident s)
