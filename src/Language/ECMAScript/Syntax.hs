@@ -1,6 +1,12 @@
 {-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+-- | ECMAScript syntax tree.
+-- Based off the [estree spec](https://github.com/estree/estree),
+-- with some modifications to make it valid/idiomatic Haskell.
+-- All nodes have 'ToJSON' instances so that they can be converted into the
+-- corresponding estree JSON node.
+-- Newest supported ECMAScript standard is ES2015.
 module Language.ECMAScript.Syntax
     ( Either' (..)
     , Identifier
@@ -54,11 +60,14 @@ import           Language.Dtfpl.M
 import           Language.Dtfpl.M.Util
 import           Language.ECMAScript.Syntax.Verify
 
+-- | Adds @type@ and @loc@ properties to make the node a valid estree node.
+-- @type@ is set to the given string while @loc@ is always null.
 estree :: Text -> [Pair] -> Value
 estree t props = object $ props ++
     [ "type" .= t
     , "loc" .= Null ]
 
+-- | Convert an 'Or' to two pairs.
 orToPairs :: (ToJSON a, ToJSON b) => Text -> Text -> Or a b -> [Pair]
 orToPairs fstKey sndKey (Fst a) =
     [ fstKey .= a
@@ -70,6 +79,8 @@ orToPairs fstKey sndKey (Both a b) =
     [ fstKey .= a
     , sndKey .= b ]
 
+-- | Identical to 'Either', but has a custom 'ToJSON' instance, since the
+-- instance for 'Either' is already defined in "Data.Aeson".
 data Either' a b = Left' a | Right' b
 
 isLeft' :: Either' a b -> Bool
@@ -86,6 +97,8 @@ instance (ToJSON a, ToJSON b) => ToJSON (Either' a b) where
 
 newtype Identifier = Identifier String
 
+-- | Create an 'Identifier'.
+-- Checks if the given string is valid in debug mode only.
 mkIdentifier :: (MConfig m, MError m) => String -> m Identifier
 mkIdentifier s = do
     debugErrIf (not $ isValidIdentifier s) $
