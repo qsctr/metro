@@ -46,9 +46,6 @@ import           Language.Dtfpl.Syntax
 -- >     3, 4 -> b
 -- >     _, _ -> c
 --
--- (Note that this isn't actually valid source for now since wildcard patterns
--- aren't supported yet.)
---
 -- The first 'VarPat' in each column of the 'DefAlt's will be used as the lambda
 -- parameter name for that parameter. If there is no 'VarPat' in that column,
 -- a 'GenIdentPart' based on the name of the function will be used.

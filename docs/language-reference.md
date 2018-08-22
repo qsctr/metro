@@ -29,6 +29,14 @@ def answer
 
 Note that the above function will not work if it is called with any argument other than those three that it pattern matches on, because it lacks a catch-all pattern.
 
+You can use `_` to match any value and discard the result.
+
+```
+def answer
+    "hello" -> "hi"
+    _ -> "I don't understand"
+```
+
 Multi-argument functions are automatically curried, so they can be partially applied.
 
 ```

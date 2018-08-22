@@ -66,9 +66,10 @@ defAlt = addLoc $ exprBlockMid $
 
 -- | Parse a pattern.
 pat :: PParsec p => p (A Pat 'Source)
-pat = varPat <|> litPat
+pat = varPat <|> litPat <|> wildPat
   where varPat = addLoc $ VarPat <$> ident
         litPat = addLoc $ LitPat <$> literal
+        wildPat = addLoc $ wildcard $> WildPat
 
 -- | Given a parser for some node constructor that takes an 'Expr' as argument,
 -- run that parser and run the 'expr' parser so that the continuation indent
@@ -181,11 +182,12 @@ symbol :: PParsec p => String -> p ()
 symbol = void . string
 
 -- | Symbol parser.
-arrow, comma, equals, lambda :: PParsec p => p ()
+arrow, comma, equals, lambda, wildcard :: PParsec p => p ()
 arrow = symbol "->"
 comma = symbol ","
 equals = symbol "="
 lambda = symbol "\\"
+wildcard = symbol "_"
 
 -- | Characters which cannot be used in identifiers.
 {-# ANN reservedChars "HLint: ignore Use String" #-}
