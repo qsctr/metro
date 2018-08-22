@@ -82,3 +82,11 @@ let factorial = \x -> case x of
     0 -> 1
     x -> mul x (factorial (dec x))
 ```
+
+You can also pattern-match on multiple expressions at once, separated by commas.
+
+```
+case a, b of
+    1, 2 -> "one and two"
+    3, 4 -> "three and four"
+```

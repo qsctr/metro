@@ -37,7 +37,6 @@ module Language.Dtfpl.Syntax
     , CaseHead'
     , AliExpr (..)
     , CaseAlt (..)
-    , CaseAltHead
     , Lam (..)
     , LamHead
     , Ident (..)
@@ -63,7 +62,6 @@ $(promote [d|
     data Pass
         = Source
         | InitGen
-        | MultiCase
         | NoDef
         | NoLamMatch
         | Curried
@@ -245,9 +243,8 @@ deriving instance Forall Show CaseHead p => Show (CaseHead p)
 
 -- | Head of 'Case' expression at the given pass.
 type CaseHead' (p :: Pass) = When p
-    (A Expr)
-    '[ 'MultiCase ==> T NonEmpty (A Expr)
-    ,  'AliasCase ==> T NonEmpty AliExpr ]
+    (T NonEmpty (A Expr))
+    '[ 'AliasCase ==> T NonEmpty AliExpr ]
 
 -- | Aliased expression.
 -- This is used when an identifier needs to be assigned to a non-variable
@@ -264,18 +261,13 @@ deriving instance Forall Show AliExpr p => Show (AliExpr p)
 
 -- | 'Case' alternative.
 data CaseAlt (p :: Pass)
-    = CaseAlt (CaseAltHead p p) (A Expr p)
+    = CaseAlt (T NonEmpty (A Pat) p) (A Expr p)
 
 type instance Children CaseAlt p =
-    '[ CaseAltHead p, A Expr ]
+    '[ T NonEmpty (A Pat), A Expr ]
 
 deriving instance Forall Eq CaseAlt p => Eq (CaseAlt p)
 deriving instance Forall Show CaseAlt p => Show (CaseAlt p)
-
--- | Head of the 'CaseAlt' at the given pass.
-type CaseAltHead (p :: Pass) = When p
-    (A Pat)
-    '[ 'MultiCase ==> T NonEmpty (A Pat) ]
 
 -- | Lambda.
 data Lam (p :: Pass)

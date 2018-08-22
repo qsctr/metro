@@ -20,6 +20,7 @@ dependencies:
   - data-or
   - megaparsec
   - mtl
+  - parser-combinators
   - singletons
   - text
   - typed-process

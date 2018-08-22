@@ -8,19 +8,20 @@ module Language.Dtfpl.Parser
     ( parse
     ) where
 
-import           Control.Category                  ((>>>))
+import           Control.Category                   ((>>>))
+import           Control.Monad.Combinators.NonEmpty
 import           Control.Monad.Except
 import           Control.Monad.State
 import           Data.Bifunctor
 import           Data.Char
 import           Data.Functor
 import           Data.Functor.Identity
-import           Data.List
-import           Data.List.NonEmpty                (NonEmpty (..), some1, (<|))
-import           Text.Megaparsec                   hiding (parse)
+import           Data.List.NonEmpty                 (NonEmpty (..), (<|))
+import           Text.Megaparsec                    hiding (parse, sepEndBy1,
+                                                     some, sepBy1)
 import           Text.Megaparsec.Char
-import           Text.Megaparsec.Char.Lexer        (indentGuard, indentLevel,
-                                                    nonIndented)
+import           Text.Megaparsec.Char.Lexer         (indentGuard, indentLevel,
+                                                     nonIndented)
 
 import           Language.Dtfpl.Err
 import           Language.Dtfpl.M
@@ -43,9 +44,9 @@ parse filename input = liftEither =<<
 
 -- | Parse a program into its AST representation.
 -- For testing purposes only, so we don't have to deal with monad transformers.
-_testParse :: String -> Either String (A Expr 'Source)
+_testParse :: String -> Either String (A Prog 'Source)
 _testParse input = first parseErrorPretty $
-    runIdentity $ evalStateT (runParserT (expr pos1 <* eof) "" input) pos1
+    runIdentity $ evalStateT (runParserT (prog <* eof) "" input) pos1
 
 -- | Parse a program.
 prog :: (PParsec p, PIndentState p) => p (A Prog 'Source)
@@ -54,14 +55,14 @@ prog = addLoc (Prog . T <$> many (nonIndented scn decl <* scn)) <* eof
 -- | Parse a declaration.
 decl :: (PParsec p, PIndentState p) => p (A Decl 'Source)
 decl = def <|> let_
-  where def = addLoc $ Def <$> (lexeme sdef *> ident) <*> indentBlock' defAlt
+  where def = addLoc $ Def <$> (lexeme1 sdef *> ident) <*> indentBlock' defAlt
         let_ = addLoc $ exprBlockMid $
-            lexeme slet *> (Let <$> lexeme ident <* equals)
+            lexeme1 slet *> (Let <$> lexeme1 ident <* equals)
 
 -- | Parse a def alternative.
 defAlt :: (PParsec p, PIndentState p) => p (A DefAlt 'Source)
 defAlt = addLoc $ exprBlockMid $
-    DefAlt . T <$> (some1 (lexeme $ try pat) <* arrow)
+    DefAlt . T <$> (some (lexeme1 $ try pat) <* arrow)
 
 -- | Parse a pattern.
 pat :: PParsec p => p (A Pat 'Source)
@@ -123,7 +124,7 @@ exprBlockWith ip p = do
 -- than the given 'Pos'.
 -- This parser consumes any trailing whitespace at the end of the line.
 expr :: (PParsec p, PIndentState p) => Pos -> p (A Expr 'Source)
-expr i = foldl1' combine <$> term `sepEndBy1` try sc1'
+expr i = foldl1 combine <$> term `sepEndBy1` try sc1'
   where combine f x = A (App f x) $ Loc (start (ann f)) (end (ann x))
         term = varExpr <|> if_ <|> case_ <|> lam <|> litExpr <|> par
         varExpr = addLoc $ VarExpr <$> try ident
@@ -134,16 +135,18 @@ expr i = foldl1' combine <$> term `sepEndBy1` try sc1'
             <*> (sthen *> sc1' *> expr i)
             <*> (selse *> sc1' *> expr i)
         case_ = addLoc $ Case
-            <$> (CaseHead <$> (scase *> sc1' *> expr i <* sof))
+            <$> (CaseHead . T <$>
+                (scase *> sc1' *> expr i `sepBy1` lexeme0 comma <* sof))
             <*> indentBlock' caseAlt
         lam = addLoc $ fmap LamExpr $ exprBlockStart $ Lam . T
-            <$> (lambda *> sc' *> some1 (lexeme $ try pat) <* arrow)
+            <$> (lambda *> sc' *> some (lexeme1 $ try pat) <* arrow)
         sc' = isc i
         sc1' = isc1 i
 
 -- | Parse a case alternative.
 caseAlt :: (PParsec p, PIndentState p) => p (A CaseAlt 'Source)
-caseAlt = addLoc $ exprBlockMid $ CaseAlt <$> (lexeme pat <* arrow)
+caseAlt = addLoc $ exprBlockMid $ CaseAlt . T <$>
+    (lexeme0 (try pat) `sepBy1` lexeme0 comma <* arrow)
 
 -- | Keyword string.
 kdef, klet, kif, kthen, kelse, kcase, kof :: String
@@ -178,8 +181,9 @@ symbol :: PParsec p => String -> p ()
 symbol = void . string
 
 -- | Symbol parser.
-arrow, equals, lambda :: PParsec p => p ()
+arrow, comma, equals, lambda :: PParsec p => p ()
 arrow = symbol "->"
+comma = symbol ","
 equals = symbol "="
 lambda = symbol "\\"
 
@@ -240,9 +244,17 @@ indentBlock' p = T <$> (get >>= isc1 >>= rest)
                 noMore = lookAhead $
                     try (scn *> eof) <|> void (indentGuard scn1 LT i')
 
--- | Space consumer without newlines.
-sc :: PParsec p => p ()
-sc = hidden $ void $ takeWhile1P Nothing (== ' ')
+-- | Space consumer without newlines. Accepts empty input.
+sc0 :: PParsec p => p ()
+sc0 = scWith takeWhileP
+
+-- | Space consumer without newlines. Only succeeds if at least one space char.
+sc1 :: PParsec p => p ()
+sc1 = scWith takeWhile1P
+
+-- | Create a space consumer with the given @takeWhile*P@ parser
+scWith :: PParsec p => (Maybe String -> (Char -> Bool) -> p String) -> p ()
+scWith p = hidden $ void $ p Nothing (== ' ')
 
 -- | Space consumer with newlines.
 scn :: (PParsec p, PIndentState p) => p ()
@@ -270,5 +282,10 @@ isc1 :: (PParsec p, PIndentState p) => Pos -> p Pos
 isc1 = indentGuard scn1 GT
 
 -- | Run the parser and consume any trailing whitespace.
-lexeme :: PParsec p => p a -> p a
-lexeme = (<* sc)
+lexeme0 :: PParsec p => p a -> p a
+lexeme0 = (<* sc0)
+
+-- | Run the parser and consume trailing whitespace.
+-- There must be at least one space.
+lexeme1 :: PParsec p => p a -> p a
+lexeme1 = (<* sc1)
