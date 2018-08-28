@@ -44,6 +44,7 @@ module Language.Dtfpl.Syntax
     , GenIdentPartNum
     , GenIdentFullNum
     , Lit (..)
+    , NativeJS (..)
     ) where
 
 import           Data.Kind
@@ -128,6 +129,15 @@ type family ToConstraint (c :: Class) (ns :: [Node]) (p :: Pass) where
     ToConstraint c '[n] p = c (n p)
     ToConstraint c (n : ns) p = (c (n p), ToConstraint c ns p)
 
+-- | Language type.
+-- Used in promoted form to parameterize nodes which can contain native code.
+data Lang = Dtfpl | Native
+
+-- | Convert 'Lang' to a 'Node' type representing code in that language type.
+type family LangNode (l :: Lang) where
+    LangNode 'Dtfpl = Expr
+    LangNode 'Native = NativeJS
+
 -- | Annotated node.
 data A (n :: Node) (p :: Pass) = A { node :: n p, ann :: Ann p }
 
@@ -160,12 +170,15 @@ deriving instance Forall Show Prog p => Show (Prog p)
 -- | Declaration.
 data Decl (p :: Pass)
     -- | @def@ function declaration.
-    = Def (DefHead p p) (DefBody p p)
+    = Def (DefHead p p) (DefBody 'Dtfpl p p)
+    -- | Native @def@ declaration.
+    | DefNative (DefHead p p) (DefBody 'Native p p)
     -- | @let@ variable declaration.
     | Let (A Ident p) (A Expr p)
 
 type instance Children Decl p =
-    '[ DefHead p, DefBody p
+    '[ DefHead p, DefBody 'Dtfpl p
+     , DefBody 'Native p
      , A Ident, A Expr ]
 
 deriving instance Forall Eq Decl p => Eq (Decl p)
@@ -175,17 +188,18 @@ deriving instance Forall Show Decl p => Show (Decl p)
 type DefHead (p :: Pass) = VoidAfter 'NoDef p (A Ident)
 
 -- | Body of the 'Def' declaration at the given pass.
-type DefBody (p :: Pass) = VoidAfter 'NoDef p (T NonEmpty (A DefAlt))
+type DefBody (l :: Lang) (p :: Pass) =
+    VoidAfter 'NoDef p (T NonEmpty (A (DefAlt l)))
 
 -- | 'Def' alternative.
-data DefAlt (p :: Pass)
-    = DefAlt (T NonEmpty (A Pat) p) (A Expr p)
+data DefAlt (l :: Lang) (p :: Pass)
+    = DefAlt (T NonEmpty (A Pat) p) (A (LangNode l) p)
 
-type instance Children DefAlt p =
-    '[ T NonEmpty (A Pat), A Expr ]
+type instance Children (DefAlt l) p =
+    '[ T NonEmpty (A Pat), A (LangNode l) ]
 
-deriving instance Forall Eq DefAlt p => Eq (DefAlt p)
-deriving instance Forall Show DefAlt p => Show (DefAlt p)
+deriving instance Forall Eq (DefAlt l) p => Eq (DefAlt l p)
+deriving instance Forall Show (DefAlt l) p => Show (DefAlt l p)
 
 -- | Pattern.
 data Pat (p :: Pass)
@@ -318,3 +332,6 @@ data Lit (p :: Pass)
     -- | String literal.
     | StrLit String
     deriving (Eq, Show)
+
+-- | Native JS code.
+newtype NativeJS (p :: Pass) = NativeJS String
