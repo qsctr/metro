@@ -14,7 +14,7 @@ See the `docs` directory for documentation.
 
 The only way to use the dtfpl compiler at the moment is to build it from source. It is written in Haskell, so you'll need [stack](https://haskellstack.org).
 
-1. Clone this repository.
+1. Clone or download this repository. If you want a more stable version you should use the most recent release.
 2. Run `stack install` inside the directory.
 
 Now you should have an executable named `dtfpl`.
