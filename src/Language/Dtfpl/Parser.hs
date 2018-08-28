@@ -150,9 +150,10 @@ caseAlt = addLoc $ exprBlockMid $ CaseAlt . T <$>
     (lexeme0 (try pat) `sepBy1` lexeme0 comma <* arrow)
 
 -- | Keyword string.
-kdef, klet, kif, kthen, kelse, kcase, kof :: String
+kdef, klet, knative, kif, kthen, kelse, kcase, kof :: String
 kdef = "def"
 klet = "let"
+knative = "native"
 kif = "if"
 kthen = "then"
 kelse = "else"
@@ -168,9 +169,10 @@ keyword :: PParsec p => String -> p ()
 keyword = string >>> (*> notFollowedBy (satisfy isIdentTailChar))
 
 -- | Keyword parser.
-sdef, slet, sif, sthen, selse, scase, sof :: PParsec p => p ()
+sdef, slet, snative, sif, sthen, selse, scase, sof :: PParsec p => p ()
 sdef = keyword kdef
 slet = keyword klet
+snative = keyword knative
 sif = keyword kif
 sthen = keyword kthen
 selse = keyword kelse
