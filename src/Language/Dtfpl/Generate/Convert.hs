@@ -93,6 +93,7 @@ instance ToJS Expr Expression where
     toJS (LamExpr (Lam ident expr)) =
         ArrowFunctionExpression . pure . IdentifierPattern
             <$> toJS ident <*> (Right' <$> toJS expr)
+    toJS (Native _) = error "Not yet implemented"
 
 -- | Convert dtfpl 'Ident' to JS 'Identifier', trying to preserve as much of the
 -- original name as possible.

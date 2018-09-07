@@ -17,8 +17,8 @@ import           Data.Char
 import           Data.Functor
 import           Data.Functor.Identity
 import           Data.List.NonEmpty                 (NonEmpty (..), (<|))
-import           Text.Megaparsec                    hiding (parse, sepEndBy1,
-                                                     some, sepBy1)
+import           Text.Megaparsec                    hiding (parse, sepBy1,
+                                                     sepEndBy1, some)
 import           Text.Megaparsec.Char
 import           Text.Megaparsec.Char.Lexer         (indentGuard, indentLevel,
                                                      nonIndented)
@@ -55,13 +55,22 @@ prog = addLoc (Prog . T <$> many (nonIndented scn decl <* scn)) <* eof
 -- | Parse a declaration.
 decl :: (PParsec p, PIndentState p) => p (A Decl 'Source)
 decl = def <|> let_
-  where def = addLoc $ Def <$> (lexeme1 sdef *> ident) <*> indentBlock' defAlt
-        let_ = addLoc $ exprBlockMid $
-            lexeme1 slet *> (Let <$> lexeme1 ident <* equals)
+  where def = addLoc $ do
+            lexeme1 sdef
+            pAltBody <- snativeToExprBody
+            Def <$> ident <*> indentBlock' (defAlt pAltBody)
+        let_ = addLoc $ do
+            lexeme1 slet
+            pBody <- snativeToExprBody
+            blockStart pBody $ Let <$> lexeme1 ident <* equals
+        snativeToExprBody = maybe expr (const nativeExpr) <$>
+            optional (lexeme1 snative)
 
--- | Parse a def alternative.
-defAlt :: (PParsec p, PIndentState p) => p (A DefAlt 'Source)
-defAlt = addLoc $ exprBlockMid $
+-- | Parse a def alternative, given a parser for the body of the alternative
+-- (either dtfpl expr or JS native expr)
+defAlt :: (PParsec p, PIndentState p) =>
+    (Pos -> p (A Expr 'Source)) -> p (A DefAlt 'Source)
+defAlt body = addLoc $ blockMid body $
     DefAlt . T <$> (some (lexeme1 $ try pat) <* arrow)
 
 -- | Parse a pattern.
@@ -92,8 +101,8 @@ pat = varPat <|> litPat <|> wildPat
 --
 -- Because the indent for @baz@ is equal to, not greater than,
 -- the starting indent of the parent 'CaseAlt' node.
-exprBlockMid :: (PParsec p, PIndentState p) => p (A Expr 'Source -> a) -> p a
-exprBlockMid = exprBlockWith indentLevel
+exprBlockMid :: (PParsec p, PIndentState p) => p (A Expr 'Source -> b) -> p b
+exprBlockMid = blockMid expr
 
 -- | Given a parser for some node constructor that takes an 'Expr' as argument,
 -- run that parser and run the 'expr' parser so that the continuation indent
@@ -108,18 +117,28 @@ exprBlockMid = exprBlockWith indentLevel
 -- > def func
 -- >     foo -> case foo of
 -- >         bar -> baz
-exprBlockStart :: (PParsec p, PIndentState p) => p (A Expr 'Source -> a) -> p a
-exprBlockStart = exprBlockWith get
+exprBlockStart :: (PParsec p, PIndentState p) => p (A Expr 'Source -> b) -> p b
+exprBlockStart = blockStart expr
 
--- | Given a parser for some node constructor that takes an 'Expr' as argument,
--- and some method of determining the current indentation, run that parser and
--- run the 'expr' parser using the given indentation method to determine the
--- minimum continuation indent.
-exprBlockWith :: (PParsec p, PIndentState p) =>
-    p Pos -> p (A Expr 'Source -> a) -> p a
-exprBlockWith ip p = do
+-- | Same as 'exprBlockMid' but generalized for any parser with the same type
+-- as 'expr'.
+blockMid :: (PParsec p, PIndentState p) =>
+    (Pos -> p (A Expr 'Source)) -> p (A Expr 'Source -> b) -> p b
+blockMid = blockWith indentLevel
+
+-- | Same as 'exprBlockStart' but generalized for any parser with the same type
+-- as 'expr'.
+blockStart :: (PParsec p, PIndentState p) =>
+    (Pos -> p (A Expr 'Source)) -> p (A Expr 'Source -> b) -> p b
+blockStart = blockWith get
+
+-- | Same as 'blockMid' and 'blockStart', but generalized for any method of
+-- determining the current indentation.
+blockWith :: (PParsec p, PIndentState p) =>
+    p Pos -> (Pos -> p a) -> p (a -> b) -> p b
+blockWith ip b p = do
     i <- ip
-    p <*> (isc i *> expr i)
+    p <*> (isc i *> b i)
 
 -- | Parse an expression, where continuation lines must be indented greater
 -- than the given 'Pos'.
@@ -148,6 +167,24 @@ expr i = foldl1 combine <$> term `sepEndBy1` try sc1'
 caseAlt :: (PParsec p, PIndentState p) => p (A CaseAlt 'Source)
 caseAlt = addLoc $ exprBlockMid $ CaseAlt . T <$>
     (lexeme0 (try pat) `sepBy1` lexeme0 comma <* arrow)
+
+-- | Parse a native JS expression and wrap it with 'Native' and 'A'.
+nativeExpr :: (PParsec p, PIndentState p) => Pos -> p (A Expr 'Source)
+nativeExpr = addLoc . fmap Native . native
+
+-- | Parse a native JS expression, where continuation lines must be indented
+-- greater than the given 'Pos'.
+-- Currently this parser just eats all input and does not actually parse the
+-- JS expression.
+native :: (PParsec p, PIndentState p) => Pos -> p String
+native i = do
+    line <- takeWhile1P Nothing (`notElem` ['\r', '\n'])
+    option line $ try $ do
+        indent <- takeWhile1P Nothing isSpace
+        col <- indentLevel
+        if col > i
+            then ((line ++ indent) ++) <$> native i
+            else empty -- failure
 
 -- | Keyword string.
 kdef, klet, knative, kif, kthen, kelse, kcase, kof :: String
