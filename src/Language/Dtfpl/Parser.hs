@@ -168,23 +168,25 @@ caseAlt :: (PParsec p, PIndentState p) => p (A CaseAlt 'Source)
 caseAlt = addLoc $ exprBlockMid $ CaseAlt . T <$>
     (lexeme0 (try pat) `sepBy1` lexeme0 comma <* arrow)
 
--- | Parse a native JS expression and wrap it with 'Native' and 'A'.
-nativeExpr :: (PParsec p, PIndentState p) => Pos -> p (A Expr 'Source)
-nativeExpr = addLoc . fmap Native . native
+-- | Parse a native JS expression and wrap it with 'NativeExpr' and 'A'.
+nativeExpr :: PParsec p => Pos -> p (A Expr 'Source)
+nativeExpr = addLoc . fmap NativeExpr . native
 
 -- | Parse a native JS expression, where continuation lines must be indented
 -- greater than the given 'Pos'.
--- Currently this parser just eats all input and does not actually parse the
--- JS expression.
-native :: (PParsec p, PIndentState p) => Pos -> p String
-native i = do
-    line <- takeWhile1P Nothing (`notElem` ['\r', '\n'])
-    option line $ try $ do
-        indent <- takeWhile1P Nothing isSpace
-        col <- indentLevel
-        if col > i
-            then ((line ++ indent) ++) <$> native i
-            else empty -- failure
+-- This parser just eats all input and does not actually parse the JS
+-- expression. The expression is parsed using a JS parser in the ParseNative
+-- simplification step.
+native :: PParsec p => Pos -> p (Native 'Source)
+native i = Native . P <$> nativeString
+  where nativeString = do
+            line <- takeWhile1P Nothing (`notElem` ['\r', '\n'])
+            option line $ try $ do
+                indent <- takeWhile1P Nothing isSpace
+                col <- indentLevel
+                if col > i
+                    then ((line ++ indent) ++) <$> nativeString
+                    else empty -- failure
 
 -- | Keyword string.
 kdef, klet, knative, kif, kthen, kelse, kcase, kof :: String

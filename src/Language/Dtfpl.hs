@@ -15,6 +15,7 @@ import           Language.Dtfpl.Err.ShowErr
 import           Language.Dtfpl.Generate.Convert
 import           Language.Dtfpl.Generate.Render
 import           Language.Dtfpl.M
+import           Language.Dtfpl.ParseNative
 import           Language.Dtfpl.Parser
 import           Language.Dtfpl.Simplify
 
@@ -25,4 +26,9 @@ compile config = fmap (first showErr) .
 
 -- | Run the full compilation process in the 'M' monad.
 compileM :: String -> M Text
-compileM = parse "" >=> simplify >>> convert >=> render >>> liftIO
+compileM =
+    parse ""
+    >=> parseNative >>> liftIO
+    >=> simplify
+    >>> convert
+    >=> render >>> liftIO

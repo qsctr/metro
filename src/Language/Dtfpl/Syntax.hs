@@ -39,6 +39,8 @@ module Language.Dtfpl.Syntax
     , CaseAlt (..)
     , Lam (..)
     , LamHead
+    , Native (..)
+    , Native'
     , Ident (..)
     , GenIdentPartPrefix
     , GenIdentPartNum
@@ -55,12 +57,14 @@ import           Data.Void
 import           Numeric.Natural
 
 import           Language.Dtfpl.Parser.Loc
+import qualified Language.ECMAScript.Syntax  as JS
 
 -- | Simplification pass.
 -- Only used in promoted form.
 $(promote [d|
     data Pass
         = Source
+        | ParsedNative
         | InitGen
         | NoDef
         | NoLamMatch
@@ -222,14 +226,15 @@ data Expr (p :: Pass)
     -- | Lambda expression.
     | LamExpr (Lam p)
     -- | Native JS expression.
-    | Native String
+    | NativeExpr (Native p)
 
 type instance Children Expr p =
     '[ A Ident
      , A Lit
      , A Expr
      , CaseHead, T NonEmpty (A CaseAlt)
-     , Lam ]
+     , Lam
+     , Native ]
 
 deriving instance Forall Eq Expr p => Eq (Expr p)
 deriving instance Forall Show Expr p => Show (Expr p)
@@ -286,6 +291,20 @@ type LamHead (p :: Pass) = When p
     (T NonEmpty (A Pat))
     '[ 'NoLamMatch ==> T NonEmpty (A Ident)
      , 'Curried ==> A Ident ]
+
+-- | Native JS expression.
+newtype Native (p :: Pass) = Native (Native' p p)
+
+type instance Children Native p =
+    '[ Native' p ]
+
+deriving instance Forall Eq Native p => Eq (Native p)
+deriving instance Forall Show Native p => Show (Native p)
+
+-- | The representation of a native JS expression at the given pass.
+type Native' (p :: Pass) = When p
+    (P String)
+    '[ 'ParsedNative ==> P JS.Expression ]
 
 -- | Identifier.
 data Ident (p :: Pass)

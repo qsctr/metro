@@ -109,7 +109,7 @@ instance AutoSim Expr p => Sim Expr p where
     sim (If cond true false) = If <$> sim cond <*> sim true <*> sim false
     sim (Case caseHead alts) = Case <$> sim caseHead <*> sim alts
     sim (LamExpr lam)        = LamExpr <$> sim lam
-    sim (Native s)           = pure $ Native s
+    sim (NativeExpr n)       = NativeExpr <$> sim n
 
 instance {-# OVERLAPPABLE #-} AutoSim CaseHead p => Sim CaseHead p where
     sim (CaseHead x) = CaseHead <$> sim x
@@ -122,6 +122,9 @@ instance {-# OVERLAPPABLE #-} AutoSim CaseAlt p => Sim CaseAlt p where
 
 instance {-# OVERLAPPABLE #-} AutoSim Lam p => Sim Lam p where
     sim (Lam lamHead expr) = Lam <$> sim lamHead <*> sim expr
+
+instance {-# OVERLAPPABLE #-} AutoSim Native p => Sim Native p where
+    sim (Native n) = Native <$> sim n
 
 instance {-# OVERLAPPABLE #-} AutoSim Ident p => Sim Ident p where
     sim (Ident str)               = pure $ Ident str
