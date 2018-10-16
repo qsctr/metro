@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies          #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -10,13 +11,16 @@
 -- pass.
 module Language.Dtfpl.Simplify.InitGen () where
 
-import           Language.Dtfpl.Simplify.Sim
+import           Language.Dtfpl.Simplify.SimM
+import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 
-instance Sim n 'InitGen => Sim (A n) 'InitGen where
-    sim (A n a) = flip A (Just a) <$> sim n
+type instance StepClass' 'InitGen = MSim
 
-instance Sim Ident 'InitGen where
-    sim (Ident str)        = pure $ Ident str
-    sim (GenIdentPart _ _) = undefined
-    sim (GenIdentFull _)   = undefined
+instance Step n 'InitGen => Step (A n) 'InitGen where
+    step (A n a) = flip A (Just a) <$> step n
+
+instance Step Ident 'InitGen where
+    step (Ident str)        = pure $ Ident str
+    step (GenIdentPart _ _) = undefined
+    step (GenIdentFull _)   = undefined

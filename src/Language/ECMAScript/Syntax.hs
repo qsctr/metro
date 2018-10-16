@@ -401,6 +401,7 @@ data Expression
     | YieldExpression Bool (Maybe Expression)
     | ClassExpression (Maybe Identifier) (Maybe Expression) ClassBody
     | MetaProperty
+    | PassthruExpression Value
 
 instance ToJSON Expression where
     toJSON (IdentifierExpression identifier) = toJSON identifier
@@ -483,6 +484,7 @@ instance ToJSON Expression where
         estree "MetaProperty"
             [ "meta" .= ("new" :: Text)
             , "property" .= ("target" :: Text) ]
+    toJSON (PassthruExpression value) = value
 
 data TemplateLiteral
     = TemplateLiteral [TemplateElement] [Expression]

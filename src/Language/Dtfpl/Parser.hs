@@ -176,7 +176,7 @@ nativeExpr = addLoc . fmap NativeExpr . native
 -- greater than the given 'Pos'.
 -- This parser just eats all input and does not actually parse the JS
 -- expression. The expression is parsed using a JS parser in the ParseNative
--- simplification step.
+-- step.
 native :: PParsec p => Pos -> p (Native 'Source)
 native i = Native . P <$> nativeString
   where nativeString = do

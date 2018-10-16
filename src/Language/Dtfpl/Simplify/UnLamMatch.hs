@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE ViewPatterns          #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
@@ -12,8 +13,11 @@ import qualified Data.List.NonEmpty              as N
 import           Data.Traversable
 
 import           Language.Dtfpl.Simplify.GenUtil
-import           Language.Dtfpl.Simplify.Sim
+import           Language.Dtfpl.Simplify.SimM
+import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
+
+type instance StepClass' 'NoLamMatch = MSim
 
 -- | Move any pattern-matching done in 'Lam' heads into a 'Case' expression in
 -- the body.
@@ -32,18 +36,19 @@ import           Language.Dtfpl.Syntax
 --
 -- 'Lam's which do not do any pattern-matching, i.e. all patterns are 'VarPat's,
 -- are unchanged (except that the 'VarPat's are replaced with 'Ident's).
-instance Sim Lam 'NoLamMatch where
-    sim (Lam (T pats) expr) = do
+instance Step Lam 'NoLamMatch where
+    step (Lam (T pats) expr) = do
         idents <- for pats $ \case
-            A (VarPat ident) _ -> sim ident
+            A (VarPat ident) _ -> step ident
             _ -> genLocIdentFull
         Lam (T idents) <$>
             case N.filter (isGenIdentFull . node . fst) $ N.zip idents pats of
-                [] -> sim expr
+                [] -> step expr
                 (unzip -> (idents', pats')) ->
                     let caseHead = CaseHead $ T $ N.fromList $
                             map (genLoc . VarExpr) idents'
                     in  fmap (genLoc . Case caseHead . T . pure . genLoc) $
-                            CaseAlt <$> sim (T $ N.fromList pats') <*> sim expr
+                            CaseAlt <$> step (T $ N.fromList pats')
+                                <*> step expr
       where isGenIdentFull (GenIdentFull _) = True
             isGenIdentFull _                = False

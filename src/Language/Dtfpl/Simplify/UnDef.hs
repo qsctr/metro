@@ -2,6 +2,7 @@
 {-# LANGUAGE MonadComprehensions   #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ParallelListComp      #-}
+{-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE ViewPatterns          #-}
 
 {-# OPTIONS_GHC -fno-warn-orphans                 #-}
@@ -15,8 +16,11 @@ import qualified Data.List.NonEmpty              as N
 import           Data.Traversable
 
 import           Language.Dtfpl.Simplify.GenUtil
-import           Language.Dtfpl.Simplify.Sim
+import           Language.Dtfpl.Simplify.SimM
+import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
+
+type instance StepClass' 'NoDef = MSim
 
 -- | Replace all 'Def' declarations with 'Let' and 'LamExpr's.
 --
@@ -49,34 +53,34 @@ import           Language.Dtfpl.Syntax
 -- The first 'VarPat' in each column of the 'DefAlt's will be used as the lambda
 -- parameter name for that parameter. If there is no 'VarPat' in that column,
 -- a 'GenIdentPart' based on the name of the function will be used.
-instance Sim Decl 'NoDef where
-    sim (Def name (T alts)) = do
-        simName <- sim name
+instance Step Decl 'NoDef where
+    step (Def name (T alts)) = do
+        sName <- step name
         let (patRows, exprs) = N.unzip $
                 N.map (\(A (DefAlt (T pats) expr) _) -> (pats, expr)) alts
             patCols = N.transpose patRows
-        simExprs <- traverse sim exprs
-        lamParams <- runGenIdentPart simName $ for patCols $ \col ->
+        sExprs <- traverse step exprs
+        lamParams <- runGenIdentPart sName $ for patCols $ \col ->
             case find nodeIsVarPat col of
-                Just varPat -> liftSim varPat
+                Just varPat -> lstep varPat
                 Nothing     -> genLoc . VarPat <$> genLocIdentPart
         let lamParamIdents = N.map (\(A (VarPat ident) _) -> ident) lamParams
             nonVarPat = N.filter (any (not . nodeIsVarPat) . snd) $
                 N.zip lamParamIdents patCols
         lamBody <- case nonVarPat of
-            [] -> pure $ N.head simExprs -- TODO: check if more than one expr
+            [] -> pure $ N.head sExprs -- TODO: check if more than one expr
             (unzip -> (idents', cols')) -> do
                 let caseHead = CaseHead $ T $ N.fromList $
                         map (genLoc . VarExpr) idents'
                     rows' = N.transpose $ N.fromList cols'
                     rows'' = N.map (N.map (mapNode varPatToWildPat)) rows'
-                simRows <- traverse (traverse sim) rows''
+                sRows <- traverse (traverse step) rows''
                 let caseAlts = [ A (CaseAlt (T pats) expr) loc
-                        | pats <- simRows | expr <- simExprs | A _ loc <- alts ]
+                        | pats <- sRows | expr <- sExprs | A _ loc <- alts ]
                 pure $ genLoc $ Case caseHead $ T caseAlts
-        pure $ Let simName $ genLoc $ LamExpr $ Lam (T lamParams) lamBody
+        pure $ Let sName $ genLoc $ LamExpr $ Lam (T lamParams) lamBody
       where nodeIsVarPat (A (VarPat _) _) = True
             nodeIsVarPat _                = False
             varPatToWildPat (VarPat _) = WildPat
             varPatToWildPat pat        = pat
-    sim (Let name expr) = Let <$> sim name <*> sim expr
+    step (Let name expr) = Let <$> step name <*> step expr

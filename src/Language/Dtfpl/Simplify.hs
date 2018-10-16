@@ -1,11 +1,13 @@
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DataKinds        #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 -- | Simplification phase.
 module Language.Dtfpl.Simplify
     ( simplify
     ) where
 
-import           Language.Dtfpl.Simplify.Sim
+import           Language.Dtfpl.Simplify.SimM
+import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 
 import           Language.Dtfpl.Simplify.AliasCase  ()
@@ -14,6 +16,6 @@ import           Language.Dtfpl.Simplify.InitGen    ()
 import           Language.Dtfpl.Simplify.UnDef      ()
 import           Language.Dtfpl.Simplify.UnLamMatch ()
 
--- | Simplify a complete program from source-form to core-form.
+-- | Simplify a complete program from ParsedNative to Core.
 simplify :: A Prog 'ParsedNative -> A Prog Core
-simplify prog = runSim $ sim prog >>= sim >>= sim >>= sim >>= sim
+simplify prog = runSim $ step prog >>= step >>= step >>= step >>= step
