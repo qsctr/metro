@@ -99,7 +99,7 @@ newtype Identifier = Identifier String
 
 -- | Create an 'Identifier'.
 -- Checks if the given string is valid in debug mode only.
-mkIdentifier :: (MConfig m, MError m) => String -> m Identifier
+mkIdentifier :: (MEnv m, MError m) => String -> m Identifier
 mkIdentifier s = do
     debugErrIf (not $ isValidIdentifier s) $
         InternalConvertErr $ InternalInvalidTargetASTErr $
