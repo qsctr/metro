@@ -17,7 +17,7 @@ import           Language.Dtfpl.Simplify.SimM
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 
-type instance StepClass' 'NoLamMatch = MSim
+type instance StepClass' 'NoLamMatch m = MSim m
 
 -- | Move any pattern-matching done in 'Lam' heads into a 'Case' expression in
 -- the body.

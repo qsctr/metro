@@ -22,7 +22,7 @@ import           Language.Dtfpl.Syntax
 
 type StepClass (p :: Pass) m = (Monad m, StepClass' p m)
 
-type family StepClass' (p :: Pass) :: (* -> *) -> Constraint
+type family StepClass' (p :: Pass) (m :: (* -> *)) :: Constraint
 
 class Step (n :: Node) (p :: Pass) where
     step :: StepClass p m => n (Pred p) -> m (n p)

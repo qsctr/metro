@@ -1,4 +1,5 @@
 const readline = require('readline');
+const { parseExpressionAt } = require('acorn');
 const { generate } = require('astring');
 
 const rl = readline.createInterface({
@@ -8,5 +9,13 @@ const rl = readline.createInterface({
 });
 
 rl.on('line', input => {
-    process.stdout.write(JSON.stringify(generate(JSON.parse(input))) + '\n');
+    const req = JSON.parse(input);
+    process.stdout.write(JSON.stringify((() => {
+        switch (req.type) {
+            case 'ParseNative':
+                return parseExpressionAt(req.value);
+            case 'Render':
+                return generate(req.value);
+        }
+    })()) + '\n');
 });

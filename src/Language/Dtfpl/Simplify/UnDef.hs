@@ -20,7 +20,7 @@ import           Language.Dtfpl.Simplify.SimM
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 
-type instance StepClass' 'NoDef = MSim
+type instance StepClass' 'NoDef m = MSim m
 
 -- | Replace all 'Def' declarations with 'Let' and 'LamExpr's.
 --

@@ -34,7 +34,7 @@ compile config program = withProcess nodeProcConfig $ \nodeProc ->
 compileM :: String -> M Text
 compileM =
     parse ""
-    >=> parseNative >>> liftIO
+    >=> parseNative
     >=> simplify
     >>> convert
     >=> render

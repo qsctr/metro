@@ -15,7 +15,7 @@ import           Language.Dtfpl.Simplify.SimM
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 
-type instance StepClass' 'AliasCase = MSim
+type instance StepClass' 'AliasCase m = MSim m
 
 -- | Attaches an 'Ident' alias to the 'CaseHead' expression if it is not a
 -- 'VarExpr'.

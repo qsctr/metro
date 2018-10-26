@@ -15,7 +15,7 @@ import           Language.Dtfpl.Simplify.SimM
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 
-type instance StepClass' 'InitGen = MSim
+type instance StepClass' 'InitGen m = MSim m
 
 instance Step n 'InitGen => Step (A n) 'InitGen where
     step (A n a) = flip A (Just a) <$> step n

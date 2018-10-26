@@ -2,6 +2,7 @@
   "name": "dtfpl",
   "version": "1.0.0",
   "dependencies": {
+    "acorn": "^6.0.2",
     "astring": "^1.2.0"
   }
 }
