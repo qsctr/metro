@@ -10,6 +10,7 @@ license: MIT
 github: qsctr/dtfpl
 extra-source-files:
   - js/**/*.js
+  - package.json
   - stack.yaml
   - README.md
   - docs/**/*.md
