@@ -33,8 +33,18 @@ instance ToJS n js => ToJS (A n) js where
     toJS (A n _) = toJS n
 
 instance ToJS Prog Program where
-    toJS (Prog (T decls)) = Program ScriptSourceType
+    toJS (Prog (T decls)) = Program ScriptSourceType <$> ((++)
         <$> traverse (fmap (Left' . DeclarationStatement) . toJS) decls
+        <*> (pure . Left' . ExpressionStatement <$> (CallExpression
+            <$> (Left' . IdentifierExpression <$> mkIdentifier "main")
+            <*> (pure . Left' <$> (CallExpression
+                <$> (Left' . MemberExpression <$> (Member
+                    <$> (Left' . MemberExpression <$> (Member
+                        <$> (Left' . IdentifierExpression
+                            <$> mkIdentifier "process")
+                        <*> (Right' <$> mkIdentifier "argv")))
+                    <*> (Right' <$> mkIdentifier "slice")))
+                <*> pure [Left' (LiteralExpression (NumberLiteral 2))])))))
 
 instance ToJS Decl Declaration where
     toJS (Let ident expr) = constDecl <$> toJS ident <*> toJS expr
