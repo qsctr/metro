@@ -2,7 +2,7 @@
 
 Dtfpl is a functional language with a syntax similar to Haskell. However, unlike Haskell, dtfpl is not a pure functional language.
 
-Note that at the moment dtfpl does not come with any built-in functions whatsoever. The compiler can still compile programs by converting them into the equivalent JavaScript syntactically, but these programs will not run. This will change after support for JavaScript FFI is added. Therefore, the example code below is only for demonstration of syntax.
+Currently, dtfpl does not have a standard library or any built-in functions. However, you can define bindings to JavaScript functions yourself.
 
 ## Declarations
 
@@ -41,9 +41,9 @@ Multi-argument functions are automatically curried, so they can be partially app
 
 ```
 def either-is-zero
-    a 0 -> true
-    0 b -> true
-    a b -> false
+    _ 0 -> true
+    0 _ -> true
+    _ _ -> false
 ```
 
 Functions can take other functions as arguments.
@@ -59,6 +59,36 @@ Values can be bound to names by using a let declaration.
 
 ```
 let factorial-of-five = factorial 5
+```
+
+### Native functions
+
+You can define bindings to JavaScript functions by using the `native` keyword after `def`.
+
+```
+def native dec
+    x -> x - 1
+```
+
+There can be any valid JavaScript expression after the arrow. However, argument names should be limited to valid JS identifiers so you can refer to them in the body of the function.
+
+### Native let
+
+You can define bindings to native JavaScript values by using the `native` keyword after `let`.
+
+```
+let native true = true
+let native pi = Math.PI
+```
+
+As with native functions, there can be any valid JS expression in the body.
+
+In the first line, we are defining the dtfpl variable `true` to be equal to the JS value `true`, since `true` is not a built-in expression in dtfpl.
+
+You can also use `let native` to bind to JS functions directly. However, these functions will not be automatically curried, so you should only do this when the function takes only one argument.
+
+```
+let native sin = Math.sin
 ```
 
 ## Expressions
@@ -97,4 +127,30 @@ You can also pattern-match on multiple expressions at once, separated by commas.
 case a, b of
     1, 2 -> "one and two"
     3, 4 -> "three and four"
+```
+
+## Main function
+
+The `main` function will be automatically executed when the compiled JS program is run with node. It takes one argument which is an array of arguments passed to the program at the command line. If your program does not use this then you can use `_` as the pattern.
+
+```
+let native print = console.log
+
+def main
+    _ -> print "hello world"
+```
+
+If you want to execute multiple statements, you can define a (curried) function which takes any number of arguments and simply evaluates the arguments for their side effects, ignoring the results. This can be done by defining a function that ignores its argument and returns itself.
+
+```
+def do _ -> do
+```
+
+Now you can do:
+
+```
+def main
+    _ -> do
+        (print "hello")
+        (print "world")
 ```
