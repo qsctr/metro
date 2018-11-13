@@ -27,6 +27,8 @@ module Language.Dtfpl.Syntax
     , mapNode
     , genLoc
     , Prog (..)
+    , TopLevel (..)
+    , ExpType (..)
     , Decl (..)
     , DefHead
     , DefBody
@@ -153,13 +155,31 @@ genLoc :: Ann p ~ Maybe a => n p -> A n p
 genLoc = flip A Nothing
 
 -- | Program.
-newtype Prog (p :: Pass) = Prog (T [] (A Decl) p)
+newtype Prog (p :: Pass) = Prog (T [] (A TopLevel) p)
 
 type instance Children Prog p =
-    '[ T [] (A Decl) ]
+    '[ T [] (A TopLevel) ]
 
 deriving instance Forall Eq Prog p => Eq (Prog p)
 deriving instance Forall Show Prog p => Show (Prog p)
+
+-- | Top level statement.
+data TopLevel (p :: Pass)
+    -- | Top level declaration.
+    = TLDecl (ExpType p) (A Decl p)
+
+type instance Children TopLevel p =
+    '[ ExpType, A Decl ]
+
+deriving instance Forall Eq TopLevel p => Eq (TopLevel p)
+deriving instance Forall Show TopLevel p => Show (TopLevel p)
+
+data ExpType (p :: Pass)
+    -- | Exported.
+    = Exp
+    -- | Private.
+    | Priv
+    deriving (Eq, Show)
 
 -- | Declaration.
 data Decl (p :: Pass)
