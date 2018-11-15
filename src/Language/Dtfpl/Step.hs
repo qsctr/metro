@@ -56,7 +56,7 @@ instance AutoStep TopLevel p => Step TopLevel p where
     step (TLDecl expType decl) = TLDecl <$> step expType <*> step decl
 
 instance Step ExpType p where
-    step Exp = pure Exp
+    step Exp  = pure Exp
     step Priv = pure Priv
 
 instance {-# OVERLAPPABLE #-} AutoStep Decl p => Step Decl p where
