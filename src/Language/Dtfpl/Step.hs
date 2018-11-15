@@ -50,7 +50,14 @@ instance (Step n p, Traversable t) => Step (T t n) p where
     step (T t) = T <$> traverse step t
 
 instance AutoStep Prog p => Step Prog p where
-    step (Prog decls) = Prog <$> step decls
+    step (Prog tls) = Prog <$> step tls
+
+instance AutoStep TopLevel p => Step TopLevel p where
+    step (TLDecl expType decl) = TLDecl <$> step expType <*> step decl
+
+instance Step ExpType p where
+    step Exp = pure Exp
+    step Priv = pure Priv
 
 instance {-# OVERLAPPABLE #-} AutoStep Decl p => Step Decl p where
     step (Def name alts) = Def <$> step name <*> step alts
