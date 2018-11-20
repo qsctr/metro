@@ -201,7 +201,7 @@ kof = "of"
 
 -- | Strings which cannot be used as identifiers.
 reservedWords :: [String]
-reservedWords = [kdef, klet, kif, kthen, kelse, kcase, kof]
+reservedWords = [kdef, klet, knative, kif, kthen, kelse, kcase, kof]
 
 -- | Parse a keyword.
 keyword :: PParsec p => String -> p ()
