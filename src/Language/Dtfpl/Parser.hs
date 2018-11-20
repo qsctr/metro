@@ -50,7 +50,11 @@ _testParse input = first parseErrorPretty $
 
 -- | Parse a program.
 prog :: (PParsec p, PIndentState p) => p (A Prog 'Source)
-prog = addLoc (Prog . T <$> many (nonIndented scn decl <* scn)) <* eof
+prog = addLoc (Prog . T <$> many (nonIndented scn tlDecl <* scn)) <* eof
+
+-- | Parse a top-level declaration.
+tlDecl :: (PParsec p, PIndentState p) => p (A TopLevel 'Source)
+tlDecl = addLoc $ TLDecl <$> option Priv (lexeme1 sexp $> Exp) <*> decl
 
 -- | Parse a declaration.
 decl :: (PParsec p, PIndentState p) => p (A Decl 'Source)
@@ -189,9 +193,10 @@ native i = Native . P <$> nativeString
                     else empty -- failure
 
 -- | Keyword string.
-kdef, klet, knative, kif, kthen, kelse, kcase, kof :: String
+kdef, klet, kexp, knative, kif, kthen, kelse, kcase, kof :: String
 kdef = "def"
 klet = "let"
+kexp = "exp"
 knative = "native"
 kif = "if"
 kthen = "then"
@@ -201,16 +206,17 @@ kof = "of"
 
 -- | Strings which cannot be used as identifiers.
 reservedWords :: [String]
-reservedWords = [kdef, klet, knative, kif, kthen, kelse, kcase, kof]
+reservedWords = [kdef, klet, kexp, knative, kif, kthen, kelse, kcase, kof]
 
 -- | Parse a keyword.
 keyword :: PParsec p => String -> p ()
 keyword = string >>> (*> notFollowedBy (satisfy isIdentTailChar))
 
 -- | Keyword parser.
-sdef, slet, snative, sif, sthen, selse, scase, sof :: PParsec p => p ()
+sdef, slet, sexp, snative, sif, sthen, selse, scase, sof :: PParsec p => p ()
 sdef = keyword kdef
 slet = keyword klet
+sexp = keyword kexp
 snative = keyword knative
 sif = keyword kif
 sthen = keyword kthen
