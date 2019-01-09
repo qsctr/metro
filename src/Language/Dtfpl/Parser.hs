@@ -54,9 +54,11 @@ prog = addLoc (Prog
     <$> (T <$> many (import_ <* scn))
     <*> (T <$> many (nonIndented scn tlDecl <* scn))) <* eof
 
+-- | Parse an import statement.
 import_ :: (PParsec p, PIndentState p) => p (A Import 'Source)
 import_ = nonIndented scn $ addLoc $ Import <$> (lexeme1 simport *> moduleName)
 
+-- | Parse a module name.
 moduleName :: PParsec p => p (A ModuleName 'Source)
 moduleName = addLoc $ ModuleName . T <$> moduleAtom `sepBy1` dot
   where moduleAtom = ModuleAtom <$> takeWhile1P Nothing isModuleAtomChar
