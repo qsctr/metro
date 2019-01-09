@@ -33,7 +33,7 @@ instance ToJS n js => ToJS (A n) js where
     toJS (A n _) = toJS n
 
 instance ToJS Prog Program where
-    toJS (Prog (T tls)) = Program ScriptSourceType <$> ((++)
+    toJS (Prog (T _) (T tls)) = Program ModuleSourceType <$> ((++)
         <$> traverse toJS tls
         <*> (pure . Left' . ExpressionStatement <$> (CallExpression
             <$> (Left' . IdentifierExpression <$> mkIdentifier "main")
@@ -45,6 +45,9 @@ instance ToJS Prog Program where
                         <*> (Right' <$> mkIdentifier "argv")))
                     <*> (Right' <$> mkIdentifier "slice")))
                 <*> pure [Left' (LiteralExpression (NumberLiteral 2))])))))
+
+instance ToJS Import ModuleDeclaration where
+    toJS (Import _) = undefined -- TODO
 
 instance ToJS TopLevel (Either' Statement ModuleDeclaration) where
     toJS (TLDecl Exp decl) =

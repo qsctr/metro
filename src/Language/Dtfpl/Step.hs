@@ -50,10 +50,19 @@ instance (Step n p, Traversable t) => Step (T t n) p where
     step (T t) = T <$> traverse step t
 
 instance AutoStep Prog p => Step Prog p where
-    step (Prog tls) = Prog <$> step tls
+    step (Prog imps tls) = Prog <$> step imps <*> step tls
+
+instance AutoStep Import p => Step Import p where
+    step (Import m) = Import <$> step m
 
 instance AutoStep TopLevel p => Step TopLevel p where
     step (TLDecl expType decl) = TLDecl <$> step expType <*> step decl
+
+instance Step ModuleName p where
+    step (ModuleName atoms) = ModuleName <$> step atoms
+
+instance Step ModuleAtom p where
+    step (ModuleAtom str) = pure $ ModuleAtom str
 
 instance Step ExpType p where
     step Exp  = pure Exp

@@ -50,7 +50,18 @@ _testParse input = first parseErrorPretty $
 
 -- | Parse a program.
 prog :: (PParsec p, PIndentState p) => p (A Prog 'Source)
-prog = addLoc (Prog . T <$> many (nonIndented scn tlDecl <* scn)) <* eof
+prog = addLoc (Prog
+    <$> (T <$> many (import_ <* scn))
+    <*> (T <$> many (nonIndented scn tlDecl <* scn))) <* eof
+
+import_ :: (PParsec p, PIndentState p) => p (A Import 'Source)
+import_ = nonIndented scn $ addLoc $ Import <$> (lexeme1 simport *> moduleName)
+
+moduleName :: PParsec p => p (A ModuleName 'Source)
+moduleName = addLoc $ ModuleName . T <$> moduleAtom `sepBy1` dot
+  where moduleAtom = ModuleAtom <$> takeWhile1P Nothing isModuleAtomChar
+        isModuleAtomChar c = (isLower c || c == '-')
+                          && c `notElem` reservedChars
 
 -- | Parse a top-level declaration.
 tlDecl :: (PParsec p, PIndentState p) => p (A TopLevel 'Source)
@@ -192,16 +203,36 @@ native i = Native . P <$> nativeString
                     then ((line ++ indent) ++) <$> nativeString
                     else empty -- failure
 
--- | Keyword string.
-kdef, klet, kexp, knative, kif, kthen, kelse, kcase, kof :: String
+-- Keyword strings
+
+kimport :: String
+kimport = "import"
+
+kdef :: String
 kdef = "def"
+
+klet :: String
 klet = "let"
+
+kexp :: String
 kexp = "exp"
+
+knative :: String
 knative = "native"
+
+kif :: String
 kif = "if"
+
+kthen :: String
 kthen = "then"
+
+kelse :: String
 kelse = "else"
+
+kcase :: String
 kcase = "case"
+
+kof :: String
 kof = "of"
 
 -- | Strings which cannot be used as identifiers.
@@ -212,28 +243,60 @@ reservedWords = [kdef, klet, kexp, knative, kif, kthen, kelse, kcase, kof]
 keyword :: PParsec p => String -> p ()
 keyword = string >>> (*> notFollowedBy (satisfy isIdentTailChar))
 
--- | Keyword parser.
-sdef, slet, sexp, snative, sif, sthen, selse, scase, sof :: PParsec p => p ()
+-- Keyword parsers
+
+simport :: PParsec p => p ()
+simport = keyword kimport
+
+sdef :: PParsec p => p ()
 sdef = keyword kdef
+
+slet :: PParsec p => p ()
 slet = keyword klet
+
+sexp :: PParsec p => p ()
 sexp = keyword kexp
+
+snative :: PParsec p => p ()
 snative = keyword knative
+
+sif :: PParsec p => p ()
 sif = keyword kif
+
+sthen :: PParsec p => p ()
 sthen = keyword kthen
+
+selse :: PParsec p => p ()
 selse = keyword kelse
+
+scase :: PParsec p => p ()
 scase = keyword kcase
+
+sof :: PParsec p => p ()
 sof = keyword kof
 
 -- | Parse a symbol.
 symbol :: PParsec p => String -> p ()
 symbol = void . string
 
--- | Symbol parser.
-arrow, comma, equals, lambda, wildcard :: PParsec p => p ()
+-- Symbol parsers
+
+arrow :: PParsec p => p ()
 arrow = symbol "->"
+
+comma :: PParsec p => p ()
 comma = symbol ","
+
+dot :: PParsec p => p ()
+dot = symbol "."
+
+equals :: PParsec p => p ()
 equals = symbol "="
+
+lambda :: PParsec p => p ()
 lambda = symbol "\\"
+
+wildcard :: PParsec p => p ()
 wildcard = symbol "_"
 
 -- | Characters which cannot be used in identifiers.

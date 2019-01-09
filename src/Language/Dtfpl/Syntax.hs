@@ -27,7 +27,10 @@ module Language.Dtfpl.Syntax
     , mapNode
     , genLoc
     , Prog (..)
+    , Import (..)
     , TopLevel (..)
+    , ModuleName (..)
+    , ModuleAtom (..)
     , ExpType (..)
     , Decl (..)
     , DefHead
@@ -155,13 +158,29 @@ genLoc :: Ann p ~ Maybe a => n p -> A n p
 genLoc = flip A Nothing
 
 -- | Program.
-newtype Prog (p :: Pass) = Prog (T [] (A TopLevel) p)
+data Prog (p :: Pass) = Prog (T [] (A Import) p) (T [] (A TopLevel) p)
 
 type instance Children Prog p =
-    '[ T [] (A TopLevel) ]
+    '[ T [] (A Import)
+     , T [] (A TopLevel) ]
 
 deriving instance Forall Eq Prog p => Eq (Prog p)
 deriving instance Forall Show Prog p => Show (Prog p)
+
+newtype Import (p :: Pass)
+    -- | Import statement.
+    = Import (A ModuleName p)
+
+type instance Children Import p =
+    '[ A ModuleName ]
+
+deriving instance Forall Eq Import p => Eq (Import p)
+deriving instance Forall Show Import p => Show (Import p)
+
+newtype ModuleName (p :: Pass) = ModuleName (T NonEmpty ModuleAtom p)
+    deriving (Eq, Show)
+
+newtype ModuleAtom (p :: Pass) = ModuleAtom String deriving (Eq, Show)
 
 -- | Top level statement.
 data TopLevel (p :: Pass)
