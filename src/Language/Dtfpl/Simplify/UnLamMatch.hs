@@ -40,15 +40,16 @@ instance Step Lam 'NoLamMatch where
     step (Lam (T pats) expr) = do
         idents <- for pats $ \case
             A (VarPat ident) _ -> step ident
-            _ -> genLocIdentFull
+            _ -> IdentBind <$> genLocIdentFull
         Lam (T idents) <$>
-            case N.filter (isGenIdentFull . node . fst) $ N.zip idents pats of
-                [] -> step expr
-                (unzip -> (idents', pats')) ->
-                    let caseHead = CaseHead $ T $ N.fromList $
-                            map (genLoc . VarExpr) idents'
-                    in  fmap (genLoc . Case caseHead . T . pure . genLoc) $
-                            CaseAlt <$> step (T $ N.fromList pats')
-                                <*> step expr
+            case N.filter (isGenIdentFull . node . unIdentBind . fst) $
+                N.zip idents pats of
+                    [] -> step expr
+                    (unzip -> (idents', pats')) ->
+                        let caseHead = CaseHead $ T $ N.fromList $
+                                map (genLoc . VarExpr . identBindToRef) idents'
+                        in  fmap (genLoc . Case caseHead . T . pure . genLoc) $
+                                CaseAlt <$> step (T $ N.fromList pats')
+                                    <*> step expr
       where isGenIdentFull (GenIdentFull _) = True
             isGenIdentFull _                = False

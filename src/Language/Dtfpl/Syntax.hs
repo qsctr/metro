@@ -46,6 +46,9 @@ module Language.Dtfpl.Syntax
     , LamHead
     , Native (..)
     , Native'
+    , IdentBind (..)
+    , IdentRef (..)
+    , identBindToRef
     , Ident (..)
     , GenIdentPartPrefix
     , GenIdentPartNum
@@ -205,17 +208,17 @@ data Decl (p :: Pass)
     -- | @def@ function declaration.
     = Def (DefHead p p) (DefBody p p)
     -- | @let@ variable declaration.
-    | Let (A Ident p) (A Expr p)
+    | Let (IdentBind p) (A Expr p)
 
 type instance Children Decl p =
     '[ DefHead p, DefBody p
-     , A Ident, A Expr ]
+     , IdentBind, A Expr ]
 
 deriving instance Forall Eq Decl p => Eq (Decl p)
 deriving instance Forall Show Decl p => Show (Decl p)
 
 -- | Head of the 'Def' declaration at the given pass.
-type DefHead (p :: Pass) = VoidAfter 'NoDef p (A Ident)
+type DefHead (p :: Pass) = VoidAfter 'NoDef p IdentBind
 
 -- | Body of the 'Def' declaration at the given pass.
 type DefBody (p :: Pass) = VoidAfter 'NoDef p (T NonEmpty (A DefAlt))
@@ -234,7 +237,7 @@ deriving instance Forall Show DefAlt p => Show (DefAlt p)
 data Pat (p :: Pass)
     -- | Variable pattern.
     -- e.g. @x -> ...@
-    = VarPat (A Ident p)
+    = VarPat (IdentBind p)
     -- | Literal pattern.
     -- e.g. @42 -> ...@
     | LitPat (A Lit p)
@@ -243,7 +246,7 @@ data Pat (p :: Pass)
     | WildPat
 
 type instance Children Pat p =
-    '[ A Ident
+    '[ IdentBind
      , A Lit ]
 
 deriving instance Forall Eq Pat p => Eq (Pat p)
@@ -252,7 +255,7 @@ deriving instance Forall Show Pat p => Show (Pat p)
 -- | Expression.
 data Expr (p :: Pass)
     -- | Variable expression.
-    = VarExpr (A Ident p)
+    = VarExpr (IdentRef p)
     -- | Literal expression.
     | LitExpr (A Lit p)
     -- | Function application.
@@ -268,7 +271,7 @@ data Expr (p :: Pass)
     | NativeExpr (Native p)
 
 type instance Children Expr p =
-    '[ A Ident
+    '[ IdentRef
      , A Lit
      , A Expr
      , CaseHead, T NonEmpty (A CaseAlt)
@@ -297,10 +300,10 @@ type CaseHead' (p :: Pass) = When p
 -- expression, to cache the result of that expression
 -- for use in the generated code.
 data AliExpr (p :: Pass)
-    = AliExpr (A Expr p) (T Maybe Ident p)
+    = AliExpr (A Expr p) (T Maybe IdentBind p)
 
 type instance Children AliExpr p =
-    '[ A Expr, T Maybe Ident ]
+    '[ A Expr, T Maybe IdentBind ]
 
 deriving instance Forall Eq AliExpr p => Eq (AliExpr p)
 deriving instance Forall Show AliExpr p => Show (AliExpr p)
@@ -328,8 +331,8 @@ deriving instance Forall Show Lam p => Show (Lam p)
 -- | Head of the lambda at the given pass.
 type LamHead (p :: Pass) = When p
     (T NonEmpty (A Pat))
-    '[ 'NoLamMatch ==> T NonEmpty (A Ident)
-     , 'Curried ==> A Ident ]
+    '[ 'NoLamMatch ==> T NonEmpty IdentBind
+     , 'Curried ==> IdentBind ]
 
 -- | Native JS expression.
 newtype Native (p :: Pass) = Native (Native' p p)
@@ -344,6 +347,25 @@ deriving instance Forall Show Native p => Show (Native p)
 type Native' (p :: Pass) = When p
     (P String)
     '[ 'ParsedNative ==> P JS.Expression ]
+
+newtype IdentBind (p :: Pass) = IdentBind { unIdentBind :: A Ident p }
+
+type instance Children IdentBind p =
+    '[ A Ident ]
+
+deriving instance Forall Eq IdentBind p => Eq (IdentBind p)
+deriving instance Forall Show IdentBind p => Show (IdentBind p)
+
+newtype IdentRef (p :: Pass) = IdentRef (A Ident p)
+
+type instance Children IdentRef p =
+    '[ A Ident ]
+
+deriving instance Forall Eq IdentRef p => Eq (IdentRef p)
+deriving instance Forall Show IdentRef p => Show (IdentRef p)
+
+identBindToRef :: IdentBind p -> IdentRef p
+identBindToRef = IdentRef . unIdentBind
 
 -- | Identifier.
 data Ident (p :: Pass)

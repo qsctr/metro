@@ -60,10 +60,10 @@ instance Step Decl 'NoDef where
                 N.map (\(A (DefAlt (T pats) expr) _) -> (pats, expr)) alts
             patCols = N.transpose patRows
         sExprs <- traverse step exprs
-        lamParams <- runGenIdentPart sName $ for patCols $ \col ->
+        lamParams <- runGenIdentPart (unIdentBind sName) $ for patCols $ \col ->
             case find nodeIsVarPat col of
                 Just varPat -> lstep varPat
-                Nothing     -> genLoc . VarPat <$> genLocIdentPart
+                Nothing     -> genLoc . VarPat . IdentBind <$> genLocIdentPart
         let lamParamIdents = N.map (\(A (VarPat ident) _) -> ident) lamParams
             nonVarPat = N.filter (any (not . nodeIsVarPat) . snd) $
                 N.zip lamParamIdents patCols
@@ -71,7 +71,7 @@ instance Step Decl 'NoDef where
             [] -> pure $ N.head sExprs -- TODO: check if more than one expr
             (unzip -> (idents', cols')) -> do
                 let caseHead = CaseHead $ T $ N.fromList $
-                        map (genLoc . VarExpr) idents'
+                        map (genLoc . VarExpr . identBindToRef) idents'
                     rows' = N.transpose $ N.fromList cols'
                     rows'' = N.map (N.map (mapNode varPatToWildPat)) rows'
                 sRows <- traverse (traverse step) rows''

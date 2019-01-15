@@ -72,8 +72,8 @@ instance ToJS Expr Expression where
         let (aliases, headExprs) = mapAccumR
                 (\alis (AliExpr expr (T ali)) -> case ali of
                     Nothing -> (alis, expr)
-                    Just ident ->
-                        ((ident, expr) : alis, genLoc $ VarExpr $ genLoc ident))
+                    Just ident -> ((ident, expr) : alis,
+                        genLoc $ VarExpr $ identBindToRef ident))
                 [] aliExprs
         aliStmts <- for aliases $ \(ident, expr) ->
             DeclarationStatement .: constDecl <$> toJS ident <*> toJS expr
@@ -115,6 +115,12 @@ instance ToJS Expr Expression where
 
 instance ToJS Native Expression where
     toJS (Native (P expr)) = pure expr
+
+instance ToJS IdentBind Identifier where
+    toJS (IdentBind ident) = toJS ident
+
+instance ToJS IdentRef Identifier where
+    toJS (IdentRef ident) = toJS ident
 
 -- | Convert dtfpl 'Ident' to JS 'Identifier', trying to preserve as much of the
 -- original name as possible.

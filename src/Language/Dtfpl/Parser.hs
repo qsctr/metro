@@ -75,11 +75,11 @@ decl = def <|> let_
   where def = addLoc $ do
             lexeme1 sdef
             pAltBody <- snativeToExprBody
-            Def <$> ident <*> indentBlock' (defAlt pAltBody)
+            Def <$> (IdentBind <$> ident) <*> indentBlock' (defAlt pAltBody)
         let_ = addLoc $ do
             lexeme1 slet
             pBody <- snativeToExprBody
-            blockStart pBody $ Let <$> lexeme1 ident <* equals
+            blockStart pBody $ Let <$> lexeme1 (IdentBind <$> ident) <* equals
         snativeToExprBody = maybe expr (const nativeExpr) <$>
             optional (lexeme1 snative)
 
@@ -93,7 +93,7 @@ defAlt body = addLoc $ blockMid body $
 -- | Parse a pattern.
 pat :: PParsec p => p (A Pat 'Source)
 pat = varPat <|> litPat <|> wildPat
-  where varPat = addLoc $ VarPat <$> ident
+  where varPat = addLoc $ VarPat . IdentBind <$> ident
         litPat = addLoc $ LitPat <$> literal
         wildPat = addLoc $ wildcard $> WildPat
 
@@ -164,7 +164,7 @@ expr :: (PParsec p, PIndentState p) => Pos -> p (A Expr 'Source)
 expr i = foldl1 combine <$> term `sepEndBy1` try sc1'
   where combine f x = A (App f x) $ Loc (start (ann f)) (end (ann x))
         term = varExpr <|> if_ <|> case_ <|> lam <|> litExpr <|> par
-        varExpr = addLoc $ VarExpr <$> try ident
+        varExpr = addLoc $ VarExpr . IdentRef <$> try ident
         litExpr = addLoc $ LitExpr <$> literal
         par = parens (sc' *> expr i)
         if_ = addLoc $ If

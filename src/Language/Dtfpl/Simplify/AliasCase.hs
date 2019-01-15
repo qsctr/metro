@@ -23,4 +23,4 @@ instance Step CaseHead 'AliasCase where
     step (CaseHead (T exprs)) = fmap (CaseHead . T) $
         for exprs $ \expr -> AliExpr <$> step expr <*> case node expr of
             VarExpr _ -> pure $ T Nothing
-            _         -> T . Just <$> genIdentFull
+            _         -> T . Just . IdentBind <$> genLocIdentFull

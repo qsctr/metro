@@ -104,6 +104,12 @@ instance {-# OVERLAPPABLE #-} AutoStep Lam p => Step Lam p where
 instance {-# OVERLAPPABLE #-} AutoStep Native p => Step Native p where
     step (Native n) = Native <$> step n
 
+instance {-# OVERLAPPABLE #-} AutoStep IdentBind p => Step IdentBind p where
+    step (IdentBind ident) = IdentBind <$> step ident
+
+instance {-# OVERLAPPABLE #-} AutoStep IdentRef p => Step IdentRef p where
+    step (IdentRef ident) = IdentRef <$> step ident
+
 instance {-# OVERLAPPABLE #-} AutoStep Ident p => Step Ident p where
     step (Ident str)               = pure $ Ident str
     step (GenIdentPart prefix num) = GenIdentPart <$> step prefix <*> step num
