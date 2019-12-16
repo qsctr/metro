@@ -1,6 +1,8 @@
 {
   "name": "dtfpl",
   "version": "1.0.0",
+  "license": "MIT",
+  "repository": "qsctr/dtfpl",
   "dependencies": {
     "acorn": "^7.1.0",
     "astring": "^1.4.3"
