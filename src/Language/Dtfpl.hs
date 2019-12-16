@@ -26,7 +26,7 @@ import           Language.Dtfpl.Simplify
 
 -- | Compile a program.
 compile :: Config -> String -> IO (Either [String] Text)
-compile config program = withProcess nodeProcConfig $ \nodeProc ->
+compile config program = withProcessTerm nodeProcConfig $ \nodeProc ->
     fmap (first showErr) $ flip runReaderT Env { config, nodeProc } $
         runExceptT $ runM $ compileM program
 

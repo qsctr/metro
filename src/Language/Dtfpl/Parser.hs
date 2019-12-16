@@ -45,7 +45,7 @@ parse filename input = liftEither =<<
 -- | Parse a program into its AST representation.
 -- For testing purposes only, so we don't have to deal with monad transformers.
 _testParse :: String -> Either String (A Prog 'Source)
-_testParse input = first parseErrorPretty $
+_testParse input = first errorBundlePretty $
     runIdentity $ evalStateT (runParserT (prog <* eof) "" input) pos1
 
 -- | Parse a program.
@@ -333,7 +333,7 @@ literal = numLit <|> strLit
                     option "" ((:) <$> char '.' <*> digits)))
           where digits = takeWhile1P (Just "digit") isDigit
         strLit = addLoc $ StrLit <$>
-            (quote *> manyTill (escape <|> notChar '\n') quote)
+            (quote *> manyTill (escape <|> anySingleBut '\n') quote)
           where quote = char '"'
                 escape = char '\\' *> choice
                     [ char '\\'
@@ -343,8 +343,8 @@ literal = numLit <|> strLit
 -- | Turn a parser for an unannotated node into a parser for an annotated node.
 addLoc :: PParsec p => p (n 'Source) -> p (A n 'Source)
 addLoc p = do
-    s <- getPosition
-    A <$> p <*> (Loc s <$> getPosition)
+    s <- getSourcePos
+    A <$> p <*> (Loc s <$> getSourcePos)
 
 -- | Parse at least one indented item, using the indent state for checking
 -- indentation.
@@ -381,9 +381,9 @@ scn1 = scnWith space1
 -- | Run the space consumer and update the indent state when the line changes.
 scnWith :: (PParsec p, PIndentState p) => p () -> p ()
 scnWith p = do
-    s <- getPosition
+    s <- getSourcePos
     hidden p
-    e <- getPosition
+    e <- getSourcePos
     when (sourceLine s /= sourceLine e) $ put $ sourceColumn e
 
 -- | Space consumer which only consumes newlines if the next line is indented

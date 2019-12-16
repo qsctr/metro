@@ -16,7 +16,7 @@ module Language.Dtfpl.Step
     ) where
 
 import           Data.Kind
-import           Data.Promotion.Prelude.Enum
+import           Data.Singletons.Prelude.Enum
 
 import           Language.Dtfpl.Syntax
 

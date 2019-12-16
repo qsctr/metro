@@ -2,6 +2,7 @@
 {-# LANGUAGE DataKinds                 #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts          #-}
+{-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE MultiParamTypeClasses     #-}
 {-# LANGUAGE StandaloneDeriving        #-}
 {-# LANGUAGE TemplateHaskell           #-}
@@ -58,14 +59,12 @@ module Language.Dtfpl.Syntax
 
 import           Data.Kind
 import           Data.List.NonEmpty
-import           Data.Promotion.Prelude      ((:==$))
-import           Data.Promotion.Prelude.Enum
-import           Data.Promotion.TH
-import           Data.Void
+import           Data.Singletons.Prelude.Enum
+import           Data.Singletons.TH
 import           Numeric.Natural
 
 import           Language.Dtfpl.Parser.Loc
-import qualified Language.ECMAScript.Syntax  as JS
+import qualified Language.ECMAScript.Syntax   as JS
 
 -- | Simplification pass.
 -- Only used in promoted form.
@@ -114,11 +113,11 @@ type (p :: Pass) ==> t = 'WhenAlt p t
 -- default type.
 type family When (p :: Pass) t (xs :: [WhenAlt]) where
     When _ t '[] = t
-    When p t ((p' ==> t') : xs) = If (p :< p') t (When p t' xs)
+    When p t ((p' ==> t') : xs) = If (p < p') t (When p t' xs)
 
 -- | Returns the given type if the current pass is at least 'InitGen',
 -- otherwise returns 'P Void'.
-type FromInitGen (p :: Pass) t = If (p :< 'InitGen) (P Void) t
+type FromInitGen (p :: Pass) t = If (p < 'InitGen) (P Void) t
 
 -- | Returns 'P Void' if the current pass is after some specified pass,
 -- otherwise returns the given type.

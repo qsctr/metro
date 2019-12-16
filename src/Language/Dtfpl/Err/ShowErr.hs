@@ -3,7 +3,7 @@ module Language.Dtfpl.Err.ShowErr
     ( ShowErr (..)
     ) where
 
-import Text.Megaparsec.Error
+import Text.Megaparsec
 
 -- | Class for errors that can be shown.
 class ShowErr a where
@@ -14,6 +14,6 @@ class ShowErr a where
 
 -- | Instance for megaparsec's 'ParseError' error type.
 -- In this module to prevent orphan instance.
-instance (Ord t, ShowToken t, ShowErrorComponent e) =>
-         ShowErr (ParseError t e) where
-    showErr parseError = [parseErrorPretty parseError]
+instance (Stream s, ShowErrorComponent e) =>
+         ShowErr (ParseErrorBundle s e) where
+    showErr parseError = [errorBundlePretty parseError]

@@ -18,7 +18,7 @@ import           Language.Dtfpl.Parser.CustomError
 -- | Main error type. Represents all errors that the compiler may output.
 data Err
     = InternalErr InternalErr
-    | ParseErr (ParseError Char CustomError)
+    | ParseErr (ParseErrorBundle String CustomError)
 
 instance ShowErr Err where
     showErr (InternalErr e) = "Internal error" : showErr e

@@ -16,7 +16,7 @@ module Language.Dtfpl.Simplify.GenUtil
 
 import           Control.Monad.Reader
 import           Control.Monad.State
-import           Data.Promotion.Prelude.Enum
+import           Data.Singletons.Prelude.Enum
 import           Numeric.Natural
 
 import           Language.Dtfpl.Simplify.SimM
