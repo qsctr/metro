@@ -9,7 +9,9 @@
 -- | Desugar pattern-matching in 'Lam's.
 module Language.Dtfpl.Simplify.UnLamMatch () where
 
+import           Control.Category
 import qualified Data.List.NonEmpty              as N
+import           Data.Maybe
 import           Data.Traversable
 
 import           Language.Dtfpl.Simplify.GenUtil
@@ -38,18 +40,19 @@ type instance StepClass' 'NoLamMatch m = MSim m
 -- are unchanged (except that the 'VarPat's are replaced with 'Ident's).
 instance Step Lam 'NoLamMatch where
     step (Lam (T pats) expr) = do
-        idents <- for pats $ \case
-            A (VarPat ident) _ -> step ident
-            _ -> IdentBind <$> genLocIdentFull
-        Lam (T idents) <$>
-            case N.filter (isGenIdentFull . node . unIdentBind . fst) $
-                N.zip idents pats of
-                    [] -> step expr
-                    (unzip -> (idents', pats')) ->
-                        let caseHead = CaseHead $ T $ N.fromList $
-                                map (genLoc . VarExpr . identBindToRef) idents'
-                        in  fmap (genLoc . Case caseHead . T . pure . genLoc) $
-                                CaseAlt <$> step (T $ N.fromList pats')
-                                    <*> step expr
-      where isGenIdentFull (GenIdentFull _) = True
-            isGenIdentFull _                = False
+        (idents, N.toList >>> catMaybes -> case_) <-
+            fmap N.unzip $ for pats $ \case
+                A (VarPat ident) _ -> do
+                    sIdent <- step ident
+                    pure (sIdent, Nothing)
+                pat -> do
+                    ident <- genLocIdentFull
+                    sPat <- step pat
+                    pure ( IdentBind ident,
+                           Just (genLoc $ VarExpr $ IdentRef ident, sPat) )
+        sExpr <- step expr
+        pure $ Lam (T idents) $ case N.nonEmpty case_ of
+            Nothing -> sExpr
+            Just (N.unzip -> (headExprs, altPats)) ->
+                genLoc $ Case (CaseHead $ T headExprs) $
+                    T $ pure $ genLoc $ CaseAlt (T altPats) sExpr
