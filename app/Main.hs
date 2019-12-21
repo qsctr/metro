@@ -13,4 +13,4 @@ main = do
         >>= compile (Config { debug = True })
         >>= \case
             Left err -> putStr $ unlines err
-            Right js -> T.writeFile (filename ++ ".js") js
+            Right js -> T.writeFile (filename ++ ".mjs") js
