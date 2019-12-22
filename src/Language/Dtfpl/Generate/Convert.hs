@@ -13,6 +13,7 @@ import           Data.Traversable
 
 import           Language.Dtfpl.M
 import           Language.Dtfpl.Syntax
+import           Language.Dtfpl.Syntax.Util
 import           Language.Dtfpl.Util
 import           Language.ECMAScript.Syntax
 import           Language.ECMAScript.Syntax.Util

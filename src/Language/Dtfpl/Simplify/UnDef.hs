@@ -18,6 +18,7 @@ import           Data.Traversable
 import           Language.Dtfpl.Simplify.GenUtil
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
+import           Language.Dtfpl.Syntax.Util
 
 type instance StepClass' 'NoDef m = ()
 

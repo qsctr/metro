@@ -25,8 +25,6 @@ module Language.Dtfpl.Syntax
     , Children
     , A (..)
     , Ann
-    , mapNode
-    , genLoc
     , Prog (..)
     , Import (..)
     , TopLevel (..)
@@ -149,15 +147,6 @@ deriving instance (Show (n p), Show (Ann p)) => Show (A n p)
 type Ann (p :: Pass) = When p
     Loc
     '[ 'InitGen ==> Maybe Loc ]
-
--- | Applies a function to the unannotated node inside an annotated node,
--- keeping the same pass.
-mapNode :: (n p -> n' p) -> A n p -> A n' p
-mapNode f (A n a) = A (f n) a
-
--- | Annotate a node as a generated node.
-genLoc :: Ann p ~ Maybe a => n p -> A n p
-genLoc = flip A Nothing
 
 -- | Program.
 data Prog (p :: Pass) = Prog (T [] (A Import) p) (T [] (A TopLevel) p)

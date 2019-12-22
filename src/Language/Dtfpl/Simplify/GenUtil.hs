@@ -22,6 +22,7 @@ import           Numeric.Natural
 import           Language.Dtfpl.Simplify.SimM
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
+import           Language.Dtfpl.Syntax.Util
 
 -- | Returns the next 'GenIdentFull' identifier and updates the 'SimState'.
 genIdentFull :: (GenIdentFullNum p ~ P Natural, MSim m) => m (Ident p)

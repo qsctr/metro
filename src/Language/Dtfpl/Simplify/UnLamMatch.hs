@@ -18,6 +18,7 @@ import           Language.Dtfpl.Simplify.GenUtil
 import           Language.Dtfpl.Simplify.SimM
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
+import           Language.Dtfpl.Syntax.Util
 
 type instance StepClass' 'NoLamMatch m = MSim m
 

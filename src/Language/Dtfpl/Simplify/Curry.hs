@@ -7,10 +7,11 @@
 -- | Curry multi-argument lambdas.
 module Language.Dtfpl.Simplify.Curry () where
 
-import qualified Data.List.NonEmpty           as N
+import qualified Data.List.NonEmpty         as N
 
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
+import           Language.Dtfpl.Syntax.Util
 
 type instance StepClass' 'Curried m = ()
 
