@@ -44,7 +44,7 @@ type GenIdentPartT p m = ReaderT (A Ident p) (StateT Natural m)
 
 -- | Run a 'GenIdentPartM' operation with a prefix for 'GenIdentPart'.
 -- This should only be run once for each prefix.
-runGenIdentPart :: MSim m => A Ident p -> GenIdentPartT p m a -> m a
+runGenIdentPart :: Monad m => A Ident p -> GenIdentPartT p m a -> m a
 runGenIdentPart prefix x = evalStateT (runReaderT x prefix) 0
 
 -- | Returns a 'GenIdentPart' and updates the state.
