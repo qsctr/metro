@@ -9,11 +9,10 @@ module Language.Dtfpl.Simplify.Curry () where
 
 import qualified Data.List.NonEmpty           as N
 
-import           Language.Dtfpl.Simplify.SimM
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 
-type instance StepClass' 'Curried m = MSim m
+type instance StepClass' 'Curried m = ()
 
 -- | Replace all multi-argument lambdas with a chain of single-argument lambdas.
 --

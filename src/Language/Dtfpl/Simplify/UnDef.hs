@@ -16,11 +16,10 @@ import qualified Data.List.NonEmpty              as N
 import           Data.Traversable
 
 import           Language.Dtfpl.Simplify.GenUtil
-import           Language.Dtfpl.Simplify.SimM
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 
-type instance StepClass' 'NoDef m = MSim m
+type instance StepClass' 'NoDef m = ()
 
 -- | Replace all 'Def' declarations with 'Let' and 'LamExpr's.
 --
