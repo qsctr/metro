@@ -12,7 +12,7 @@ class ShowErr a where
     -- Instances should list the lines from least specific to most specific.
     showErr :: a -> [String]
 
--- | Instance for megaparsec's 'ParseError' error type.
+-- | Instance for megaparsec's 'ParseErrorBundle' error type.
 -- In this module to prevent orphan instance.
 instance (Stream s, ShowErrorComponent e) =>
          ShowErr (ParseErrorBundle s e) where
