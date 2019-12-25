@@ -12,5 +12,5 @@ main = do
     readFile (filename ++ ".dtfpl")
         >>= compile (Config { debug = True })
         >>= \case
-            Left err -> putStr $ unlines err
+            Left err -> putStr err
             Right js -> T.writeFile (filename ++ ".mjs") js

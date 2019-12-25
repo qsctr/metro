@@ -15,7 +15,7 @@ import           System.Process.Typed
 
 import           Language.Dtfpl.Config
 import           Language.Dtfpl.Env
-import           Language.Dtfpl.Err.ShowErr
+import           Language.Dtfpl.Err.Format
 import           Language.Dtfpl.Generate.Convert
 import           Language.Dtfpl.Generate.Render
 import           Language.Dtfpl.M
@@ -25,9 +25,9 @@ import           Language.Dtfpl.Parser
 import           Language.Dtfpl.Simplify
 
 -- | Compile a program.
-compile :: Config -> String -> IO (Either [String] Text)
+compile :: Config -> String -> IO (Either String Text)
 compile config program = withProcessTerm nodeProcConfig $ \nodeProc ->
-    fmap (first showErr) $ flip runReaderT Env { config, nodeProc } $
+    fmap (first formatErr) $ flip runReaderT Env { config, nodeProc } $
         runExceptT $ runM $ compileM program
 
 -- | Run the full compilation process in the 'M' monad.

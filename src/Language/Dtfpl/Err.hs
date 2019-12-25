@@ -11,7 +11,7 @@ module Language.Dtfpl.Err
 
 import           Text.Megaparsec.Error
 
-import           Language.Dtfpl.Err.ShowErr
+import           Language.Dtfpl.Err.ErrMessage
 import           Language.Dtfpl.Generate.ConvertErr
 import           Language.Dtfpl.Parser.CustomError
 
@@ -20,16 +20,12 @@ data Err
     = InternalErr InternalErr
     | ParseErr (ParseErrorBundle String CustomError)
 
-instance ShowErr Err where
-    showErr (InternalErr e) = "Internal error" : showErr e
-    showErr (ParseErr e)    = "Parse error" : showErr e
-
 -- | Internal errors, i.e. it's not the user's fault.
 data InternalErr
     = InternalConvertErr InternalConvertErr
 
-instance ShowErr InternalErr where
-    showErr (InternalConvertErr e) = "Convert error" : showErr e
+instance ErrMessage InternalErr where
+    errMessage (InternalConvertErr e) = "Convert error" : errMessage e
 
 -- | Wrap a string with backticks.
 -- Useful for showing pieces of code in error messages.
