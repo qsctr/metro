@@ -55,6 +55,7 @@ import           Data.Or
 import           Data.Text                          (Text)
 
 import           Language.Dtfpl.Err
+import           Language.Dtfpl.Err.Util
 import           Language.Dtfpl.Generate.ConvertErr
 import           Language.Dtfpl.M
 import           Language.Dtfpl.M.Util

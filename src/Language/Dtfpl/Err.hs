@@ -6,7 +6,6 @@
 module Language.Dtfpl.Err
     ( Err (..)
     , InternalErr (..)
-    , errQuote
     ) where
 
 import           Text.Megaparsec.Error
@@ -26,8 +25,3 @@ data InternalErr
 
 instance ErrMessage InternalErr where
     errMessage (InternalConvertErr e) = "Convert error" : errMessage e
-
--- | Wrap a string with backticks.
--- Useful for showing pieces of code in error messages.
-errQuote :: String -> String
-errQuote = ('`' :) . (++ "`")
