@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 -- | ECMAScript syntax tree.
@@ -52,13 +51,8 @@ module Language.ECMAScript.Syntax
 import           Data.Aeson
 import           Data.Aeson.Types
 import           Data.Or
-import           Data.Text                          (Text)
+import           Data.Text                         (Text)
 
-import           Language.Dtfpl.Err
-import           Language.Dtfpl.Err.Util
-import           Language.Dtfpl.Generate.ConvertErr
-import           Language.Dtfpl.M
-import           Language.Dtfpl.M.Util
 import           Language.ECMAScript.Syntax.Verify
 
 -- | Adds @type@ and @loc@ properties to make the node a valid estree node.
@@ -99,13 +93,16 @@ instance (ToJSON a, ToJSON b) => ToJSON (Either' a b) where
 newtype Identifier = Identifier String
 
 -- | Create an 'Identifier'.
--- Checks if the given string is valid in debug mode only.
-mkIdentifier :: (MEnv m, MError m) => String -> m Identifier
-mkIdentifier s = do
-    debugErrIf (not $ isValidIdentifier s) $
-        InternalConvertErr $ InternalInvalidTargetASTErr $
-            errQuote s ++ " is not a valid ECMAScript identifier"
-    pure $ Identifier s
+-- Optionally checks if the given string is valid.
+mkIdentifier
+    :: Bool             -- ^ Whether to make sure the string is a valid
+                        -- identifier. If false then result will never be
+                        -- 'Nothing'.
+    -> String
+    -> Maybe Identifier
+mkIdentifier validate s
+    | not validate || isValidIdentifier s = Just $ Identifier s
+    | otherwise = Nothing
 
 instance ToJSON Identifier where
     toJSON (Identifier name) =

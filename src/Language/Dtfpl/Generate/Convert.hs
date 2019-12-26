@@ -37,14 +37,14 @@ instance ToJS Prog Program where
     toJS (Prog (T _) (T tls)) = Program ModuleSourceType <$> ((++)
         <$> traverse toJS tls
         <*> (pure . Left' . ExpressionStatement <$> (CallExpression
-            <$> (Left' . IdentifierExpression <$> mkIdentifier "main")
+            <$> (Left' . IdentifierExpression <$> mkIdentifierM "main")
             <*> (pure . Left' <$> (CallExpression
                 <$> (Left' . MemberExpression <$> (Member
                     <$> (Left' . MemberExpression <$> (Member
                         <$> (Left' . IdentifierExpression
-                            <$> mkIdentifier "process")
-                        <*> (Right' <$> mkIdentifier "argv")))
-                    <*> (Right' <$> mkIdentifier "slice")))
+                            <$> mkIdentifierM "process")
+                        <*> (Right' <$> mkIdentifierM "argv")))
+                    <*> (Right' <$> mkIdentifierM "slice")))
                 <*> pure [Left' (LiteralExpression (NumberLiteral 2))])))))
 
 instance ToJS Import ModuleDeclaration where
@@ -126,7 +126,7 @@ instance ToJS IdentRef Identifier where
 -- | Convert dtfpl 'Ident' to JS 'Identifier', trying to preserve as much of the
 -- original name as possible.
 instance ToJS Ident Identifier where
-    toJS = mkIdentifier . convertIdent
+    toJS = mkIdentifierM . convertIdent
       where convertIdent (Ident s)
                 | s `elem` reservedWords = '$' : s
                 | otherwise = head s : concatMap convertChar (tail s)
