@@ -28,6 +28,11 @@ dependencies:
 ghc-options:
   - -Wall
   - -Werror
+  - -Wwarn=unused-top-binds
+  - -Wwarn=unused-local-binds
+  - -Wwarn=unused-pattern-binds
+  - -Wwarn=unused-matches
+  - -Wwarn=unused-imports
   - -Wcompat
   - -Wincomplete-record-updates
   - -Wincomplete-uni-patterns
