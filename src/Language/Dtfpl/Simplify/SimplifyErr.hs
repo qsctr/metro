@@ -3,6 +3,7 @@
 -- | Errors for simplify phase
 module Language.Dtfpl.Simplify.SimplifyErr
     ( SimplifyErr (..)
+    , InternalSimplifyErr (..)
     ) where
 
 import           Language.Dtfpl.Err.ErrLoc
@@ -29,3 +30,11 @@ instance ErrMessage SimplifyErr where
 
 instance ErrLoc SimplifyErr where
     errLoc (DuplicateIdentErr new _) = ann new
+
+data InternalSimplifyErr
+    = InternalDuplicateGenIdentErr (A Ident 'Resolved) (IdentBind 'Resolved)
+
+instance ErrMessage InternalSimplifyErr where
+    errMessage (InternalDuplicateGenIdentErr new old) =
+        [ "Duplicate generated identifier " ++ formatQuote new
+        , formatQuote old ++ " is already defined" ]

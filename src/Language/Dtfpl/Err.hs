@@ -24,6 +24,8 @@ data Err
 -- | Internal errors, i.e. it's not the user's fault.
 data InternalErr
     = InternalConvertErr InternalConvertErr
+    | InternalSimplifyErr InternalSimplifyErr
 
 instance ErrMessage InternalErr where
     errMessage (InternalConvertErr e) = "Convert error" : errMessage e
+    errMessage (InternalSimplifyErr e) = "Simplify error" : errMessage e
