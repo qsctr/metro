@@ -72,6 +72,7 @@ $(promote [d|
         | ParsedNative
         | InitGen
         | NoDef
+        | Resolved
         | NoLamMatch
         | Curried
         | AliasCase

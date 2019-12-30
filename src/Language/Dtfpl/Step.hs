@@ -46,7 +46,7 @@ instance {-# OVERLAPPABLE #-}
 instance Step (P t) p where
     step (P x) = pure $ P x
 
-instance (Step n p, Traversable t) => Step (T t n) p where
+instance {-# OVERLAPPABLE #-} (Step n p, Traversable t) => Step (T t n) p where
     step (T t) = T <$> traverse step t
 
 instance AutoStep Prog p => Step Prog p where
