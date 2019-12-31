@@ -20,7 +20,7 @@ import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 import           Language.ECMAScript.Syntax
 
-type instance StepClass' 'ParsedNative m = (MEnv m, MonadIO m)
+type instance StepClass' 'ParsedNative m = (MNodeProc m, MonadIO m)
 
 data ParseNative
 instance Message ParseNative String Value
@@ -29,5 +29,6 @@ instance Step Native 'ParsedNative where
     step (Native (P str)) =
         Native . P . PassthruExpression <$> send @ParseNative str
 
-parseNative :: (MEnv m, MonadIO m) => A Prog 'Source -> m (A Prog 'ParsedNative)
+parseNative :: (MNodeProc m, MonadIO m) =>
+    A Prog 'Source -> m (A Prog 'ParsedNative)
 parseNative = step

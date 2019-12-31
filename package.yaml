@@ -18,6 +18,7 @@ dependencies:
   - base >= 4.7 && < 5
   - aeson
   - bytestring
+  - capability
   - containers
   - data-or
   - megaparsec
@@ -25,6 +26,7 @@ dependencies:
   - parser-combinators
   - singletons
   - text
+  - transformers
   - typed-process
 ghc-options:
   - -Wall

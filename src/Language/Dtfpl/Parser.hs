@@ -1,6 +1,7 @@
 {-# LANGUAGE ConstraintKinds  #-}
 {-# LANGUAGE DataKinds        #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies     #-}
 
 -- | Parser for dtfpl.
@@ -8,9 +9,9 @@ module Language.Dtfpl.Parser
     ( parse
     ) where
 
+import           Capability.Error                   (throw)
 import           Control.Category                   ((>>>))
 import           Control.Monad.Combinators.NonEmpty
-import           Control.Monad.Except
 import           Control.Monad.State
 import           Data.Bifunctor
 import           Data.Char
@@ -39,7 +40,7 @@ type PIndentState = MonadState Pos
 -- | Parse a program into its AST representation.
 -- May throw parse errors in the error monad.
 parse :: MError m => FilePath -> String -> m (A Prog 'Source)
-parse filename input = liftEither =<<
+parse filename input = either (throw @"err") pure =<<
     first ParseErr <$> evalStateT (runParserT prog filename input) pos1
 
 -- | Parse a program into its AST representation.

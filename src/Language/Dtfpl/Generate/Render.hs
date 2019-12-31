@@ -16,5 +16,5 @@ import           Language.ECMAScript.Syntax
 data Render
 instance Message Render Program Text
 
-render :: (MEnv m, MonadIO m) => Program -> m Text
+render :: (MNodeProc m, MonadIO m) => Program -> m Text
 render = send @Render

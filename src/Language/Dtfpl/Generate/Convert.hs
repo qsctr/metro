@@ -20,13 +20,13 @@ import           Language.ECMAScript.Syntax.Util
 import           Language.ECMAScript.Syntax.Verify
 
 -- | Convert a dtfpl Core program to a JS program
-convert :: (MEnv m, MError m) => A Prog Core -> m Program
+convert :: (MConfig m, MError m) => A Prog Core -> m Program
 convert = toJS
 
 -- | Typeclass for dtfpl core node @n@ which can be converted to JS node @js@.
 class ToJS n js where
     -- | Convert a dtfpl core node to a js node.
-    toJS :: (MEnv m, MError m) => n Core -> m js
+    toJS :: (MConfig m, MError m) => n Core -> m js
 
 -- | Currently we just throw away the annotations.
 -- Might add source maps later on.
