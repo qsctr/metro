@@ -1,14 +1,19 @@
-{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE ConstraintKinds            #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE DerivingVia                #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE PolyKinds                  #-}
 
 -- | 'SimM' monad with associated 'SimState' state type.
 module Language.Dtfpl.Simplify.SimM
     ( SimState (..)
-    , SimM
+    , SimT
     , MSim
-    , runSim
+    , sim
     ) where
 
-import           Control.Monad.State
+import           Capability.State
+import           Control.Monad.Trans.State
 import           Numeric.Natural
 
 -- | State used in the simplification process.
@@ -24,14 +29,18 @@ initSimState :: SimState
 initSimState = SimState
     { nextGenIdentFullNum = 0 }
 
--- | Simplification monad.
--- Uses 'State' monad to keep track of simplification state.
-type SimM = State SimState
+type MSim = HasState "sim" SimState
 
-type MSim = MonadState SimState
+-- | Simplification monad transformer.
+-- Uses 'StateT' monad transformer to keep track of simplification state.
+newtype SimT m a = SimT { runSimT :: StateT SimState m a }
+    deriving (Functor, Applicative, Monad)
+    deriving MSim via MonadState (StateT SimState m)
+
+-- type MSim = MonadState SimState
 
 -- | Run a simplification with the initial simplification state.
 -- This should only be used on a complete program, not on parts of it,
 -- as combining those parts would result in a possibly invalid program.
-runSim :: SimM a -> a
-runSim = flip evalState initSimState
+sim :: Monad m => SimT m a -> m a
+sim x = evalStateT (runSimT x) initSimState

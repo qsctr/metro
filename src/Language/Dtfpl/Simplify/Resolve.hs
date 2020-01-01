@@ -7,6 +7,10 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE PolyKinds #-}
 
 {-# LANGUAGE ScopedTypeVariables   #-}
 
@@ -17,12 +21,14 @@ module Language.Dtfpl.Simplify.Resolve
     ( resolve
     ) where
 
-import           Control.Monad.Except
-import           Control.Monad.Reader
+import Capability.Reader
+import Capability.Error
 import qualified Data.Map.Strict                     as M
 import           Data.Singletons.Prelude.Enum
 import           Numeric.Natural
 import Data.Bifunctor
+import Control.Monad.Trans.Reader (ReaderT, runReaderT)
+import Control.Monad
 
 import Data.Traversable
 
@@ -34,6 +40,7 @@ import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
 import           Language.Dtfpl.Util
 import Language.Dtfpl.M.Util
+import Language.Dtfpl.Config
 
 data Name
     = Name String
@@ -49,56 +56,47 @@ identToName (GenIdentFull (P n))         = GenNameFull n
 identBindToName :: IdentBind 'Resolved -> Name
 identBindToName (IdentBind (A ident _)) = identToName ident
 
--- type MResolve = MonadReader (M.Map Name (IdentBind 'Resolved))
+type NameMap = M.Map Name (IdentBind 'Resolved)
 
-class Monad m => MResolve m where
-    getNames :: m (M.Map Name (IdentBind 'Resolved))
-    lookupName :: Ident 'Resolved -> m (Maybe (IdentBind 'Resolved))
-    addName :: IdentBind 'Resolved -> m a -> m a
+type MResolve = HasReader "names" NameMap
 
-instance Monad m => MResolve (ReaderT (M.Map Name (IdentBind 'Resolved)) m) where
-    getNames = ask
-    lookupName = asks . M.lookup . identToName
-    addName ib = local (M.insert (identBindToName ib) ib)
+newtype ResolveT m a = ResolveT { runResolveT :: ReaderT NameMap m a }
+    deriving (Functor, Applicative, Monad)
+    deriving MResolve via MonadReader (ReaderT NameMap m)
 
-type instance StepClass' 'Resolved m = ()
+type instance StepClass' 'Resolved m = (MResolve m, MConfig m, MError m)
 
-resolve :: Monad m => A Prog (Pred 'Resolved) -> m (A Prog 'Resolved)
-resolve = step
+resolve :: (Monad m, MConfig (ResolveT m), MError (ResolveT m)) => A Prog (Pred 'Resolved) -> m (A Prog 'Resolved)
+resolve prog = runReaderT (runResolveT $ step prog) M.empty
 
--- type instance StepClass' 'Resolved m = (MResolve m, MEnv m, MError m)
+instance Step (T [] (A TopLevel)) 'Resolved where
+    step (T tls) = do
+        let (binds, bodies) = unzip $ map splitLet tls
+              where splitLet (A (TLDecl _ (A decl _)) _) = case decl of
+                        Let bind body -> (bind, body)
+                        Def bind _ -> absurdP bind
+            stepBinds [] = ([] ,) <$> ask @"names"
+            stepBinds (ib:ibs) = do
+                sib <- step ib
+                first (sib :) <$> local @"names" (M.insert (identBindToName sib) sib) (stepBinds ibs)
+        (sBinds, names) <- stepBinds binds
 
--- resolve :: (MEnv m, MError m) => A Prog (Pred 'Resolved) -> m (A Prog 'Resolved)
--- resolve prog = runReaderT (step prog) M.empty
+        undefined
 
--- instance Step (T [] (A TopLevel)) 'Resolved where
---     step (T tls) = do
---         let (binds, bodies) = unzip $ map splitLet tls
---               where splitLet (A (TLDecl _ (A decl _)) _) = case decl of
---                         Let bind body -> (bind, body)
---                         Def bind _ -> absurdP bind
---             stepBinds [] = ([] ,) <$> getNames
---             stepBinds (ib:ibs) = do
---                 sib <- step ib
---                 first (sib :) <$> addName sib (stepBinds ibs)
---         (sBinds, names) <- stepBinds binds
-
---         undefined
-
--- instance Step IdentBind 'Resolved where
---     step (IdentBind ident) = do
---         si <- step ident
---         let sni = node si
---             checkDupWithErr errCtor =
---                 lookupName sni >>= \case
---                     Nothing -> pure ()
---                     Just old -> throwError $ errCtor si old
---             checkGenDup = do
---                 d <- getDebug
---                 when d $ checkDupWithErr $ InternalErr
---                     .: InternalSimplifyErr .: InternalDuplicateGenIdentErr
---         case sni of
---             Ident _ -> checkDupWithErr $ SimplifyErr .: DuplicateIdentErr
---             GenIdentPart _ _ -> checkGenDup
---             GenIdentFull _ -> checkGenDup
---         pure $ IdentBind si
+instance Step IdentBind 'Resolved where
+    step (IdentBind ident) = do
+        si <- step ident
+        let sni = node si
+            checkDupWithErr errCtor =
+                asks @"names" (M.lookup $ identToName sni) >>= \case
+                    Nothing -> pure ()
+                    Just old -> throw @"err" $ errCtor si old
+            checkGenDup = do
+                d <- asks @"config" debug
+                when d $ checkDupWithErr $ InternalErr
+                    .: InternalSimplifyErr .: InternalDuplicateGenIdentErr
+        case sni of
+            Ident _ -> checkDupWithErr $ SimplifyErr .: DuplicateIdentErr
+            GenIdentPart _ _ -> checkGenDup
+            GenIdentFull _ -> checkGenDup
+        pure $ IdentBind si
