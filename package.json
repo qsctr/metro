@@ -4,7 +4,7 @@
   "license": "MIT",
   "repository": "qsctr/dtfpl",
   "dependencies": {
-    "acorn": "^7.1.0",
+    "acorn": "^7.1.1",
     "astring": "^1.4.3"
   }
 }
