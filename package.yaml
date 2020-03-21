@@ -23,6 +23,7 @@ dependencies:
   - megaparsec
   - mtl
   - parser-combinators
+  - polysemy
   - singletons
   - text
   - typed-process
