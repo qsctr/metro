@@ -37,8 +37,6 @@ newtype SimT m a = SimT { runSimT :: StateT SimState m a }
     deriving (Functor, Applicative, Monad)
     deriving MSim via MonadState (StateT SimState m)
 
--- type MSim = MonadState SimState
-
 -- | Run a simplification with the initial simplification state.
 -- This should only be used on a complete program, not on parts of it,
 -- as combining those parts would result in a possibly invalid program.

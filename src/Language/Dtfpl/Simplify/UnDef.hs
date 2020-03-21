@@ -62,7 +62,7 @@ instance Step Decl 'NoDef where
         sExprs <- traverse step exprs
         lamParams <- runGenIdentPart (unIdentBind sName) $ for patCols $ \col ->
             case find nodeIsVarPat col of
-                Just varPat -> lstep varPat
+                Just varPat -> step varPat
                 Nothing     -> genLoc . VarPat . IdentBind <$> genLocIdentPart
         let lamParamIdents = N.map (\(A (VarPat ident) _) -> ident) lamParams
             nonVarPat = N.filter (any (not . nodeIsVarPat) . snd) $
