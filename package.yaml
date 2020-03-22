@@ -24,6 +24,7 @@ dependencies:
   - mtl
   - parser-combinators
   - polysemy
+  - polysemy-plugin
   - singletons
   - text
   - typed-process
@@ -40,6 +41,9 @@ ghc-options:
   - -Wincomplete-uni-patterns
   - -Wredundant-constraints
   - -O2
+  - -fplugin=Polysemy.Plugin
+  - -flate-specialise
+  - -fspecialise-aggressively
 
 library:
   source-dirs: src
