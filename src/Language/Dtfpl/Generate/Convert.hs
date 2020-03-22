@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -10,8 +11,9 @@ module Language.Dtfpl.Generate.Convert
 
 import qualified Data.List.NonEmpty                as N
 import           Data.Traversable
+import           Polysemy
 
-import           Language.Dtfpl.M
+import           Language.Dtfpl.Eff
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
 import           Language.Dtfpl.Util
@@ -19,14 +21,13 @@ import           Language.ECMAScript.Syntax
 import           Language.ECMAScript.Syntax.Util
 import           Language.ECMAScript.Syntax.Verify
 
--- | Convert a dtfpl Core program to a JS program
-convert :: (MEnv m, MError m) => A Prog Core -> m Program
+convert :: Members '[EConfig, EErr] r => A Prog Core -> Sem r Program
 convert = toJS
 
 -- | Typeclass for dtfpl core node @n@ which can be converted to JS node @js@.
 class ToJS n js where
     -- | Convert a dtfpl core node to a js node.
-    toJS :: (MEnv m, MError m) => n Core -> m js
+    toJS :: Members '[EConfig, EErr] r => n Core -> Sem r js
 
 -- | Currently we just throw away the annotations.
 -- Might add source maps later on.
@@ -37,14 +38,14 @@ instance ToJS Prog Program where
     toJS (Prog (T _) (T tls)) = Program ModuleSourceType <$> ((++)
         <$> traverse toJS tls
         <*> (pure . Left' . ExpressionStatement <$> (CallExpression
-            <$> (Left' . IdentifierExpression <$> mkIdentifierM "main")
+            <$> (Left' . IdentifierExpression <$> mkIdentifierE "main")
             <*> (pure . Left' <$> (CallExpression
                 <$> (Left' . MemberExpression <$> (Member
                     <$> (Left' . MemberExpression <$> (Member
                         <$> (Left' . IdentifierExpression
-                            <$> mkIdentifierM "process")
-                        <*> (Right' <$> mkIdentifierM "argv")))
-                    <*> (Right' <$> mkIdentifierM "slice")))
+                            <$> mkIdentifierE "process")
+                        <*> (Right' <$> mkIdentifierE "argv")))
+                    <*> (Right' <$> mkIdentifierE "slice")))
                 <*> pure [Left' (LiteralExpression (NumberLiteral 2))])))))
 
 instance ToJS Import ModuleDeclaration where
@@ -126,7 +127,7 @@ instance ToJS IdentRef Identifier where
 -- | Convert dtfpl 'Ident' to JS 'Identifier', trying to preserve as much of the
 -- original name as possible.
 instance ToJS Ident Identifier where
-    toJS = mkIdentifierM . convertIdent
+    toJS = mkIdentifierE . convertIdent
       where convertIdent (Ident s)
                 | s `elem` reservedWords = '$' : s
                 | otherwise = head s : concatMap convertChar (tail s)
