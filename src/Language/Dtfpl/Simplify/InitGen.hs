@@ -14,7 +14,7 @@ module Language.Dtfpl.Simplify.InitGen () where
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 
-type instance StepClass' 'InitGen m = ()
+type instance StepEffs 'InitGen = '[]
 
 instance Step n 'InitGen => Step (A n) 'InitGen where
     step (A n a) = flip A (Just a) <$> step n
