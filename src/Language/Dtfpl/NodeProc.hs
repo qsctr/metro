@@ -1,3 +1,4 @@
+{-# LANGUAGE AllowAmbiguousTypes    #-}
 {-# LANGUAGE DataKinds              #-}
 {-# LANGUAGE FlexibleContexts       #-}
 {-# LANGUAGE FunctionalDependencies #-}
@@ -9,11 +10,12 @@
 {-# LANGUAGE RankNTypes             #-}
 {-# LANGUAGE ScopedTypeVariables    #-}
 {-# LANGUAGE TemplateHaskell        #-}
+{-# LANGUAGE TypeApplications       #-}
 
 module Language.Dtfpl.NodeProc
     ( Message
     , Send
-    , send
+    , send'
     , NodeProc
     , runSend
     , withNodeProc
@@ -36,6 +38,10 @@ data Send m a where
     Send :: Message t req res => Proxy t -> req -> Send m res
 
 makeSem ''Send
+
+send' :: forall t req res r.
+    (Message t req res, Member Send r) => req -> Sem r res
+send' = send $ Proxy @t
 
 type NodeProc = Process Handle Handle ()
 
