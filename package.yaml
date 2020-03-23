@@ -5,7 +5,7 @@ description: A dynamically typed functional programming language that compiles t
 category: Language
 author: Bretton Chen
 maintainer: Bretton Chen
-copyright: (c) 2017-18 Bretton Chen
+copyright: (c) 2017-20 Bretton Chen
 license: MIT
 github: qsctr/dtfpl
 extra-source-files:
