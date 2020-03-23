@@ -5,27 +5,23 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE TypeInType            #-}
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
 module Language.Dtfpl.Step
-    ( StepClass
-    , StepClass'
+    ( StepEffs
     , Step (..)
     ) where
 
-import           Data.Kind
 import           Data.Singletons.Prelude.Enum
+import           Polysemy
 
 import           Language.Dtfpl.Syntax
 
-type StepClass (p :: Pass) m = (Monad m, StepClass' p m)
-
-type family StepClass' (p :: Pass) (m :: (* -> *)) :: Constraint
+type family StepEffs (p :: Pass) :: EffectRow
 
 class Step (n :: Node) (p :: Pass) where
-    step :: StepClass p m => n (Pred p) -> m (n p)
+    step :: Members (StepEffs p) r => n (Pred p) -> Sem r (n p)
 
 type AutoStep (n :: Node) (p :: Pass) =
     ( AllStep (Children n p) p
