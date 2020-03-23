@@ -23,6 +23,7 @@ import qualified Data.Map.Strict                     as M
 import           Data.Singletons.Prelude.Enum
 import           Numeric.Natural
 import Data.Bifunctor
+import Polysemy
 
 import Data.Traversable
 
@@ -61,9 +62,9 @@ instance Monad m => MResolve (ReaderT (M.Map Name (IdentBind 'Resolved)) m) wher
     lookupName = asks . M.lookup . identToName
     addName ib = local (M.insert (identBindToName ib) ib)
 
-type instance StepClass' 'Resolved m = ()
+type instance StepEffs 'Resolved = '[]
 
-resolve :: Monad m => A Prog (Pred 'Resolved) -> m (A Prog 'Resolved)
+resolve :: A Prog (Pred 'Resolved) -> Sem r (A Prog 'Resolved)
 resolve = step
 
 -- type instance StepClass' 'Resolved m = (MResolve m, MEnv m, MError m)

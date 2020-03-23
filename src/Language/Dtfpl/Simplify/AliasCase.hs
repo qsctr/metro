@@ -10,12 +10,11 @@ module Language.Dtfpl.Simplify.AliasCase () where
 
 import           Data.Traversable
 
-import           Language.Dtfpl.Simplify.GenUtil
-import           Language.Dtfpl.Simplify.SimM
+import           Language.Dtfpl.Simplify.GenIdentFull
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 
-type instance StepClass' 'AliasCase m = MSim m
+type instance StepEffs 'AliasCase = '[EGenIdentFull]
 
 -- | Attaches an 'Ident' alias to the 'CaseHead' expression if it is not a
 -- 'VarExpr'.
