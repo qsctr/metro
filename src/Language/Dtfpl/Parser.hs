@@ -17,6 +17,8 @@ import           Data.Char
 import           Data.Functor
 import           Data.Functor.Identity
 import           Data.List.NonEmpty                 (NonEmpty (..), (<|))
+import           Polysemy
+import           Polysemy.Error                     (Error, fromEither)
 import           Text.Megaparsec                    hiding (parse, sepBy1,
                                                      sepEndBy1, some)
 import           Text.Megaparsec.Char
@@ -24,7 +26,6 @@ import           Text.Megaparsec.Char.Lexer         (indentGuard, indentLevel,
                                                      nonIndented)
 
 import           Language.Dtfpl.Err
-import           Language.Dtfpl.M
 import           Language.Dtfpl.Parser.CustomError
 import           Language.Dtfpl.Parser.Loc
 import           Language.Dtfpl.Syntax
@@ -38,8 +39,8 @@ type PIndentState = MonadState Pos
 
 -- | Parse a program into its AST representation.
 -- May throw parse errors in the error monad.
-parse :: MError m => FilePath -> String -> m (A Prog 'Source)
-parse filename input = liftEither =<<
+parse :: Member (Error Err) r => FilePath -> String -> Sem r (A Prog 'Source)
+parse filename input = fromEither =<<
     first ParseErr <$> evalStateT (runParserT prog filename input) pos1
 
 -- | Parse a program into its AST representation.
