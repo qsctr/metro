@@ -11,7 +11,6 @@ import           Polysemy.Error
 import           Polysemy.Reader
 
 import           Language.Dtfpl.Config
-import           Language.Dtfpl.Eff
 import           Language.Dtfpl.Err
 import           Language.Dtfpl.Err.Util
 import           Language.Dtfpl.Generate.ConvertErr
@@ -23,11 +22,10 @@ constDecl ident expr = VariableDeclarationDeclaration $
     VariableDeclaration ConstVariableDeclaration
         [VariableDeclarator (IdentifierPattern ident) (Just expr)]
 
-mkIdentifierE :: Members '[EConfig, EErr] r => String -> Sem r Identifier
+mkIdentifierE :: Members '[Reader Config, Error Err] r
+    => String -> Sem r Identifier
 mkIdentifierE s = do
     d <- asks debug
-    case mkIdentifier d s of
-        Just i -> pure i
-        Nothing -> throw $
-            InternalErr $ InternalConvertErr $ InternalInvalidTargetASTErr $
-                errQuote s ++ " is not a valid ECMAScript identifier"
+    flip note (mkIdentifier d s) $
+        InternalErr $ InternalConvertErr $ InternalInvalidTargetASTErr $
+            errQuote s ++ " is not a valid ECMAScript identifier"

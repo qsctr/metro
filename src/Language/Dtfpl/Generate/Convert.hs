@@ -12,8 +12,11 @@ module Language.Dtfpl.Generate.Convert
 import qualified Data.List.NonEmpty                as N
 import           Data.Traversable
 import           Polysemy
+import           Polysemy.Error
+import           Polysemy.Reader
 
-import           Language.Dtfpl.Eff
+import           Language.Dtfpl.Config
+import           Language.Dtfpl.Err
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
 import           Language.Dtfpl.Util
@@ -21,13 +24,13 @@ import           Language.ECMAScript.Syntax
 import           Language.ECMAScript.Syntax.Util
 import           Language.ECMAScript.Syntax.Verify
 
-convert :: Members '[EConfig, EErr] r => A Prog Core -> Sem r Program
+convert :: Members '[Reader Config, Error Err] r => A Prog Core -> Sem r Program
 convert = toJS
 
 -- | Typeclass for dtfpl core node @n@ which can be converted to JS node @js@.
 class ToJS n js where
     -- | Convert a dtfpl core node to a js node.
-    toJS :: Members '[EConfig, EErr] r => n Core -> Sem r js
+    toJS :: Members '[Reader Config, Error Err] r => n Core -> Sem r js
 
 -- | Currently we just throw away the annotations.
 -- Might add source maps later on.
