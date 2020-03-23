@@ -28,13 +28,11 @@ import Polysemy
 import Data.Traversable
 
 import           Language.Dtfpl.Err
-import           Language.Dtfpl.M
 import           Language.Dtfpl.Simplify.SimplifyErr
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
 import           Language.Dtfpl.Util
-import Language.Dtfpl.M.Util
 
 data Name
     = Name String
