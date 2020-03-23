@@ -1,18 +1,19 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DataKinds        #-}
 
 -- | Functions to make constructing JS syntax trees easier.
 module Language.ECMAScript.Syntax.Util
     ( constDecl
-    , mkIdentifierM
+    , mkIdentifierE
     ) where
 
-import           Control.Monad.Except
+import           Polysemy
+import           Polysemy.Error
+import           Polysemy.Reader
 
+import           Language.Dtfpl.Config
 import           Language.Dtfpl.Err
 import           Language.Dtfpl.Err.Util
 import           Language.Dtfpl.Generate.ConvertErr
-import           Language.Dtfpl.M
-import           Language.Dtfpl.M.Util
 import           Language.ECMAScript.Syntax
 
 -- | @const \<ident> = \<expr>;@
@@ -21,11 +22,10 @@ constDecl ident expr = VariableDeclarationDeclaration $
     VariableDeclaration ConstVariableDeclaration
         [VariableDeclarator (IdentifierPattern ident) (Just expr)]
 
-mkIdentifierM :: (MEnv m, MError m) => String -> m Identifier
-mkIdentifierM s = do
-    d <- getDebug
-    case mkIdentifier d s of
-        Just i -> pure i
-        Nothing -> throwError $
-            InternalErr $ InternalConvertErr $ InternalInvalidTargetASTErr $
-                errQuote s ++ " is not a valid ECMAScript identifier"
+mkIdentifierE :: Members '[Reader Config, Error Err] r
+    => String -> Sem r Identifier
+mkIdentifierE s = do
+    d <- asks debug
+    flip note (mkIdentifier d s) $
+        InternalErr $ InternalConvertErr $ InternalInvalidTargetASTErr $
+            errQuote s ++ " is not a valid ECMAScript identifier"

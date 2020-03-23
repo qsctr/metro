@@ -23,17 +23,16 @@ import qualified Data.Map.Strict                     as M
 import           Data.Singletons.Prelude.Enum
 import           Numeric.Natural
 import Data.Bifunctor
+import Polysemy
 
 import Data.Traversable
 
 import           Language.Dtfpl.Err
-import           Language.Dtfpl.M
 import           Language.Dtfpl.Simplify.SimplifyErr
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
 import           Language.Dtfpl.Util
-import Language.Dtfpl.M.Util
 
 data Name
     = Name String
@@ -61,9 +60,9 @@ instance Monad m => MResolve (ReaderT (M.Map Name (IdentBind 'Resolved)) m) wher
     lookupName = asks . M.lookup . identToName
     addName ib = local (M.insert (identBindToName ib) ib)
 
-type instance StepClass' 'Resolved m = ()
+type instance StepEffs 'Resolved = '[]
 
-resolve :: Monad m => A Prog (Pred 'Resolved) -> m (A Prog 'Resolved)
+resolve :: A Prog (Pred 'Resolved) -> Sem r (A Prog 'Resolved)
 resolve = step
 
 -- type instance StepClass' 'Resolved m = (MResolve m, MEnv m, MError m)

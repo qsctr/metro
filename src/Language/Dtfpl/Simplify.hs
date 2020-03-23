@@ -6,17 +6,19 @@ module Language.Dtfpl.Simplify
     ( simplify
     ) where
 
-import           Language.Dtfpl.Simplify.SimM
+import           Polysemy
+
+import           Language.Dtfpl.Simplify.GenIdentFull
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 
-import           Language.Dtfpl.Simplify.AliasCase  ()
-import           Language.Dtfpl.Simplify.Curry      ()
-import           Language.Dtfpl.Simplify.InitGen    ()
+import           Language.Dtfpl.Simplify.AliasCase    ()
+import           Language.Dtfpl.Simplify.Curry        ()
+import           Language.Dtfpl.Simplify.InitGen      ()
 import           Language.Dtfpl.Simplify.Resolve
-import           Language.Dtfpl.Simplify.UnDef      ()
-import           Language.Dtfpl.Simplify.UnLamMatch ()
+import           Language.Dtfpl.Simplify.UnDef        ()
+import           Language.Dtfpl.Simplify.UnLamMatch   ()
 
 -- | Simplify a complete program from ParsedNative to Core.
-simplify :: A Prog 'ParsedNative -> A Prog Core
-simplify prog = runSim $ step prog >>= step >>= resolve >>= step >>= step >>= step
+simplify :: A Prog 'ParsedNative -> Sem r (A Prog Core)
+simplify prog = runGenIdentFull $ step prog >>= step >>= resolve >>= step >>= step >>= step

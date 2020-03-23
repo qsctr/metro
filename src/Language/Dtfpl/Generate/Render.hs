@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeApplications      #-}
 
@@ -6,15 +7,14 @@ module Language.Dtfpl.Generate.Render
     ( render
     ) where
 
-import           Control.Monad.IO.Class
-import           Data.Text                       (Text)
+import           Data.Text                  (Text)
+import           Polysemy
 
-import           Language.Dtfpl.M
-import           Language.Dtfpl.NodeProc.Message
-import           Language.ECMAScript.Syntax
+import           Language.Dtfpl.NodeProc
+import           Language.ECMAScript.Syntax (Program)
 
 data Render
 instance Message Render Program Text
 
-render :: (MEnv m, MonadIO m) => Program -> m Text
-render = send @Render
+render :: Member Send r => Program -> Sem r Text
+render = send' @Render

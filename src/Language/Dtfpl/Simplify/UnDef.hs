@@ -12,15 +12,15 @@
 module Language.Dtfpl.Simplify.UnDef () where
 
 import           Data.Foldable
-import qualified Data.List.NonEmpty              as N
+import qualified Data.List.NonEmpty                   as N
 import           Data.Traversable
 
-import           Language.Dtfpl.Simplify.GenUtil
+import           Language.Dtfpl.Simplify.GenIdentPart
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
 
-type instance StepClass' 'NoDef m = ()
+type instance StepEffs 'NoDef = '[]
 
 -- | Replace all 'Def' declarations with 'Let' and 'LamExpr's.
 --
@@ -62,7 +62,7 @@ instance Step Decl 'NoDef where
         sExprs <- traverse step exprs
         lamParams <- runGenIdentPart (unIdentBind sName) $ for patCols $ \col ->
             case find nodeIsVarPat col of
-                Just varPat -> lstep varPat
+                Just varPat -> step varPat
                 Nothing     -> genLoc . VarPat . IdentBind <$> genLocIdentPart
         let lamParamIdents = N.map (\(A (VarPat ident) _) -> ident) lamParams
             nonVarPat = N.filter (any (not . nodeIsVarPat) . snd) $

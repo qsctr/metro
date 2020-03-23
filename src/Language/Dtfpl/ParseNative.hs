@@ -11,23 +11,22 @@ module Language.Dtfpl.ParseNative
     ( parseNative
     ) where
 
-import           Control.Monad.IO.Class
 import           Data.Aeson
+import           Polysemy
 
-import           Language.Dtfpl.M
-import           Language.Dtfpl.NodeProc.Message
+import           Language.Dtfpl.NodeProc
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
-import           Language.ECMAScript.Syntax
+import           Language.ECMAScript.Syntax hiding (Member)
 
-type instance StepClass' 'ParsedNative m = (MEnv m, MonadIO m)
+type instance StepEffs 'ParsedNative = '[Send]
 
 data ParseNative
 instance Message ParseNative String Value
 
 instance Step Native 'ParsedNative where
     step (Native (P str)) =
-        Native . P . PassthruExpression <$> send @ParseNative str
+        Native . P . PassthruExpression <$> send' @ParseNative str
 
-parseNative :: (MEnv m, MonadIO m) => A Prog 'Source -> m (A Prog 'ParsedNative)
+parseNative :: Member Send r => A Prog 'Source -> Sem r (A Prog 'ParsedNative)
 parseNative = step

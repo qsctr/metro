@@ -10,17 +10,16 @@
 module Language.Dtfpl.Simplify.UnLamMatch () where
 
 import           Control.Category
-import qualified Data.List.NonEmpty              as N
+import qualified Data.List.NonEmpty                   as N
 import           Data.Maybe
 import           Data.Traversable
 
-import           Language.Dtfpl.Simplify.GenUtil
-import           Language.Dtfpl.Simplify.SimM
+import           Language.Dtfpl.Simplify.GenIdentFull
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
 
-type instance StepClass' 'NoLamMatch m = MSim m
+type instance StepEffs 'NoLamMatch = '[EGenIdentFull]
 
 -- | Move any pattern-matching done in 'Lam' heads into a 'Case' expression in
 -- the body.

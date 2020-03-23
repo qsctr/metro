@@ -13,13 +13,14 @@ module Language.Dtfpl.Simplify.InitGen () where
 
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
+import           Language.Dtfpl.Syntax.Util
 
-type instance StepClass' 'InitGen m = ()
+type instance StepEffs 'InitGen = '[]
 
 instance Step n 'InitGen => Step (A n) 'InitGen where
     step (A n a) = flip A (Just a) <$> step n
 
 instance Step Ident 'InitGen where
-    step (Ident str)        = pure $ Ident str
-    step (GenIdentPart _ _) = undefined
-    step (GenIdentFull _)   = undefined
+    step (Ident str)             = pure $ Ident str
+    step (GenIdentPart prefix _) = absurdP prefix
+    step (GenIdentFull num)      = absurdP num
