@@ -5,7 +5,6 @@
 {-# LANGUAGE PolyKinds           #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
-{-# LANGUAGE TypeOperators       #-}
 
 module Language.Dtfpl.Simplify.GenIdentFull
     ( EGenIdentFull
@@ -16,10 +15,10 @@ module Language.Dtfpl.Simplify.GenIdentFull
 
 import           Numeric.Natural
 import           Polysemy
-import           Polysemy.State
 
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
+import           Language.Dtfpl.Util.Counter
 
 data EGenIdentFull m a where
     GetGenIdentFull
@@ -37,11 +36,5 @@ genLocIdentFull
 genLocIdentFull = genLoc <$> genIdentFull
 
 runGenIdentFull :: InterpreterFor EGenIdentFull r
-runGenIdentFull = evalState 0 . reinterpretAsState
-  where reinterpretAsState
-            :: Sem (EGenIdentFull ': r) a -> Sem (State Natural ': r) a
-        reinterpretAsState = reinterpret $ \case
-            GetGenIdentFull -> do
-                n <- get
-                put $ succ n
-                pure $ GenIdentFull $ P n
+runGenIdentFull = runCounter . reinterpret (\case
+    GetGenIdentFull -> GenIdentFull . P <$> next)

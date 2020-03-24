@@ -7,7 +7,6 @@
 {-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
-{-# LANGUAGE TypeOperators       #-}
 
 module Language.Dtfpl.Simplify.GenIdentPart
     ( EGenIdentPart
@@ -18,10 +17,10 @@ module Language.Dtfpl.Simplify.GenIdentPart
 
 import           Numeric.Natural
 import           Polysemy
-import           Polysemy.State
 
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
+import           Language.Dtfpl.Util.Counter
 
 type GenIdentPartEnabled p =
     (GenIdentPartPrefix p ~ A Ident, GenIdentPartNum p ~ P Natural)
@@ -40,12 +39,6 @@ genLocIdentPart
     => Sem r (A Ident p)
 genLocIdentPart = genLoc <$> genIdentPart
 
-runGenIdentPart :: forall p r. A Ident p -> InterpreterFor (EGenIdentPart p) r
-runGenIdentPart prefix = evalState 0 . reinterpretAsState
-  where reinterpretAsState
-            :: Sem (EGenIdentPart p ': r) a -> Sem (State Natural ': r) a
-        reinterpretAsState = reinterpret $ \case
-            GetGenIdentPart -> do
-                n <- get
-                put $ succ n
-                pure $ GenIdentPart prefix $ P n
+runGenIdentPart :: A Ident p -> InterpreterFor (EGenIdentPart p) r
+runGenIdentPart prefix = runCounter . reinterpret (\case
+    GetGenIdentPart -> GenIdentPart prefix . P <$> next)
