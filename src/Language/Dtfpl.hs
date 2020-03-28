@@ -33,8 +33,7 @@ compile config =
     >>> runError
     >>> fmap (first formatErr)
     >>> runReader config
-    >>> flip runSend
-    >>> withNodeProc
+    >>> runSend
     >>> resourceToIOFinal
     >>> embedToFinal
     >>> runFinal
