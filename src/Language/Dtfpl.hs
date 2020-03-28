@@ -33,13 +33,14 @@ compile config =
     >>> runError
     >>> fmap (first formatErr)
     >>> runReader config
-    >>> runSend
+    >>> runNodeProc
     >>> resourceToIOFinal
     >>> embedToFinal
     >>> runFinal
 
 -- | Run the full compilation process with effects.
-compileE :: Members '[Reader Config, Error Err, Send] r => String -> Sem r Text
+compileE :: Members '[Reader Config, Error Err, NodeProc] r
+    => String -> Sem r Text
 compileE =
     parse ""
     >=> parseNative

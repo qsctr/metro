@@ -16,5 +16,5 @@ import           Language.ECMAScript.Syntax (Program)
 data Render
 instance Message Render Program Text
 
-render :: Member Send r => Program -> Sem r Text
+render :: Member NodeProc r => Program -> Sem r Text
 render = send' @Render

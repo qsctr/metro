@@ -13,9 +13,9 @@
 
 module Language.Dtfpl.NodeProc
     ( Message
-    , Send
+    , NodeProc
     , send'
-    , runSend
+    , runNodeProc
     ) where
 
 import           Data.Aeson
@@ -31,17 +31,17 @@ import           System.Process.Typed
 
 class (Typeable t, ToJSON req, FromJSON res) => Message t req res | t -> req res
 
-data Send m a where
-    Send :: Message t req res => Proxy t -> req -> Send m res
+data NodeProc m a where
+    Send :: Message t req res => Proxy t -> req -> NodeProc m res
 
-makeSem ''Send
+makeSem ''NodeProc
 
 send' :: forall t req res r.
-    (Message t req res, Member Send r) => req -> Sem r res
+    (Message t req res, Member NodeProc r) => req -> Sem r res
 send' = send $ Proxy @t
 
-runSend :: Members '[Resource, Embed IO] r => InterpreterFor Send r
-runSend a = bracket (startProcess config) stopProcess $
+runNodeProc :: Members '[Resource, Embed IO] r => InterpreterFor NodeProc r
+runNodeProc a = bracket (startProcess config) stopProcess $
     \p -> interpret
         (\case
             Send proxy x -> embed $ do
