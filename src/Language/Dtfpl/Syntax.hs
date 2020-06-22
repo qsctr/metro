@@ -94,7 +94,7 @@ newtype P t (p :: Pass) = P t deriving (Eq, Show)
 
 -- | Lift a @* -> *@ type constructor to a 'Node' type parameterized by
 -- inner node type @n@ and pass @p@ and holding elements of type @n p@.
-newtype T (t :: * -> *) (n :: Node) (p :: Pass) = T { unT :: t (n p) }
+newtype T (t :: Type -> Type) (n :: Node) (p :: Pass) = T { unT :: t (n p) }
     deriving (Eq, Show)
 
 -- | Alternative clause for use with 'When'.
