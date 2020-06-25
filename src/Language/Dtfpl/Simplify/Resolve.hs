@@ -1,8 +1,11 @@
+{-# LANGUAGE BlockArguments        #-}
 {-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TupleSections         #-}
+{-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
 
@@ -55,25 +58,30 @@ resolve :: Members GlobalEffs r
     => A Prog (Pred 'Resolved) -> Sem r (A Prog 'Resolved)
 resolve = runReader M.empty . step
 
+stepBinds :: (Step n 'Resolved, Members (StepEffs 'Resolved) r)
+    => [n (Pred 'Resolved)] -> (n 'Resolved -> Maybe (IdentBind 'Resolved))
+    -> ([n 'Resolved] -> Sem r a) -> Sem r a
+stepBinds xxs getIdentBind cont = do
+    (sxxs, names) <- go xxs
+    local (const names) $ cont sxxs
+  where go [] = ([] ,) <$> ask @NameMap
+        go (x:xs) = do
+            sx <- step x
+            first (sx :) <$> case getIdentBind sx of
+                Just sib -> local (M.insert (identBindToName sib) sib) $ go xs
+                Nothing -> go xs
+
 instance Step (T [] (A TopLevel)) 'Resolved where
     step (T tls) = do
         let (binds, bodies) = unzip $ map splitLet tls
               where splitLet (A (TLDecl _ (A decl _)) _) = case decl of
                         Let bind body -> (bind, body)
                         Def bind _    -> absurdP bind
-            stepBinds :: Members (StepEffs 'Resolved) r
-                => [IdentBind (Pred 'Resolved)]
-                -> Sem r ([IdentBind 'Resolved],
-                    M.Map Name (IdentBind 'Resolved))
-            stepBinds [] = ([] ,) <$> ask
-            stepBinds (ib:ibs) = do
-                sib <- step ib
-                first (sib :) <$>
-                    local (M.insert (identBindToName sib) sib) (stepBinds ibs)
-        (sBinds, names) <- stepBinds binds
-        sBodies <- local (M.union names) $ traverse step bodies
-        pure $ T $ zipWith3 (mapNode .: mapTLDecl .: mapNode .: const .: Let)
-            sBinds sBodies tls
+        stepBinds binds Just \sBinds -> do
+            sBodies <- traverse step bodies
+            pure $ T $ zipWith3
+                (mapNode .: mapTLDecl .: mapNode .: const .: Let)
+                sBinds sBodies tls
 
 instance Step IdentBind 'Resolved where
     step (IdentBind ident) = do
