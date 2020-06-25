@@ -15,6 +15,7 @@ module Language.Dtfpl.Simplify.Resolve
 
 import           Control.Monad
 import           Data.Bifunctor
+import           Data.Map.Strict                     (Map)
 import qualified Data.Map.Strict                     as M
 import           Data.Singletons.Prelude.Enum
 import           Numeric.Natural
@@ -44,7 +45,7 @@ identToName (GenIdentFull (P n))         = GenNameFull n
 identBindToName :: IdentBind 'Resolved -> Name
 identBindToName (IdentBind (A ident _)) = identToName ident
 
-type NameMap = M.Map Name (IdentBind 'Resolved)
+type NameMap = Map Name (IdentBind 'Resolved)
 
 type GlobalEffs = '[Reader Config, Error Err]
 
