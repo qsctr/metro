@@ -72,9 +72,9 @@ $(promote [d|
         | ParsedNative
         | InitGen
         | NoDef
-        | Resolved
         | NoLamMatch
         | Curried
+        | Resolved
         | AliasCase
         deriving (Eq, Ord, Enum, Bounded)
     |])

@@ -27,4 +27,4 @@ import           Language.Dtfpl.Simplify.UnLamMatch   ()
 simplify :: Members '[Reader Config, Error Err] r
     => A Prog 'ParsedNative -> Sem r (A Prog Core)
 simplify prog = runGenIdentFull $
-    step prog >>= step >>= resolve >>= step >>= step >>= step
+    step prog >>= step >>= step >>= step >>= resolve >>= step
