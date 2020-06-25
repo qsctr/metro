@@ -59,6 +59,10 @@ resolve :: Members GlobalEffs r
     => A Prog (Pred 'Resolved) -> Sem r (A Prog 'Resolved)
 resolve = runReader M.empty . step
 
+addName :: Members (StepEffs 'Resolved) r
+    => IdentBind 'Resolved -> Sem r a -> Sem r a
+addName sib = local $ M.insert (identBindToName sib) sib
+
 stepBinds :: (Step n 'Resolved, Members (StepEffs 'Resolved) r)
     => [n (Pred 'Resolved)] -> (n 'Resolved -> Maybe (IdentBind 'Resolved))
     -> ([n 'Resolved] -> Sem r a) -> Sem r a
@@ -69,7 +73,7 @@ stepBinds xxs getIdentBind cont = do
         go (x:xs) = do
             sx <- step x
             first (sx :) <$> case getIdentBind sx of
-                Just sib -> local (M.insert (identBindToName sib) sib) $ go xs
+                Just sib -> addName sib $ go xs
                 Nothing -> go xs
 
 instance Step (T [] (A TopLevel)) 'Resolved where
@@ -88,6 +92,11 @@ instance Step CaseAlt 'Resolved where
             A (VarPat sib) _ -> Just sib
             _ -> Nothing
         \sPats -> CaseAlt (T $ N.fromList sPats) <$> step expr
+
+instance Step Lam 'Resolved where
+    step (Lam ib expr) = do
+        sib <- step ib
+        Lam sib <$> addName sib (step expr)
 
 instance Step IdentBind 'Resolved where
     step (IdentBind ident) = do
