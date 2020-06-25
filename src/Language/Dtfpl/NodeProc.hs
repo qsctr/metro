@@ -1,4 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes    #-}
+{-# LANGUAGE BlockArguments         #-}
 {-# LANGUAGE DataKinds              #-}
 {-# LANGUAGE FlexibleContexts       #-}
 {-# LANGUAGE FunctionalDependencies #-}
@@ -43,14 +44,14 @@ send' = send $ Proxy @t
 runNodeProc :: Members '[Resource, Embed IO] r => InterpreterFor NodeProc r
 runNodeProc a = bracket (startProcess config) stopProcess $
     \p -> interpret
-        (\case
+        \case
             Send proxy x -> embed $ do
                 let req = object
                         [ "type" .= show (typeRep proxy)
                         , "value" .= x ]
                 L.hPut (getStdin p) $ encode req `C.snoc` '\n'
                 hFlush $ getStdin p
-                fromJust . decode . L.fromStrict <$> B.hGetLine (getStdout p))
+                fromJust . decode . L.fromStrict <$> B.hGetLine (getStdout p)
         a
   where config = setStdin createPipe
                $ setStdout createPipe

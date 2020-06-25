@@ -1,3 +1,4 @@
+{-# LANGUAGE BlockArguments      #-}
 {-# LANGUAGE DataKinds           #-}
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE GADTs               #-}
@@ -36,5 +37,5 @@ genLocIdentFull
 genLocIdentFull = genLoc <$> genIdentFull
 
 runGenIdentFull :: InterpreterFor EGenIdentFull r
-runGenIdentFull = runCounter . reinterpret (\case
-    GetGenIdentFull -> GenIdentFull . P <$> next)
+runGenIdentFull = runCounter . reinterpret \case
+    GetGenIdentFull -> GenIdentFull . P <$> next
