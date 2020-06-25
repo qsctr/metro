@@ -16,7 +16,6 @@ module Language.Dtfpl.Simplify.Resolve
     ( resolve
     ) where
 
-import           Control.Monad
 import           Data.Bifunctor
 import qualified Data.List.NonEmpty                  as N
 import           Data.Map.Strict                     (Map)
@@ -59,7 +58,7 @@ resolve :: Members GlobalEffs r
     => A Prog (Pred 'Resolved) -> Sem r (A Prog 'Resolved)
 resolve = runReader M.empty . step
 
-addName :: Members (StepEffs 'Resolved) r
+addName :: Member (Reader NameMap) r
     => IdentBind 'Resolved -> Sem r a -> Sem r a
 addName sib = local $ M.insert (identBindToName sib) sib
 
@@ -98,20 +97,28 @@ instance Step Lam 'Resolved where
         sib <- step ib
         Lam sib <$> addName sib (step expr)
 
+lookupIdent :: Member (Reader NameMap) r
+    => A Ident 'Resolved -> Sem r (Maybe (IdentBind 'Resolved))
+lookupIdent = asks . M.lookup . identToName . node
+
 instance Step IdentBind 'Resolved where
     step (IdentBind ident) = do
         si <- step ident
-        let sni = node si
-            checkDupWithErr errCtor =
-                asks (M.lookup $ identToName sni) >>= \case
-                    Nothing -> pure ()
-                    Just old -> throw $ errCtor si old
-            checkGenDup = do
-                d <- asks debug
-                when d $ checkDupWithErr $ InternalErr
+        let checkDupWithErr errCtor = lookupIdent si >>= \case
+                Nothing -> pure ()
+                Just old -> throw $ errCtor si old
+        if isSourceIdent $ node si
+            then checkDupWithErr $ SimplifyErr .: DuplicateIdentErr
+            else whenM (asks debug) $ checkDupWithErr $ InternalErr
                     .: InternalSimplifyErr .: InternalDuplicateGenIdentErr
-        case sni of
-            Ident _ -> checkDupWithErr $ SimplifyErr .: DuplicateIdentErr
-            GenIdentPart _ _ -> checkGenDup
-            GenIdentFull _ -> checkGenDup
         pure $ IdentBind si
+
+instance Step IdentRef 'Resolved where
+    step (IdentRef U ident) = do
+        si <- step ident
+        lookupIdent si >>= \case
+            Nothing -> throw if isSourceIdent $ node si
+                then SimplifyErr $ UnresolvedIdentErr si
+                else InternalErr $
+                    InternalSimplifyErr $ InternalUnresolvedGenIdentErr si
+            Just ib -> pure $ IdentRef ib si

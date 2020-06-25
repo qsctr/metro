@@ -21,6 +21,7 @@ module Language.Dtfpl.Syntax
     , Core
     , Node
     , P (..)
+    , U (..)
     , T (..)
     , Children
     , A (..)
@@ -47,7 +48,7 @@ module Language.Dtfpl.Syntax
     , Native'
     , IdentBind (..)
     , IdentRef (..)
-    , identBindToRef
+    , IdentBindToRef (..)
     , Ident (..)
     , GenIdentPartPrefix
     , GenIdentPartNum
@@ -91,6 +92,10 @@ type Class = Type -> Constraint
 -- | Lift a regular type to a 'Node' type which ignores the current pass.
 -- Phantom type.
 newtype P t (p :: Pass) = P t deriving (Eq, Show)
+
+-- | Lifted version of '()' which ignores the current pass.
+-- Specialized version of @'P' '()'@.
+data U (p :: Pass) = U deriving (Eq, Show)
 
 -- | Lift a @* -> *@ type constructor to a 'Node' type parameterized by
 -- inner node type @n@ and pass @p@ and holding elements of type @n p@.
@@ -345,16 +350,25 @@ type instance Children IdentBind p =
 deriving instance Forall Eq IdentBind p => Eq (IdentBind p)
 deriving instance Forall Show IdentBind p => Show (IdentBind p)
 
-newtype IdentRef (p :: Pass) = IdentRef (A Ident p)
+data IdentRef (p :: Pass) = IdentRef (IdentRefBind p p) (A Ident p)
 
 type instance Children IdentRef p =
-    '[ A Ident ]
+    '[ IdentRefBind p
+     , A Ident ]
 
 deriving instance Forall Eq IdentRef p => Eq (IdentRef p)
 deriving instance Forall Show IdentRef p => Show (IdentRef p)
 
-identBindToRef :: IdentBind p -> IdentRef p
-identBindToRef = IdentRef . unIdentBind
+type IdentRefBind (p :: Pass) = If (p < 'Resolved) U IdentBind
+
+class IdentBindToRef identRefBind where
+    identBindToRef :: IdentRefBind p ~ identRefBind => IdentBind p -> IdentRef p
+
+instance IdentBindToRef U where
+    identBindToRef (IdentBind ident) = IdentRef U ident
+
+instance IdentBindToRef IdentBind where
+    identBindToRef ib@(IdentBind ident) = IdentRef ib ident
 
 -- | Identifier.
 data Ident (p :: Pass)

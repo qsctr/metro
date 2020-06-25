@@ -3,8 +3,10 @@ module Language.Dtfpl.Util
     ( (.:)
     , traverseMaybe
     , forMaybe
+    , whenM
     ) where
 
+import           Control.Monad
 import           Data.Maybe
 
 -- | Compose a one-argument function with a two-argument function,
@@ -20,3 +22,9 @@ traverseMaybe = sequenceA .: mapMaybe
 -- | Flipped version of 'traverseMaybe'.
 forMaybe :: Applicative f => [a] -> (a -> Maybe (f b)) -> f [b]
 forMaybe = flip traverseMaybe
+
+-- | Monadic version of 'when'.
+whenM :: Monad m => m Bool -> m () -> m ()
+whenM cm x = do
+    c <- cm
+    when c x

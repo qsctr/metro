@@ -49,7 +49,7 @@ instance Step Lam 'NoLamMatch where
                     ident <- genLocIdentFull
                     sPat <- step pat
                     pure ( IdentBind ident,
-                           Just (genLoc $ VarExpr $ IdentRef ident, sPat) )
+                           Just (genLoc $ VarExpr $ IdentRef U ident, sPat) )
         sExpr <- step expr
         pure $ Lam (T idents) $ case N.nonEmpty case_ of
             Nothing -> sExpr

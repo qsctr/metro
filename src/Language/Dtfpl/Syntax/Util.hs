@@ -5,6 +5,7 @@ module Language.Dtfpl.Syntax.Util
     , genLoc
     , absurdP
     , mapTLDecl
+    , isSourceIdent
     ) where
 
 import Data.Void
@@ -27,3 +28,9 @@ absurdP (P x) = absurd x
 -- | Map into the 'Decl' part of a 'TLDecl'.
 mapTLDecl :: (A Decl p -> A Decl p') -> TopLevel p -> TopLevel p'
 mapTLDecl f (TLDecl expType decl) = TLDecl (coerce expType) $ f decl
+
+-- | Returns 'True' if the identifier is not compiler-generated.
+isSourceIdent :: Ident p -> Bool
+isSourceIdent (Ident _) = True
+isSourceIdent (GenIdentPart _ _) = False
+isSourceIdent (GenIdentFull _) = False

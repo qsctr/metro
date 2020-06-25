@@ -125,7 +125,7 @@ instance ToJS IdentBind Identifier where
     toJS (IdentBind ident) = toJS ident
 
 instance ToJS IdentRef Identifier where
-    toJS (IdentRef ident) = toJS ident
+    toJS (IdentRef _ ident) = toJS ident
 
 -- | Convert dtfpl 'Ident' to JS 'Identifier', trying to preserve as much of the
 -- original name as possible.

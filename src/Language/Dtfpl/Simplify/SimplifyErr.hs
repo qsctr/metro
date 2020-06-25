@@ -19,6 +19,8 @@ data SimplifyErr
     = DuplicateIdentErr
         (A Ident 'Resolved)   -- ^ The duplicate identifier
         (IdentBind 'Resolved) -- ^ The original identifier
+    -- | Unresolved identifier.
+    | UnresolvedIdentErr (A Ident 'Resolved)
 
 instance ErrMessage SimplifyErr where
     errMessage (DuplicateIdentErr new old) =
@@ -27,14 +29,20 @@ instance ErrMessage SimplifyErr where
             Nothing -> formatQuote old ++ " is already defined"
             Just loc -> "Previously defined " ++ formatQuote old
                 ++ " at " ++ formatLoc loc ]
+    errMessage (UnresolvedIdentErr ident) =
+        [ "Unresolved identifier " ++ formatQuote ident ]
 
 instance ErrLoc SimplifyErr where
     errLoc (DuplicateIdentErr new _) = ann new
+    errLoc (UnresolvedIdentErr ident) = ann ident
 
 data InternalSimplifyErr
     = InternalDuplicateGenIdentErr (A Ident 'Resolved) (IdentBind 'Resolved)
+    | InternalUnresolvedGenIdentErr (A Ident 'Resolved)
 
 instance ErrMessage InternalSimplifyErr where
     errMessage (InternalDuplicateGenIdentErr new old) =
         [ "Duplicate generated identifier " ++ formatQuote new
         , formatQuote old ++ " is already defined" ]
+    errMessage (InternalUnresolvedGenIdentErr ident) =
+        [ "Unresolved generated identifier " ++ formatQuote ident ]

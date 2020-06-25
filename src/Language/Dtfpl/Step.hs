@@ -42,6 +42,9 @@ instance {-# OVERLAPPABLE #-}
 instance Step (P t) p where
     step (P x) = pure $ P x
 
+instance Step U p where
+    step U = pure U
+
 instance {-# OVERLAPPABLE #-} (Step n p, Traversable t) => Step (T t n) p where
     step (T t) = T <$> traverse step t
 
@@ -104,7 +107,7 @@ instance {-# OVERLAPPABLE #-} AutoStep IdentBind p => Step IdentBind p where
     step (IdentBind ident) = IdentBind <$> step ident
 
 instance {-# OVERLAPPABLE #-} AutoStep IdentRef p => Step IdentRef p where
-    step (IdentRef ident) = IdentRef <$> step ident
+    step (IdentRef bind ident) = IdentRef <$> step bind <*> step ident
 
 instance {-# OVERLAPPABLE #-} AutoStep Ident p => Step Ident p where
     step (Ident str)               = pure $ Ident str
