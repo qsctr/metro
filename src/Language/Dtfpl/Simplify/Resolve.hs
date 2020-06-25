@@ -18,6 +18,7 @@ module Language.Dtfpl.Simplify.Resolve
 
 import           Control.Monad
 import           Data.Bifunctor
+import qualified Data.List.NonEmpty                  as N
 import           Data.Map.Strict                     (Map)
 import qualified Data.Map.Strict                     as M
 import           Data.Singletons.Prelude.Enum
@@ -72,16 +73,21 @@ stepBinds xxs getIdentBind cont = do
                 Nothing -> go xs
 
 instance Step (T [] (A TopLevel)) 'Resolved where
-    step (T tls) = do
-        let (binds, bodies) = unzip $ map splitLet tls
-              where splitLet (A (TLDecl _ (A decl _)) _) = case decl of
-                        Let bind body -> (bind, body)
-                        Def bind _    -> absurdP bind
-        stepBinds binds Just \sBinds -> do
-            sBodies <- traverse step bodies
-            pure $ T $ zipWith3
-                (mapNode .: mapTLDecl .: mapNode .: const .: Let)
-                sBinds sBodies tls
+    step (T tls) = stepBinds binds Just \sBinds -> do
+        sBodies <- traverse step bodies
+        pure $ T $ zipWith3 (mapNode .: mapTLDecl .: mapNode .: const .: Let)
+            sBinds sBodies tls
+      where (binds, bodies) = unzip $ map splitLet tls
+            splitLet (A (TLDecl _ (A decl _)) _) = case decl of
+                Let bind body -> (bind, body)
+                Def bind _    -> absurdP bind
+
+instance Step CaseAlt 'Resolved where
+    step (CaseAlt (T pats) expr) = stepBinds (N.toList pats)
+        \case
+            A (VarPat sib) _ -> Just sib
+            _ -> Nothing
+        \sPats -> CaseAlt (T $ N.fromList sPats) <$> step expr
 
 instance Step IdentBind 'Resolved where
     step (IdentBind ident) = do
