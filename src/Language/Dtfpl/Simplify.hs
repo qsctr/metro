@@ -7,7 +7,11 @@ module Language.Dtfpl.Simplify
     ) where
 
 import           Polysemy
+import           Polysemy.Error
+import           Polysemy.Reader
 
+import           Language.Dtfpl.Config
+import           Language.Dtfpl.Err
 import           Language.Dtfpl.Simplify.GenIdentFull
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
@@ -20,5 +24,7 @@ import           Language.Dtfpl.Simplify.UnDef        ()
 import           Language.Dtfpl.Simplify.UnLamMatch   ()
 
 -- | Simplify a complete program from ParsedNative to Core.
-simplify :: A Prog 'ParsedNative -> Sem r (A Prog Core)
-simplify prog = runGenIdentFull $ step prog >>= step >>= resolve >>= step >>= step >>= step
+simplify :: Members '[Reader Config, Error Err] r
+    => A Prog 'ParsedNative -> Sem r (A Prog Core)
+simplify prog = runGenIdentFull $
+    step prog >>= step >>= resolve >>= step >>= step >>= step
