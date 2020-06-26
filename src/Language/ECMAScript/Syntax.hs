@@ -1,4 +1,5 @@
-{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE OverloadedStrings  #-}
 
 -- | ECMAScript syntax tree.
 -- Based off the [estree spec](https://github.com/estree/estree),
@@ -7,7 +8,8 @@
 -- corresponding estree JSON node.
 -- Newest supported ECMAScript standard is ES2015.
 module Language.ECMAScript.Syntax
-    ( Either' (..)
+    ( These (..)
+    , Either' (..)
     , Identifier
     , mkIdentifier
     , Literal (..)
@@ -50,6 +52,7 @@ module Language.ECMAScript.Syntax
 
 import           Data.Aeson
 import           Data.Aeson.Types
+import           Data.Data                         (Data)
 import           Data.Text                         (Text)
 
 import           Language.ECMAScript.Syntax.Verify
@@ -61,7 +64,7 @@ estree t props = object $ props ++
     [ "type" .= t
     , "loc" .= Null ]
 
-data These a b = This a | That b | These a b
+data These a b = This a | That b | These a b deriving Data
 
 -- | Convert a 'These' to two pairs.
 theseToPairs :: (ToJSON a, ToJSON b) => Text -> Text -> These a b -> [Pair]
@@ -77,7 +80,7 @@ theseToPairs thisKey thatKey (These a b) =
 
 -- | Identical to 'Either', but has a custom 'ToJSON' instance, since the
 -- instance for 'Either' is already defined in "Data.Aeson".
-data Either' a b = Left' a | Right' b
+data Either' a b = Left' a | Right' b deriving Data
 
 isLeft' :: Either' a b -> Bool
 isLeft' (Left' _)  = True
@@ -91,7 +94,7 @@ instance (ToJSON a, ToJSON b) => ToJSON (Either' a b) where
     toJSON (Left' a)  = toJSON a
     toJSON (Right' b) = toJSON b
 
-newtype Identifier = Identifier String
+newtype Identifier = Identifier String deriving Data
 
 -- | Create an 'Identifier'.
 -- Optionally checks if the given string is valid.
@@ -116,6 +119,7 @@ data Literal
     | NullLiteral
     | NumberLiteral Double
     | RegExpLiteral String String
+    deriving Data
 
 instance ToJSON Literal where
     toJSON literal =
@@ -136,6 +140,7 @@ instance ToJSON Literal where
                         , "flags" .= flags ] ]
 
 data Program = Program SourceType [Either' Statement ModuleDeclaration]
+    deriving Data
 
 instance ToJSON Program where
     toJSON (Program sourceType body) =
@@ -146,6 +151,7 @@ instance ToJSON Program where
 data SourceType
     = ScriptSourceType
     | ModuleSourceType
+    deriving Data
 
 instance ToJSON SourceType where
     toJSON ScriptSourceType = "script"
@@ -173,6 +179,7 @@ data Statement
     | ForInStatement (Either' VariableDeclaration Pattern) Expression Statement
     | ForOfStatement (Either' VariableDeclaration Pattern) Expression Statement
     | DeclarationStatement Declaration
+    deriving Data
 
 instance ToJSON Statement where
     toJSON (ExpressionStatement expression) =
@@ -246,7 +253,7 @@ instance ToJSON Statement where
             , "body" .= body ]
     toJSON (DeclarationStatement declaration) = toJSON declaration
 
-newtype Block = Block [Statement]
+newtype Block = Block [Statement] deriving Data
 
 instance ToJSON Block where
     toJSON (Block body) =
@@ -255,6 +262,7 @@ instance ToJSON Block where
 
 data SwitchCase
     = SwitchCase (Maybe Expression) [Statement]
+    deriving Data
 
 instance ToJSON SwitchCase where
     toJSON (SwitchCase test consequent) =
@@ -264,6 +272,7 @@ instance ToJSON SwitchCase where
 
 data CatchClause
     = CatchClause Pattern Block
+    deriving Data
 
 instance ToJSON CatchClause where
     toJSON (CatchClause param body) =
@@ -275,6 +284,7 @@ data Declaration
     = FunctionDeclaration Bool Identifier [Pattern] Block
     | VariableDeclarationDeclaration VariableDeclaration
     | ClassDeclaration Identifier (Maybe Expression) ClassBody
+    deriving Data
 
 instance ToJSON Declaration where
     toJSON (FunctionDeclaration generator name params body) =
@@ -293,6 +303,7 @@ instance ToJSON Declaration where
 
 data VariableDeclaration
     = VariableDeclaration VariableDeclarationKind [VariableDeclarator]
+    deriving Data
 
 instance ToJSON VariableDeclaration where
     toJSON (VariableDeclaration kind declarations) =
@@ -304,6 +315,7 @@ data VariableDeclarationKind
     = VarVariableDeclaration
     | LetVariableDeclaration
     | ConstVariableDeclaration
+    deriving Data
 
 instance ToJSON VariableDeclarationKind where
     toJSON VarVariableDeclaration   = "var"
@@ -312,6 +324,7 @@ instance ToJSON VariableDeclarationKind where
 
 data VariableDeclarator
     = VariableDeclarator Pattern (Maybe Expression)
+    deriving Data
 
 instance ToJSON VariableDeclarator where
     toJSON (VariableDeclarator name value) =
@@ -319,7 +332,7 @@ instance ToJSON VariableDeclarator where
             [ "id" .= name
             , "init" .= value ]
 
-newtype ClassBody = ClassBody [MethodDefinition]
+newtype ClassBody = ClassBody [MethodDefinition] deriving Data
 
 instance ToJSON ClassBody where
     toJSON (ClassBody body) =
@@ -329,6 +342,7 @@ instance ToJSON ClassBody where
 data MethodDefinition
     = MethodDefinition Bool MethodDefinitionKind
         (Either' Expression Identifier) Function
+    deriving Data
 
 instance ToJSON MethodDefinition where
     toJSON (MethodDefinition static kind key value) =
@@ -344,6 +358,7 @@ data MethodDefinitionKind
     | MethodMethodDefinition
     | GetMethodDefinition
     | SetMethodDefinition
+    deriving Data
 
 instance ToJSON MethodDefinitionKind where
     toJSON ConstructorMethodDefinition = "constructor"
@@ -353,6 +368,7 @@ instance ToJSON MethodDefinitionKind where
 
 data Super
     = Super
+    deriving Data
 
 instance ToJSON Super where
     toJSON Super =
@@ -360,13 +376,16 @@ instance ToJSON Super where
 
 data SpreadElement
     = SpreadElement Expression
+    deriving Data
 
 instance ToJSON SpreadElement where
     toJSON (SpreadElement argument) =
         estree "SpreadElement"
             [ "argument" .= argument ]
 
-data Function = Function Bool (Maybe Identifier) [Pattern] Block
+data Function
+    = Function Bool (Maybe Identifier) [Pattern] Block
+    deriving Data
 
 instance ToJSON Function where
     toJSON (Function generator name params body) =
@@ -401,6 +420,7 @@ data Expression
     | ClassExpression (Maybe Identifier) (Maybe Expression) ClassBody
     | MetaProperty
     | PassthruExpression Value
+    deriving Data
 
 instance ToJSON Expression where
     toJSON (IdentifierExpression identifier) = toJSON identifier
@@ -487,6 +507,7 @@ instance ToJSON Expression where
 
 data TemplateLiteral
     = TemplateLiteral [TemplateElement] [Expression]
+    deriving Data
 
 instance ToJSON TemplateLiteral where
     toJSON (TemplateLiteral quasis expressions) =
@@ -494,7 +515,7 @@ instance ToJSON TemplateLiteral where
             [ "quasis" .= quasis
             , "expressions" .= expressions ]
 
-newtype TemplateElement = TemplateElement String
+newtype TemplateElement = TemplateElement String deriving Data
 
 instance ToJSON TemplateElement where
     toJSON (TemplateElement raw) =
@@ -508,6 +529,7 @@ data Property
     = Property PropertyKey Expression
     | ShorthandProperty Identifier
     | MethodProperty PropertyKind PropertyKey Function
+    deriving Data
 
 type PropertyKey = Either' Expression (Either' Literal Identifier)
 
@@ -543,6 +565,7 @@ data PropertyKind
     = InitProperty
     | GetProperty
     | SetProperty
+    deriving Data
 
 instance ToJSON PropertyKind where
     toJSON InitProperty = "init"
@@ -557,6 +580,7 @@ data UnaryOperator
     | TypeofOperator
     | VoidOperator
     | DeleteOperator
+    deriving Data
 
 instance ToJSON UnaryOperator where
     toJSON UnaryNegationOperator = "-"
@@ -570,6 +594,7 @@ instance ToJSON UnaryOperator where
 data UpdateOperator
     = IncrementOperator
     | DecrementOperator
+    deriving Data
 
 instance ToJSON UpdateOperator where
     toJSON IncrementOperator = "++"
@@ -578,6 +603,7 @@ instance ToJSON UpdateOperator where
 data PrePostFix
     = Prefix
     | Postfix
+    deriving Data
 
 data BinaryOperator
     = EqualOperator
@@ -601,6 +627,7 @@ data BinaryOperator
     | BitwiseAndOperator
     | InOperator
     | InstanceofOperator
+    deriving Data
 
 instance ToJSON BinaryOperator where
     toJSON EqualOperator              = "=="
@@ -638,6 +665,7 @@ data AssignmentOperator
     | BitwiseOrAssignmentOperator
     | BitwiseXorAssignmentOperator
     | BitwiseAndAssignmentOperator
+    deriving Data
 
 instance ToJSON AssignmentOperator where
     toJSON AssignmentOperator                   = "="
@@ -656,6 +684,7 @@ instance ToJSON AssignmentOperator where
 data LogicalOperator
     = LogicalOrOperator
     | LogicalAndOperator
+    deriving Data
 
 instance ToJSON LogicalOperator where
     toJSON LogicalOrOperator  = "||"
@@ -663,6 +692,7 @@ instance ToJSON LogicalOperator where
 
 data Member
     = Member (Either' Expression Super) (Either' Expression Identifier)
+    deriving Data
 
 instance ToJSON Member where
     toJSON (Member obj property) =
@@ -678,6 +708,7 @@ data Pattern
     | ArrayPattern [Maybe Pattern]
     | RestElement Pattern
     | AssignmentPattern Pattern Expression
+    deriving Data
 
 instance ToJSON Pattern where
     toJSON (IdentifierPattern identifier) = toJSON identifier
@@ -699,6 +730,7 @@ instance ToJSON Pattern where
 data AssignmentProperty
     = AssignmentProperty PropertyKey Pattern
     | ShorthandAssignmentProperty Pattern
+    deriving Data
 
 instance ToJSON AssignmentProperty where
     toJSON (AssignmentProperty key value) =
@@ -725,6 +757,7 @@ data ModuleDeclaration
     | ExportNamedSpecifiersDeclaration [ExportSpecifier] (Maybe Literal)
     | ExportDefaultDeclaration (Either' Declaration Expression)
     | ExportAllDeclaration Literal
+    deriving Data
 
 instance ToJSON ModuleDeclaration where
     toJSON (ImportDeclaration specifiers source) =
@@ -751,6 +784,7 @@ instance ToJSON ModuleDeclaration where
 data ImportSpecifier
     = ImportSpecifier Identifier
     | AliasedImportSpecifier Identifier Identifier
+    deriving Data
 
 instance ToJSON ImportSpecifier where
     toJSON (ImportSpecifier imported) =
@@ -762,7 +796,7 @@ instance ToJSON ImportSpecifier where
             [ "imported" .= imported
             , "local" .= local ]
 
-newtype ImportDefaultSpecifier = ImportDefaultSpecifier Identifier
+newtype ImportDefaultSpecifier = ImportDefaultSpecifier Identifier deriving Data
 
 instance ToJSON ImportDefaultSpecifier where
     toJSON (ImportDefaultSpecifier local) =
@@ -770,6 +804,7 @@ instance ToJSON ImportDefaultSpecifier where
             [ "local" .= local ]
 
 newtype ImportNamespaceSpecifier = ImportNamespaceSpecifier Identifier
+    deriving Data
 
 instance ToJSON ImportNamespaceSpecifier where
     toJSON (ImportNamespaceSpecifier local) =
@@ -779,6 +814,7 @@ instance ToJSON ImportNamespaceSpecifier where
 data ExportSpecifier
     = ExportSpecifier Identifier
     | AliasedExportSpecifier Identifier Identifier
+    deriving Data
 
 instance ToJSON ExportSpecifier where
     toJSON (ExportSpecifier local) =

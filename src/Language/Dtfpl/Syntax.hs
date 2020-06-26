@@ -1,5 +1,6 @@
 {-# LANGUAGE ConstraintKinds           #-}
 {-# LANGUAGE DataKinds                 #-}
+{-# LANGUAGE DeriveDataTypeable        #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts          #-}
 {-# LANGUAGE GADTs                     #-}
@@ -56,6 +57,7 @@ module Language.Dtfpl.Syntax
     , Lit (..)
     ) where
 
+import           Data.Data
 import           Data.Kind
 import           Data.List.NonEmpty
 import           Data.Singletons.Prelude.Enum
@@ -91,16 +93,16 @@ type Class = Type -> Constraint
 
 -- | Lift a regular type to a 'Node' type which ignores the current pass.
 -- Phantom type.
-newtype P t (p :: Pass) = P t deriving (Eq, Show)
+newtype P t (p :: Pass) = P t deriving (Eq, Show, Data)
 
 -- | Lifted version of '()' which ignores the current pass.
 -- Specialized version of @'P' '()'@.
-data U (p :: Pass) = U deriving (Eq, Show)
+data U (p :: Pass) = U deriving (Eq, Show, Data)
 
 -- | Lift a @* -> *@ type constructor to a 'Node' type parameterized by
 -- inner node type @n@ and pass @p@ and holding elements of type @n p@.
 newtype T (t :: Type -> Type) (n :: Node) (p :: Pass) = T { unT :: t (n p) }
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
 -- | Alternative clause for use with 'When'.
 -- Only used in promoted form.
@@ -137,6 +139,8 @@ type family Children (n :: Node) (p :: Pass) :: [Node]
 type Forall (c :: Class) (n :: Node) (p :: Pass) =
     ToConstraint c (Children n p) p
 
+type ForallTy (c :: Class) (n :: Node) (p :: Pass) = (Forall c n p, Typeable p)
+
 -- | Converts a type-level list of nodes into a constraint which applies
 -- the typeclass constraint to each node.
 type family ToConstraint (c :: Class) (ns :: [Node]) (p :: Pass) where
@@ -148,6 +152,8 @@ data A (n :: Node) (p :: Pass) = A { node :: n p, ann :: Ann p }
 
 deriving instance (Eq (n p), Eq (Ann p)) => Eq (A n p)
 deriving instance (Show (n p), Show (Ann p)) => Show (A n p)
+deriving instance (Data (n p), Data (Ann p), Typeable n, Typeable p)
+    => Data (A n p)
 
 -- | The annotation for nodes at the given pass.
 type Ann (p :: Pass) = When p
@@ -163,6 +169,7 @@ type instance Children Prog p =
 
 deriving instance Forall Eq Prog p => Eq (Prog p)
 deriving instance Forall Show Prog p => Show (Prog p)
+deriving instance ForallTy Data Prog p => Data (Prog p)
 
 newtype Import (p :: Pass)
     -- | Import statement.
@@ -173,11 +180,12 @@ type instance Children Import p =
 
 deriving instance Forall Eq Import p => Eq (Import p)
 deriving instance Forall Show Import p => Show (Import p)
+deriving instance ForallTy Data Import p => Data (Import p)
 
 newtype ModuleName (p :: Pass) = ModuleName (T NonEmpty ModuleAtom p)
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
-newtype ModuleAtom (p :: Pass) = ModuleAtom String deriving (Eq, Show)
+newtype ModuleAtom (p :: Pass) = ModuleAtom String deriving (Eq, Show, Data)
 
 -- | Top level statement.
 data TopLevel (p :: Pass)
@@ -189,13 +197,14 @@ type instance Children TopLevel p =
 
 deriving instance Forall Eq TopLevel p => Eq (TopLevel p)
 deriving instance Forall Show TopLevel p => Show (TopLevel p)
+deriving instance ForallTy Data TopLevel p => Data (TopLevel p)
 
 data ExpType (p :: Pass)
     -- | Exported.
     = Exp
     -- | Private.
     | Priv
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)
 
 -- | Declaration.
 data Decl (p :: Pass)
@@ -210,6 +219,7 @@ type instance Children Decl p =
 
 deriving instance Forall Eq Decl p => Eq (Decl p)
 deriving instance Forall Show Decl p => Show (Decl p)
+deriving instance ForallTy Data Decl p => Data (Decl p)
 
 -- | Head of the 'Def' declaration at the given pass.
 type DefHead (p :: Pass) = VoidAfter 'NoDef p IdentBind
@@ -226,6 +236,7 @@ type instance Children DefAlt p =
 
 deriving instance Forall Eq DefAlt p => Eq (DefAlt p)
 deriving instance Forall Show DefAlt p => Show (DefAlt p)
+deriving instance ForallTy Data DefAlt p => Data (DefAlt p)
 
 -- | Pattern.
 data Pat (p :: Pass)
@@ -245,6 +256,7 @@ type instance Children Pat p =
 
 deriving instance Forall Eq Pat p => Eq (Pat p)
 deriving instance Forall Show Pat p => Show (Pat p)
+deriving instance ForallTy Data Pat p => Data (Pat p)
 
 -- | Expression.
 data Expr (p :: Pass)
@@ -274,6 +286,7 @@ type instance Children Expr p =
 
 deriving instance Forall Eq Expr p => Eq (Expr p)
 deriving instance Forall Show Expr p => Show (Expr p)
+deriving instance ForallTy Data Expr p => Data (Expr p)
 
 -- | Head of 'Case' expression.
 newtype CaseHead (p :: Pass) = CaseHead (CaseHead' p p)
@@ -283,6 +296,7 @@ type instance Children CaseHead p =
 
 deriving instance Forall Eq CaseHead p => Eq (CaseHead p)
 deriving instance Forall Show CaseHead p => Show (CaseHead p)
+deriving instance ForallTy Data CaseHead p => Data (CaseHead p)
 
 -- | Head of 'Case' expression at the given pass.
 type CaseHead' (p :: Pass) = When p
@@ -301,6 +315,7 @@ type instance Children AliExpr p =
 
 deriving instance Forall Eq AliExpr p => Eq (AliExpr p)
 deriving instance Forall Show AliExpr p => Show (AliExpr p)
+deriving instance ForallTy Data AliExpr p => Data (AliExpr p)
 
 -- | 'Case' alternative.
 data CaseAlt (p :: Pass)
@@ -311,6 +326,7 @@ type instance Children CaseAlt p =
 
 deriving instance Forall Eq CaseAlt p => Eq (CaseAlt p)
 deriving instance Forall Show CaseAlt p => Show (CaseAlt p)
+deriving instance ForallTy Data CaseAlt p => Data (CaseAlt p)
 
 -- | Lambda.
 data Lam (p :: Pass)
@@ -321,6 +337,7 @@ type instance Children Lam p =
 
 deriving instance Forall Eq Lam p => Eq (Lam p)
 deriving instance Forall Show Lam p => Show (Lam p)
+deriving instance ForallTy Data Lam p => Data (Lam p)
 
 -- | Head of the lambda at the given pass.
 type LamHead (p :: Pass) = When p
@@ -336,6 +353,7 @@ type instance Children Native p =
 
 deriving instance Forall Eq Native p => Eq (Native p)
 deriving instance Forall Show Native p => Show (Native p)
+deriving instance ForallTy Data Native p => Data (Native p)
 
 -- | The representation of a native JS expression at the given pass.
 type Native' (p :: Pass) = When p
@@ -349,6 +367,7 @@ type instance Children IdentBind p =
 
 deriving instance Forall Eq IdentBind p => Eq (IdentBind p)
 deriving instance Forall Show IdentBind p => Show (IdentBind p)
+deriving instance ForallTy Data IdentBind p => Data (IdentBind p)
 
 data IdentRef (p :: Pass) = IdentRef (IdentRefBind p p) (A Ident p)
 
@@ -358,6 +377,7 @@ type instance Children IdentRef p =
 
 deriving instance Forall Eq IdentRef p => Eq (IdentRef p)
 deriving instance Forall Show IdentRef p => Show (IdentRef p)
+deriving instance ForallTy Data IdentRef p => Data (IdentRef p)
 
 type IdentRefBind (p :: Pass) = If (p < 'Resolved) U IdentBind
 
@@ -385,6 +405,7 @@ type instance Children Ident p =
 
 deriving instance Forall Eq Ident p => Eq (Ident p)
 deriving instance Forall Show Ident p => Show (Ident p)
+deriving instance ForallTy Data Ident p => Data (Ident p)
 
 -- | Prefix of a 'GenIdentPart' at the given pass.
 type GenIdentPartPrefix (p :: Pass) = FromInitGen p (A Ident)
@@ -402,4 +423,4 @@ data Lit (p :: Pass)
     = NumLit Double
     -- | String literal.
     | StrLit String
-    deriving (Eq, Show)
+    deriving (Eq, Show, Data)

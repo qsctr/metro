@@ -1,4 +1,5 @@
-{-# LANGUAGE RecordWildCards #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE RecordWildCards    #-}
 
 -- | Source locations for annotating nodes.
 module Language.Dtfpl.Parser.Loc
@@ -6,11 +7,12 @@ module Language.Dtfpl.Parser.Loc
     , formatLoc
     ) where
 
+import           Data.Data
 import           Text.Megaparsec.Pos
 
 -- | Source location of a node.
 -- Represented as a range.
-data Loc = Loc { start :: SourcePos, end :: SourcePos } deriving Eq
+data Loc = Loc { start :: SourcePos, end :: SourcePos } deriving (Eq, Data)
 
 instance Show Loc where show = formatLoc
 
