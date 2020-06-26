@@ -50,7 +50,6 @@ module Language.ECMAScript.Syntax
 
 import           Data.Aeson
 import           Data.Aeson.Types
-import           Data.Or
 import           Data.Text                         (Text)
 
 import           Language.ECMAScript.Syntax.Verify
@@ -62,17 +61,19 @@ estree t props = object $ props ++
     [ "type" .= t
     , "loc" .= Null ]
 
--- | Convert an 'Or' to two pairs.
-orToPairs :: (ToJSON a, ToJSON b) => Text -> Text -> Or a b -> [Pair]
-orToPairs fstKey sndKey (Fst a) =
-    [ fstKey .= a
-    , sndKey .= Null ]
-orToPairs fstKey sndKey (Snd b) =
-    [ fstKey .= Null
-    , sndKey .= b ]
-orToPairs fstKey sndKey (Both a b) =
-    [ fstKey .= a
-    , sndKey .= b ]
+data These a b = This a | That b | These a b
+
+-- | Convert a 'These' to two pairs.
+theseToPairs :: (ToJSON a, ToJSON b) => Text -> Text -> These a b -> [Pair]
+theseToPairs thisKey thatKey (This a) =
+    [ thisKey .= a
+    , thatKey .= Null ]
+theseToPairs thisKey thatKey (That b) =
+    [ thisKey .= Null
+    , thatKey .= b ]
+theseToPairs thisKey thatKey (These a b) =
+    [ thisKey .= a
+    , thatKey .= b ]
 
 -- | Identical to 'Either', but has a custom 'ToJSON' instance, since the
 -- instance for 'Either' is already defined in "Data.Aeson".
@@ -164,7 +165,7 @@ data Statement
     | IfStatement Expression Statement (Maybe Statement)
     | SwitchStatement Expression [SwitchCase]
     | ThrowStatement Expression
-    | TryStatement [Statement] (Or CatchClause Block)
+    | TryStatement [Statement] (These CatchClause Block)
     | WhileStatement Expression Statement
     | DoWhileStatement Statement Expression
     | ForStatement (Maybe (Either' VariableDeclaration Expression))
@@ -215,10 +216,10 @@ instance ToJSON Statement where
     toJSON (ThrowStatement argument) =
         estree "ThrowStatement"
             [ "argument" .= argument ]
-    toJSON (TryStatement block handlerOrFinalizer) =
+    toJSON (TryStatement block handlerAndFinalizer) =
         estree "TryStatement" $
             [ "block" .= block ]
-            ++ orToPairs "handler" "finalizer" handlerOrFinalizer
+            ++ theseToPairs "handler" "finalizer" handlerAndFinalizer
     toJSON (WhileStatement test body) =
         estree "WhileStatement"
             [ "test" .= test
