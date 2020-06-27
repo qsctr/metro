@@ -73,17 +73,14 @@ stepBinds xxs getIdentBind cont = do
             sx <- step x
             first (sx :) <$> case getIdentBind sx of
                 Just sib -> addName sib $ go xs
-                Nothing -> go xs
+                Nothing  -> go xs
 
 instance Step (T [] (A TopLevel)) 'Resolved where
     step (T tls) = stepBinds binds Just \sBinds -> do
         sBodies <- traverse step bodies
         pure $ T $ zipWith3 (mapNode .: mapTLDecl .: mapNode .: const .: Let)
             sBinds sBodies tls
-      where (binds, bodies) = unzip $ map splitLet tls
-            splitLet (A (TLDecl _ (A decl _)) _) = case decl of
-                Let bind body -> (bind, body)
-                Def bind _    -> absurdP bind
+      where (binds, bodies) = unzip $ map splitTLDecl tls
 
 instance Step CaseAlt 'Resolved where
     step (CaseAlt (T pats) expr) = stepBinds (N.toList pats)
@@ -117,8 +114,9 @@ instance Step IdentRef 'Resolved where
     step (IdentRef U ident) = do
         si <- step ident
         lookupIdent si >>= \case
-            Nothing -> throw if isSourceIdent $ node si
-                then SimplifyErr $ UnresolvedIdentErr si
-                else InternalErr $
-                    InternalSimplifyErr $ InternalUnresolvedGenIdentErr si
+            Nothing -> throw
+                if isSourceIdent $ node si
+                    then SimplifyErr $ UnresolvedIdentErr si
+                    else InternalErr $
+                        InternalSimplifyErr $ InternalUnresolvedGenIdentErr si
             Just ib -> pure $ IdentRef ib si
