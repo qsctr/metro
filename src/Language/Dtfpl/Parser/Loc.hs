@@ -12,7 +12,7 @@ import           Text.Megaparsec.Pos
 
 -- | Source location of a node.
 -- Represented as a range.
-data Loc = Loc { start :: SourcePos, end :: SourcePos } deriving (Eq, Data)
+data Loc = Loc { start :: SourcePos, end :: SourcePos } deriving (Eq, Ord, Data)
 
 instance Show Loc where show = formatLoc
 
