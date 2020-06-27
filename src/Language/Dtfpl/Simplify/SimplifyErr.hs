@@ -6,11 +6,14 @@ module Language.Dtfpl.Simplify.SimplifyErr
     , InternalSimplifyErr (..)
     ) where
 
+import           Data.Singletons.Prelude.Enum
+
 import           Language.Dtfpl.Err.ErrLoc
 import           Language.Dtfpl.Err.ErrMessage
 import           Language.Dtfpl.Format.Util
 import           Language.Dtfpl.Parser.Loc
 import           Language.Dtfpl.Syntax
+import           Language.Dtfpl.Syntax.Util
 
 -- | Error during simplify phase
 data SimplifyErr
@@ -21,6 +24,8 @@ data SimplifyErr
         (IdentBind 'Resolved) -- ^ The original identifier
     -- | Unresolved identifier.
     | UnresolvedIdentErr (A Ident 'Resolved)
+    -- | Recursive or mutually recursive let declaration.
+    | RecursiveLetErr (A Decl (Pred 'Reordered))
 
 instance ErrMessage SimplifyErr where
     errMessage (DuplicateIdentErr new old) =
@@ -31,10 +36,15 @@ instance ErrMessage SimplifyErr where
                 ++ " at " ++ formatLoc loc ]
     errMessage (UnresolvedIdentErr ident) =
         [ "Unresolved identifier " ++ formatQuote ident ]
+    errMessage (RecursiveLetErr (A decl _)) =
+        [ "Recursive or mutually recursive definition of " ++ case decl of
+            Let bind _ -> formatQuote bind
+            Def bind _ -> absurdP bind ]
 
 instance ErrLoc SimplifyErr where
-    errLoc (DuplicateIdentErr new _) = ann new
+    errLoc (DuplicateIdentErr new _)  = ann new
     errLoc (UnresolvedIdentErr ident) = ann ident
+    errLoc (RecursiveLetErr decl)     = ann decl
 
 data InternalSimplifyErr
     = InternalDuplicateGenIdentErr (A Ident 'Resolved) (IdentBind 'Resolved)

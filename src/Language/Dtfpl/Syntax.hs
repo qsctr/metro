@@ -78,6 +78,7 @@ $(promote [d|
         | NoLamMatch
         | Curried
         | Resolved
+        | Reordered
         | AliasCase
         deriving (Eq, Ord, Enum, Bounded)
     |])

@@ -27,6 +27,7 @@ dependencies:
   - singletons
   - text
   - typed-process
+  - uniplate
 ghc-options:
   - -Wall
   - -Werror
