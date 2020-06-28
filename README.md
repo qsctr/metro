@@ -12,16 +12,13 @@ See the `docs` directory for documentation.
 
 ## Trying it out
 
-The only way to use the dtfpl compiler at the moment is to build it from source. It is written in Haskell, so you'll need [stack](https://haskellstack.org).
+The only way to use the dtfpl compiler at the moment is to build it from source. It is written in Haskell, so you'll need [stack](https://haskellstack.org). You also need [node.js](https://nodejs.org) to run the compiler since it uses some JavaScript libraries.
 
-1. Clone or download this repository. If you want a more stable version you should use the most recent release.
-2. Run `stack install` inside the directory.
+1. Clone or download this repository. If you want a more stable version then use the most recent release.
+2. Run `npm install` to install JS dependencies.
+3. Run `stack install` to build the compiler.
 
 Now you should have an executable named `dtfpl`.
-
-## Why does dtfpl exist?
-
-Many JavaScript programs and libraries today are adopting functional programming, using functional techniques like higher order functions, partial application, function composition, etc. However, the JavaScript language itself is not very well suited for functional programming. Therefore, dtfpl provides a better way to write and structure functional programs, while still compiling to high-level, readable, and modern JavaScript, and remaining dynamically typed for simpler JS interop and easier adoption. Dtfpl will also come with a standard library with many useful utility functions.
 
 ## About the name
 
