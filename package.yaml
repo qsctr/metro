@@ -9,11 +9,13 @@ copyright: (c) 2017-20 Bretton Chen
 license: MIT
 github: qsctr/dtfpl
 extra-source-files:
-  - js/**/*.js
   - package.json
   - stack.yaml
   - README.md
   - docs/**/*.md
+data-files:
+  - js/**/*.js
+  - node_modules/**/*
 dependencies:
   - base >= 4.7 && < 5
   - aeson
@@ -47,6 +49,7 @@ ghc-options:
 
 library:
   source-dirs: src
+  generated-other-modules: Paths_dtfpl
 
 executable:
   source-dirs: app

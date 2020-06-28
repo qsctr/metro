@@ -30,6 +30,8 @@ import           Polysemy.Resource
 import           System.IO
 import           System.Process.Typed
 
+import           Paths_dtfpl
+
 class (Typeable t, ToJSON req, FromJSON res) => Message t req res | t -> req res
 
 data NodeProc m a where
@@ -42,10 +44,14 @@ send' :: forall t req res r.
 send' = send $ Proxy @t
 
 runNodeProc :: Members '[Resource, Embed IO] r => InterpreterFor NodeProc r
-runNodeProc a = bracket (startProcess config) stopProcess $
-    \p -> interpret
+runNodeProc a = do
+    jsMain <- embed $ getDataFileName "js/main.js"
+    let config = setStdin createPipe
+               $ setStdout createPipe
+               $ proc "node" [jsMain]
+    bracket (startProcess config) stopProcess \p -> interpret
         \case
-            Send proxy x -> embed $ do
+            Send proxy x -> embed do
                 let req = object
                         [ "type" .= show (typeRep proxy)
                         , "value" .= x ]
@@ -53,6 +59,3 @@ runNodeProc a = bracket (startProcess config) stopProcess $
                 hFlush $ getStdin p
                 fromJust . decode . L.fromStrict <$> B.hGetLine (getStdout p)
         a
-  where config = setStdin createPipe
-               $ setStdout createPipe
-               $ proc "node" ["js/main"]
