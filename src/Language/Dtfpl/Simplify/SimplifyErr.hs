@@ -24,8 +24,8 @@ data SimplifyErr
         (IdentBind 'Resolved) -- ^ The original identifier
     -- | Unresolved identifier.
     | UnresolvedIdentErr (A Ident 'Resolved)
-    -- | Recursive or mutually recursive let declaration.
-    | RecursiveLetErr (A Decl (Pred 'Reordered))
+    -- | Recursive or mutually recursive declaration.
+    | RecursiveDeclErr (A Decl (Pred 'Reordered))
 
 instance ErrMessage SimplifyErr where
     errMessage (DuplicateIdentErr new old) =
@@ -36,7 +36,7 @@ instance ErrMessage SimplifyErr where
                 ++ " at " ++ formatLoc loc ]
     errMessage (UnresolvedIdentErr ident) =
         [ "Unresolved identifier " ++ formatQuote ident ]
-    errMessage (RecursiveLetErr (A decl _)) =
+    errMessage (RecursiveDeclErr (A decl _)) =
         [ "Recursive or mutually recursive definition of " ++ case decl of
             Let bind _ -> formatQuote bind
             Def bind _ -> absurdP bind ]
@@ -44,7 +44,7 @@ instance ErrMessage SimplifyErr where
 instance ErrLoc SimplifyErr where
     errLoc (DuplicateIdentErr new _)  = ann new
     errLoc (UnresolvedIdentErr ident) = ann ident
-    errLoc (RecursiveLetErr decl)     = ann decl
+    errLoc (RecursiveDeclErr decl)    = ann decl
 
 data InternalSimplifyErr
     = InternalDuplicateGenIdentErr (A Ident 'Resolved) (IdentBind 'Resolved)
