@@ -1,4 +1,5 @@
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DataKinds    #-}
+{-# LANGUAGE ViewPatterns #-}
 
 -- | Errors for simplify phase
 module Language.Dtfpl.Simplify.SimplifyErr
@@ -6,6 +7,8 @@ module Language.Dtfpl.Simplify.SimplifyErr
     , InternalSimplifyErr (..)
     ) where
 
+import           Data.List.NonEmpty            (NonEmpty)
+import qualified Data.List.NonEmpty            as N
 import           Data.Singletons.Prelude.Enum
 
 import           Language.Dtfpl.Err.ErrLoc
@@ -20,12 +23,14 @@ data SimplifyErr
     -- | An identifier being defined with the same name as an already existing
     -- one.
     = DuplicateIdentErr
-        (A Ident 'Resolved)   -- ^ The duplicate identifier
+        (A Ident 'Resolved) -- ^ The duplicate identifier
         (IdentBind 'Resolved) -- ^ The original identifier
     -- | Unresolved identifier.
     | UnresolvedIdentErr (A Ident 'Resolved)
-    -- | Recursive or mutually recursive declaration.
-    | RecursiveDeclErr (A Decl (Pred 'Reordered))
+    -- | Cyclic declarations.
+    | CyclicDeclErr
+        (A Decl (Pred 'Reordered)) -- ^ The declaration causing the cycle
+        (NonEmpty (A Decl (Pred 'Reordered))) -- ^ "Call stack" of declarations
 
 instance ErrMessage SimplifyErr where
     errMessage (DuplicateIdentErr new old) =
@@ -36,15 +41,24 @@ instance ErrMessage SimplifyErr where
                 ++ " at " ++ formatLoc loc ]
     errMessage (UnresolvedIdentErr ident) =
         [ "Unresolved identifier " ++ formatQuote ident ]
-    errMessage (RecursiveDeclErr (A decl _)) =
-        [ "Recursive or mutually recursive definition of " ++ case decl of
-            Let bind _ -> formatQuote bind
-            Def bind _ -> absurdP bind ]
+    errMessage (CyclicDeclErr d ds) =
+        "Cyclic declaration" : reverse (lastMsg : msg ds)
+      where lastMsg = depends d ++ " again"
+            msg (N.uncons -> (x, rest)) = case rest of
+                Nothing -> ["The evaluation of " ++ nameLoc x]
+                Just xs -> (depends x ++ " which") : msg xs
+            depends x = "  depends on " ++ nameLoc x
+            nameLoc :: A Decl (Pred 'Reordered) -> String
+            nameLoc (A decl a) = case decl of
+                Let bind _ -> formatQuote bind ++ case a of
+                    Just loc -> " (" ++ formatLoc loc ++ ")"
+                    Nothing  -> ""
+                Def bind _ -> absurdP bind
 
 instance ErrLoc SimplifyErr where
     errLoc (DuplicateIdentErr new _)  = ann new
     errLoc (UnresolvedIdentErr ident) = ann ident
-    errLoc (RecursiveDeclErr decl)    = ann decl
+    errLoc (CyclicDeclErr decl _)     = ann decl
 
 data InternalSimplifyErr
     = InternalDuplicateGenIdentErr (A Ident 'Resolved) (IdentBind 'Resolved)

@@ -14,6 +14,7 @@ module Language.Dtfpl.Simplify.Reorder () where
 import           Control.Monad
 import           Data.Foldable
 import           Data.Generics.Uniplate.Data
+import qualified Data.List.NonEmpty                  as N
 import           Data.Map.Strict                     (Map)
 import qualified Data.Map.Strict                     as M
 import           Data.Set                            (Set)
@@ -52,13 +53,13 @@ instance Step (T [] (A TopLevel)) 'Reordered where
             visitAddRefs :: Members
                 '[ State (Map PIdentBind (CheckType, Set PIdentBind))
                  , Error Err ] r
-                => CheckType -> Set PIdentBind -> PIdentBind -> Sem r Bool
+                => CheckType -> [PIdentBind] -> PIdentBind -> Sem r Bool
             visitAddRefs checkType visiting bind = case M.lookup bind tlMap of
                 Nothing -> pure False
                 Just tl
-                    | bind `S.member` visiting -> throw $
-                        SimplifyErr $ RecursiveDeclErr $ case tl of
-                            A (TLDecl _ decl) _ -> decl
+                    | bind `elem` visiting -> throw $ SimplifyErr $
+                        CyclicDeclErr (tlToDecl tl) $
+                            N.fromList $ map (tlToDecl . (tlMap M.!)) visiting
                     | otherwise -> do
                         refMap <- get
                         case M.lookup bind refMap of
@@ -67,7 +68,9 @@ instance Step (T [] (A TopLevel)) 'Reordered where
                                 | ct < checkType -> addRefs tl old
                                 | otherwise -> pure ()
                         pure True
-              where addRefs tl old = do
+              where tlToDecl (A (TLDecl _ decl) _) = decl
+                    visiting' = bind : visiting
+                    addRefs tl old = do
                         refs <- case checkType of
                             CheckLoad ->
                                 let (checkAllRefs, loadExpr) = run $
@@ -79,10 +82,9 @@ instance Step (T [] (A TopLevel)) 'Reordered where
                         let refs' = S.union old $ S.fromList refs
                         modify' $ M.insert bind (checkType, refs')
                       where (_, A expr _) = splitTLDecl tl
-                            visiting' = S.insert bind visiting
                             visitRefs ct = filterM $ visitAddRefs ct visiting'
         refMap <- execState M.empty $
-            for_ binds $ visitAddRefs CheckLoad S.empty
+            for_ binds $ visitAddRefs CheckLoad []
         -- Second pass: determine topological ordering
         let visitTopoSort :: Members
                 '[ Output (A TopLevel Preordered)
