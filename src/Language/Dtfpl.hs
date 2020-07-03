@@ -26,7 +26,7 @@ import           Language.Dtfpl.ParseNative
 import           Language.Dtfpl.Parser
 import           Language.Dtfpl.Simplify
 
--- | Compile a program.
+-- | Compile a module.
 compile :: Config -> String -> IO (Either String Text)
 compile config =
     compileE

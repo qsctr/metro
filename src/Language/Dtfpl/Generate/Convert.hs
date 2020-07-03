@@ -24,7 +24,7 @@ import           Language.ECMAScript.Syntax
 import           Language.ECMAScript.Syntax.Util
 import           Language.ECMAScript.Syntax.Verify
 
-convert :: Members '[Reader Config, Error Err] r => A Prog Core -> Sem r Program
+convert :: Members '[Reader Config, Error Err] r => A Mod Core -> Sem r Program
 convert = toJS
 
 -- | Typeclass for dtfpl core node @n@ which can be converted to JS node @js@.
@@ -37,8 +37,8 @@ class ToJS n js where
 instance ToJS n js => ToJS (A n) js where
     toJS (A n _) = toJS n
 
-instance ToJS Prog Program where
-    toJS (Prog (T _) (T tls)) = Program ModuleSourceType <$> ((++)
+instance ToJS Mod Program where
+    toJS (Mod (T _) (T tls)) = Program ModuleSourceType <$> ((++)
         <$> traverse toJS tls
         <*> (pure . Left' . ExpressionStatement <$> (CallExpression
             <$> (Left' . IdentifierExpression <$> mkIdentifierE "main")

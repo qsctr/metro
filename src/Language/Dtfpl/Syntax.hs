@@ -27,7 +27,7 @@ module Language.Dtfpl.Syntax
     , Children
     , A (..)
     , Ann
-    , Prog (..)
+    , Mod (..)
     , Import (..)
     , TopLevel (..)
     , ModuleName (..)
@@ -163,17 +163,17 @@ type Ann (p :: Pass) = When p
     Loc
     '[ 'InitGen ==> Maybe Loc ]
 
--- | Program.
-data Prog (p :: Pass) = Prog (T [] (A Import) p) (T [] (A TopLevel) p)
+-- | Module.
+data Mod (p :: Pass) = Mod (T [] (A Import) p) (T [] (A TopLevel) p)
 
-type instance Children Prog p =
+type instance Children Mod p =
     '[ T [] (A Import)
      , T [] (A TopLevel) ]
 
-deriving instance Forall Eq Prog p => Eq (Prog p)
-deriving instance Forall Ord Prog p => Ord (Prog p)
-deriving instance Forall Show Prog p => Show (Prog p)
-deriving instance ForallTy Data Prog p => Data (Prog p)
+deriving instance Forall Eq Mod p => Eq (Mod p)
+deriving instance Forall Ord Mod p => Ord (Mod p)
+deriving instance Forall Show Mod p => Show (Mod p)
+deriving instance ForallTy Data Mod p => Data (Mod p)
 
 newtype Import (p :: Pass)
     -- | Import statement.

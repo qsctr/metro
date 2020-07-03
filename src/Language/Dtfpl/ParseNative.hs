@@ -28,6 +28,5 @@ instance Step Native 'ParsedNative where
     step (Native (P str)) =
         Native . P . PassthruExpression <$> send' @ParseNative str
 
-parseNative :: Member NodeProc r
-    => A Prog 'Source -> Sem r (A Prog 'ParsedNative)
+parseNative :: Member NodeProc r => A Mod 'Source -> Sem r (A Mod 'ParsedNative)
 parseNative = step

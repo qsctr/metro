@@ -24,8 +24,8 @@ import           Language.Dtfpl.Simplify.Resolve
 import           Language.Dtfpl.Simplify.UnDef        ()
 import           Language.Dtfpl.Simplify.UnLamMatch   ()
 
--- | Simplify a complete program from ParsedNative to Core.
+-- | Simplify a complete module from ParsedNative to Core.
 simplify :: Members '[Reader Config, Error Err] r
-    => A Prog 'ParsedNative -> Sem r (A Prog Core)
-simplify prog = runGenIdentFull $
-    step prog >>= step >>= step >>= step >>= resolve >>= step >>= step
+    => A Mod 'ParsedNative -> Sem r (A Mod Core)
+simplify mod_ = runGenIdentFull $
+    step mod_ >>= step >>= step >>= step >>= resolve >>= step >>= step

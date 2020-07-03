@@ -55,7 +55,7 @@ type GlobalEffs = '[Reader Config, Error Err]
 type instance StepEffs 'Resolved = Reader NameMap ': GlobalEffs
 
 resolve :: Members GlobalEffs r
-    => A Prog (Pred 'Resolved) -> Sem r (A Prog 'Resolved)
+    => A Mod (Pred 'Resolved) -> Sem r (A Mod 'Resolved)
 resolve = runReader M.empty . step
 
 addName :: Member (Reader NameMap) r

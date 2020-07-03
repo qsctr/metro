@@ -37,21 +37,21 @@ type PParsec = MonadParsec CustomError String
 -- from the start of the line.
 type PIndentState = MonadState Pos
 
--- | Parse a program into its AST representation.
+-- | Parse a module into its AST representation.
 -- May throw parse errors in the error monad.
-parse :: Member (Error Err) r => FilePath -> String -> Sem r (A Prog 'Source)
+parse :: Member (Error Err) r => FilePath -> String -> Sem r (A Mod 'Source)
 parse filename input = fromEither =<<
-    first ParseErr <$> evalStateT (runParserT prog filename input) pos1
+    first ParseErr <$> evalStateT (runParserT mod_ filename input) pos1
 
--- | Parse a program into its AST representation.
+-- | Parse a module into its AST representation.
 -- For testing purposes only, so we don't have to deal with monad transformers.
-_testParse :: String -> Either String (A Prog 'Source)
+_testParse :: String -> Either String (A Mod 'Source)
 _testParse input = first errorBundlePretty $
-    runIdentity $ evalStateT (runParserT (prog <* eof) "" input) pos1
+    runIdentity $ evalStateT (runParserT (mod_ <* eof) "" input) pos1
 
--- | Parse a program.
-prog :: (PParsec p, PIndentState p) => p (A Prog 'Source)
-prog = addLoc (Prog
+-- | Parse a module.
+mod_ :: (PParsec p, PIndentState p) => p (A Mod 'Source)
+mod_ = addLoc (Mod
     <$> (T <$> many (import_ <* scn))
     <*> (T <$> many (nonIndented scn tlDecl <* scn))) <* eof
 

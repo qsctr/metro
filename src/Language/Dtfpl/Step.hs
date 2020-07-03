@@ -48,8 +48,8 @@ instance Step U p where
 instance {-# OVERLAPPABLE #-} (Step n p, Traversable t) => Step (T t n) p where
     step (T t) = T <$> traverse step t
 
-instance AutoStep Prog p => Step Prog p where
-    step (Prog imps tls) = Prog <$> step imps <*> step tls
+instance AutoStep Mod p => Step Mod p where
+    step (Mod imps tls) = Mod <$> step imps <*> step tls
 
 instance AutoStep Import p => Step Import p where
     step (Import m) = Import <$> step m
