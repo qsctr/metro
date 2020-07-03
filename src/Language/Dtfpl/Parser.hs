@@ -57,13 +57,13 @@ mod_ = addLoc (Mod
 
 -- | Parse an import statement.
 import_ :: (PParsec p, PIndentState p) => p (A Import 'Source)
-import_ = nonIndented scn $ addLoc $ Import <$> (lexeme1 simport *> moduleName)
+import_ = nonIndented scn $ addLoc $ Import <$> (lexeme1 simport *> modName)
 
 -- | Parse a module name.
-moduleName :: PParsec p => p (A ModuleName 'Source)
-moduleName = addLoc $ ModuleName . T <$> moduleAtom `sepBy1` dot
-  where moduleAtom = ModuleAtom <$> takeWhile1P Nothing isModuleAtomChar
-        isModuleAtomChar c = (isLower c || c == '-')
+modName :: PParsec p => p (A ModName 'Source)
+modName = addLoc $ ModName . T <$> modAtom `sepBy1` dot
+  where modAtom = ModAtom <$> takeWhile1P Nothing isModAtomChar
+        isModAtomChar c = (isLower c || c == '-')
                           && c `notElem` reservedChars
 
 -- | Parse a top-level declaration.

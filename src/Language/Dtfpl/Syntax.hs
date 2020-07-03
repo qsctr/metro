@@ -30,8 +30,8 @@ module Language.Dtfpl.Syntax
     , Mod (..)
     , Import (..)
     , TopLevel (..)
-    , ModuleName (..)
-    , ModuleAtom (..)
+    , ModName (..)
+    , ModAtom (..)
     , ExpType (..)
     , Decl (..)
     , DefHead
@@ -177,20 +177,20 @@ deriving instance ForallTy Data Mod p => Data (Mod p)
 
 newtype Import (p :: Pass)
     -- | Import statement.
-    = Import (A ModuleName p)
+    = Import (A ModName p)
 
 type instance Children Import p =
-    '[ A ModuleName ]
+    '[ A ModName ]
 
 deriving instance Forall Eq Import p => Eq (Import p)
 deriving instance Forall Ord Import p => Ord (Import p)
 deriving instance Forall Show Import p => Show (Import p)
 deriving instance ForallTy Data Import p => Data (Import p)
 
-newtype ModuleName (p :: Pass) = ModuleName (T NonEmpty ModuleAtom p)
+newtype ModName (p :: Pass) = ModName (T NonEmpty ModAtom p)
     deriving (Eq, Ord, Show, Data)
 
-newtype ModuleAtom (p :: Pass) = ModuleAtom String
+newtype ModAtom (p :: Pass) = ModAtom String
     deriving (Eq, Ord, Show, Data)
 
 -- | Top level statement.
