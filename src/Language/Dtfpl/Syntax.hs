@@ -94,16 +94,16 @@ type Class = Type -> Constraint
 
 -- | Lift a regular type to a 'Node' type which ignores the current pass.
 -- Phantom type.
-newtype P t (p :: Pass) = P t deriving (Eq, Ord, Show, Data)
+newtype P t (p :: Pass) = P t deriving (Eq, Ord, Show, Read, Data)
 
 -- | Lifted version of '()' which ignores the current pass.
 -- Specialized version of @'P' '()'@.
-data U (p :: Pass) = U deriving (Eq, Ord, Show, Data)
+data U (p :: Pass) = U deriving (Eq, Ord, Show, Read, Data)
 
 -- | Lift a @* -> *@ type constructor to a 'Node' type parameterized by
 -- inner node type @n@ and pass @p@ and holding elements of type @n p@.
 newtype T (t :: Type -> Type) (n :: Node) (p :: Pass) = T { unT :: t (n p) }
-    deriving (Eq, Ord, Show, Data)
+    deriving (Eq, Ord, Show, Read, Data)
 
 -- | Alternative clause for use with 'When'.
 -- Only used in promoted form.
@@ -156,6 +156,7 @@ type ForallA (c :: Class) (n :: Node) (p :: Pass) = (c (n p), c (Ann p))
 deriving instance ForallA Eq n p => Eq (A n p)
 deriving instance ForallA Ord n p => Ord (A n p)
 deriving instance ForallA Show n p => Show (A n p)
+deriving instance ForallA Read n p => Read (A n p)
 deriving instance (ForallA Data n p, Typeable n, Typeable p) => Data (A n p)
 
 -- | The annotation for nodes at the given pass.
@@ -173,6 +174,7 @@ type instance Children Mod p =
 deriving instance Forall Eq Mod p => Eq (Mod p)
 deriving instance Forall Ord Mod p => Ord (Mod p)
 deriving instance Forall Show Mod p => Show (Mod p)
+deriving instance Forall Read Mod p => Read (Mod p)
 deriving instance ForallTy Data Mod p => Data (Mod p)
 
 newtype Import (p :: Pass)
@@ -185,13 +187,14 @@ type instance Children Import p =
 deriving instance Forall Eq Import p => Eq (Import p)
 deriving instance Forall Ord Import p => Ord (Import p)
 deriving instance Forall Show Import p => Show (Import p)
+deriving instance Forall Read Import p => Read (Import p)
 deriving instance ForallTy Data Import p => Data (Import p)
 
 newtype ModName (p :: Pass) = ModName (T NonEmpty ModAtom p)
-    deriving (Eq, Ord, Show, Data)
+    deriving (Eq, Ord, Show, Read, Data)
 
 newtype ModAtom (p :: Pass) = ModAtom String
-    deriving (Eq, Ord, Show, Data)
+    deriving (Eq, Ord, Show, Read, Data)
 
 -- | Top level statement.
 data TopLevel (p :: Pass)
@@ -204,6 +207,7 @@ type instance Children TopLevel p =
 deriving instance Forall Eq TopLevel p => Eq (TopLevel p)
 deriving instance Forall Ord TopLevel p => Ord (TopLevel p)
 deriving instance Forall Show TopLevel p => Show (TopLevel p)
+deriving instance Forall Read TopLevel p => Read (TopLevel p)
 deriving instance ForallTy Data TopLevel p => Data (TopLevel p)
 
 data ExpType (p :: Pass)
@@ -211,7 +215,7 @@ data ExpType (p :: Pass)
     = Exp
     -- | Private.
     | Priv
-    deriving (Eq, Ord, Show, Data)
+    deriving (Eq, Ord, Show, Read, Data)
 
 -- | Declaration.
 data Decl (p :: Pass)
@@ -227,6 +231,7 @@ type instance Children Decl p =
 deriving instance Forall Eq Decl p => Eq (Decl p)
 deriving instance Forall Ord Decl p => Ord (Decl p)
 deriving instance Forall Show Decl p => Show (Decl p)
+deriving instance Forall Read Decl p => Read (Decl p)
 deriving instance ForallTy Data Decl p => Data (Decl p)
 
 -- | Head of the 'Def' declaration at the given pass.
@@ -245,6 +250,7 @@ type instance Children DefAlt p =
 deriving instance Forall Eq DefAlt p => Eq (DefAlt p)
 deriving instance Forall Ord DefAlt p => Ord (DefAlt p)
 deriving instance Forall Show DefAlt p => Show (DefAlt p)
+deriving instance Forall Read DefAlt p => Read (DefAlt p)
 deriving instance ForallTy Data DefAlt p => Data (DefAlt p)
 
 -- | Pattern.
@@ -266,6 +272,7 @@ type instance Children Pat p =
 deriving instance Forall Eq Pat p => Eq (Pat p)
 deriving instance Forall Ord Pat p => Ord (Pat p)
 deriving instance Forall Show Pat p => Show (Pat p)
+deriving instance Forall Read Pat p => Read (Pat p)
 deriving instance ForallTy Data Pat p => Data (Pat p)
 
 -- | Expression.
@@ -297,6 +304,7 @@ type instance Children Expr p =
 deriving instance Forall Eq Expr p => Eq (Expr p)
 deriving instance Forall Ord Expr p => Ord (Expr p)
 deriving instance Forall Show Expr p => Show (Expr p)
+deriving instance Forall Read Expr p => Read (Expr p)
 deriving instance ForallTy Data Expr p => Data (Expr p)
 
 -- | Head of 'Case' expression.
@@ -308,6 +316,7 @@ type instance Children CaseHead p =
 deriving instance Forall Eq CaseHead p => Eq (CaseHead p)
 deriving instance Forall Ord CaseHead p => Ord (CaseHead p)
 deriving instance Forall Show CaseHead p => Show (CaseHead p)
+deriving instance Forall Read CaseHead p => Read (CaseHead p)
 deriving instance ForallTy Data CaseHead p => Data (CaseHead p)
 
 -- | Head of 'Case' expression at the given pass.
@@ -328,6 +337,7 @@ type instance Children AliExpr p =
 deriving instance Forall Eq AliExpr p => Eq (AliExpr p)
 deriving instance Forall Ord AliExpr p => Ord (AliExpr p)
 deriving instance Forall Show AliExpr p => Show (AliExpr p)
+deriving instance Forall Read AliExpr p => Read (AliExpr p)
 deriving instance ForallTy Data AliExpr p => Data (AliExpr p)
 
 -- | 'Case' alternative.
@@ -340,6 +350,7 @@ type instance Children CaseAlt p =
 deriving instance Forall Eq CaseAlt p => Eq (CaseAlt p)
 deriving instance Forall Ord CaseAlt p => Ord (CaseAlt p)
 deriving instance Forall Show CaseAlt p => Show (CaseAlt p)
+deriving instance Forall Read CaseAlt p => Read (CaseAlt p)
 deriving instance ForallTy Data CaseAlt p => Data (CaseAlt p)
 
 -- | Lambda.
@@ -352,6 +363,7 @@ type instance Children Lam p =
 deriving instance Forall Eq Lam p => Eq (Lam p)
 deriving instance Forall Ord Lam p => Ord (Lam p)
 deriving instance Forall Show Lam p => Show (Lam p)
+deriving instance Forall Read Lam p => Read (Lam p)
 deriving instance ForallTy Data Lam p => Data (Lam p)
 
 -- | Head of the lambda at the given pass.
@@ -369,6 +381,7 @@ type instance Children Native p =
 deriving instance Forall Eq Native p => Eq (Native p)
 deriving instance Forall Ord Native p => Ord (Native p)
 deriving instance Forall Show Native p => Show (Native p)
+deriving instance Forall Read Native p => Read (Native p)
 deriving instance ForallTy Data Native p => Data (Native p)
 
 -- | The representation of a native JS expression at the given pass.
@@ -384,6 +397,7 @@ type instance Children IdentBind p =
 deriving instance Forall Eq IdentBind p => Eq (IdentBind p)
 deriving instance Forall Ord IdentBind p => Ord (IdentBind p)
 deriving instance Forall Show IdentBind p => Show (IdentBind p)
+deriving instance Forall Read IdentBind p => Read (IdentBind p)
 deriving instance ForallTy Data IdentBind p => Data (IdentBind p)
 
 data IdentRef (p :: Pass) = IdentRef (IdentRefBind p p) (A Ident p)
@@ -395,6 +409,7 @@ type instance Children IdentRef p =
 deriving instance Forall Eq IdentRef p => Eq (IdentRef p)
 deriving instance Forall Ord IdentRef p => Ord (IdentRef p)
 deriving instance Forall Show IdentRef p => Show (IdentRef p)
+deriving instance Forall Read IdentRef p => Read (IdentRef p)
 deriving instance ForallTy Data IdentRef p => Data (IdentRef p)
 
 type IdentRefBind (p :: Pass) = If (p < 'Resolved) U IdentBind
@@ -424,6 +439,7 @@ type instance Children Ident p =
 deriving instance Forall Eq Ident p => Eq (Ident p)
 deriving instance Forall Ord Ident p => Ord (Ident p)
 deriving instance Forall Show Ident p => Show (Ident p)
+deriving instance Forall Read Ident p => Read (Ident p)
 deriving instance ForallTy Data Ident p => Data (Ident p)
 
 -- | Prefix of a 'GenIdentPart' at the given pass.
@@ -442,4 +458,4 @@ data Lit (p :: Pass)
     = NumLit Double
     -- | String literal.
     | StrLit String
-    deriving (Eq, Ord, Show, Data)
+    deriving (Eq, Ord, Show, Read, Data)

@@ -13,4 +13,6 @@ main = do
         >>= compile (Config { debug = True })
         >>= \case
             Left err -> putStr err
-            Right js -> T.writeFile (filename ++ ".mjs") js
+            Right (js, inter) -> do
+                T.writeFile (filename ++ ".mjs") js
+                writeFile (filename ++ ".dtfpli") inter

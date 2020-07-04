@@ -7,10 +7,10 @@ module Language.Dtfpl
     , compile
     ) where
 
-import           Control.Category                ((>>>))
-import           Control.Monad
+import           Control.Category                  ((>>>))
 import           Data.Bifunctor
-import           Data.Text                       (Text)
+import           Data.Function
+import           Data.Text                         (Text)
 import           Polysemy
 import           Polysemy.Error
 import           Polysemy.Reader
@@ -21,13 +21,15 @@ import           Language.Dtfpl.Err
 import           Language.Dtfpl.Err.Format
 import           Language.Dtfpl.Generate.Convert
 import           Language.Dtfpl.Generate.Render
+import           Language.Dtfpl.Interface.Generate
+import           Language.Dtfpl.Interface.Render
 import           Language.Dtfpl.NodeProc
 import           Language.Dtfpl.ParseNative
 import           Language.Dtfpl.Parser
 import           Language.Dtfpl.Simplify
 
 -- | Compile a module.
-compile :: Config -> String -> IO (Either String Text)
+compile :: Config -> String -> IO (Either String (Text, String))
 compile config =
     compileE
     >>> runError
@@ -40,10 +42,9 @@ compile config =
 
 -- | Run the full compilation process with effects.
 compileE :: Members '[Reader Config, Error Err, NodeProc] r
-    => String -> Sem r Text
-compileE =
-    parse ""
-    >=> parseNative
-    >=> simplify
-    >=> convert
-    >=> render
+    => String -> Sem r (Text, String)
+compileE src = do
+    core <- parse "" src >>= parseNative >>= simplify
+    js <- convert core >>= render
+    let inter = generateInterface core & renderInterface
+    pure (js, inter)
