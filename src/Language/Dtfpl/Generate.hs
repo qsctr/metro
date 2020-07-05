@@ -4,9 +4,9 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies          #-}
 
--- | Convert Dtfpl Core to JS
-module Language.Dtfpl.Generate.Convert
-    ( convert
+-- | Generate JS from Dtfpl Core
+module Language.Dtfpl.Generate
+    ( generate
     ) where
 
 import qualified Data.List.NonEmpty                as N
@@ -24,8 +24,8 @@ import           Language.ECMAScript.Syntax
 import           Language.ECMAScript.Syntax.Util
 import           Language.ECMAScript.Syntax.Verify
 
-convert :: Members '[Reader Config, Error Err] r => A Mod Core -> Sem r Program
-convert = toJS
+generate :: Members '[Reader Config, Error Err] r => A Mod Core -> Sem r Program
+generate = toJS
 
 -- | Typeclass for dtfpl core node @n@ which can be converted to JS node @js@.
 class ToJS n js where

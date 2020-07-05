@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeFamilies     #-}
 
 -- | Parser for dtfpl.
-module Language.Dtfpl.Parser
+module Language.Dtfpl.Parse
     ( parse
     ) where
 
@@ -26,8 +26,8 @@ import           Text.Megaparsec.Char.Lexer         (indentGuard, indentLevel,
                                                      nonIndented)
 
 import           Language.Dtfpl.Err
-import           Language.Dtfpl.Parser.CustomError
-import           Language.Dtfpl.Parser.Loc
+import           Language.Dtfpl.Parse.CustomError
+import           Language.Dtfpl.Parse.Loc
 import           Language.Dtfpl.Syntax
 
 -- | Parser that has parsec functionality.

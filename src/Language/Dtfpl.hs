@@ -19,13 +19,13 @@ import           Polysemy.Resource
 import           Language.Dtfpl.Config
 import           Language.Dtfpl.Err
 import           Language.Dtfpl.Err.Format
-import           Language.Dtfpl.Generate.Convert
-import           Language.Dtfpl.Generate.Render
+import           Language.Dtfpl.Generate
 import           Language.Dtfpl.Interface.Generate
 import           Language.Dtfpl.Interface.Render
 import           Language.Dtfpl.NodeProc
+import           Language.Dtfpl.Parse
 import           Language.Dtfpl.ParseNative
-import           Language.Dtfpl.Parser
+import           Language.Dtfpl.Render
 import           Language.Dtfpl.Simplify
 
 -- | Compile a module.
@@ -45,6 +45,6 @@ compileE :: Members '[Reader Config, Error Err, NodeProc] r
     => String -> Sem r (Text, String)
 compileE src = do
     core <- parse "" src >>= parseNative >>= simplify
-    js <- convert core >>= render
+    js <- generate core >>= render
     let inter = generateInterface core & renderInterface
     pure (js, inter)

@@ -5,7 +5,7 @@ module Language.Dtfpl.Err.Format
 import           Language.Dtfpl.Err
 import           Language.Dtfpl.Err.ErrLoc
 import           Language.Dtfpl.Err.ErrMessage
-import           Language.Dtfpl.Parser.Loc
+import           Language.Dtfpl.Parse.Loc
 import           Text.Megaparsec.Error
 
 formatErr :: Err -> String

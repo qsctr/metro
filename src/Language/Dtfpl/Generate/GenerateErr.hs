@@ -1,15 +1,15 @@
--- | Errors for convert phase
-module Language.Dtfpl.Generate.ConvertErr
-    ( InternalConvertErr (..)
+-- | Errors for generate phase
+module Language.Dtfpl.Generate.GenerateErr
+    ( InternalGenerateErr (..)
     ) where
 
 import           Language.Dtfpl.Err.ErrMessage
 
--- | Internal error during convert phase
-data InternalConvertErr
+-- | Internal error during generate phase
+data InternalGenerateErr
     -- | The generated JS AST is invalid
     = InternalInvalidTargetASTErr String
 
-instance ErrMessage InternalConvertErr where
+instance ErrMessage InternalGenerateErr where
     errMessage (InternalInvalidTargetASTErr msg) =
         ["Attempted to construct invalid ECMAScript AST", msg]

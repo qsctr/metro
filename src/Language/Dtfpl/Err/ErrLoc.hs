@@ -3,7 +3,7 @@ module Language.Dtfpl.Err.ErrLoc
     ( ErrLoc (..)
     ) where
 
-import           Language.Dtfpl.Parser.Loc
+import           Language.Dtfpl.Parse.Loc
 
 -- | Class for errors that may have a location.
 class ErrLoc a where

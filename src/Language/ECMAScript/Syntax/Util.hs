@@ -1,4 +1,4 @@
-{-# LANGUAGE DataKinds        #-}
+{-# LANGUAGE DataKinds #-}
 
 -- | Functions to make constructing JS syntax trees easier.
 module Language.ECMAScript.Syntax.Util
@@ -13,7 +13,7 @@ import           Polysemy.Reader
 import           Language.Dtfpl.Config
 import           Language.Dtfpl.Err
 import           Language.Dtfpl.Err.Util
-import           Language.Dtfpl.Generate.ConvertErr
+import           Language.Dtfpl.Generate.GenerateErr
 import           Language.ECMAScript.Syntax
 
 -- | @const \<ident> = \<expr>;@
@@ -27,5 +27,5 @@ mkIdentifierE :: Members '[Reader Config, Error Err] r
 mkIdentifierE s = do
     d <- asks debug
     flip note (mkIdentifier d s) $
-        InternalErr $ InternalConvertErr $ InternalInvalidTargetASTErr $
+        InternalErr $ InternalGenerateErr $ InternalInvalidTargetASTErr $
             errQuote s ++ " is not a valid ECMAScript identifier"

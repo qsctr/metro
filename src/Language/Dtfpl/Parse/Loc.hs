@@ -2,7 +2,7 @@
 {-# LANGUAGE RecordWildCards    #-}
 
 -- | Source locations for annotating nodes.
-module Language.Dtfpl.Parser.Loc
+module Language.Dtfpl.Parse.Loc
     ( Loc (..)
     , formatLoc
     ) where

@@ -3,7 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeApplications      #-}
 
-module Language.Dtfpl.Generate.Render
+module Language.Dtfpl.Render
     ( render
     ) where
 

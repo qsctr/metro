@@ -1,5 +1,5 @@
 -- | Custom parser errors.
-module Language.Dtfpl.Parser.CustomError
+module Language.Dtfpl.Parse.CustomError
     ( CustomError (..)
     ) where
 

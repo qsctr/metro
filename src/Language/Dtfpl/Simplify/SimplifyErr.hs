@@ -14,7 +14,7 @@ import           Data.Singletons.Prelude.Enum
 import           Language.Dtfpl.Err.ErrLoc
 import           Language.Dtfpl.Err.ErrMessage
 import           Language.Dtfpl.Format.Util
-import           Language.Dtfpl.Parser.Loc
+import           Language.Dtfpl.Parse.Loc
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
 

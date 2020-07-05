@@ -64,7 +64,7 @@ import           Data.Singletons.Prelude.Enum
 import           Data.Singletons.TH
 import           Numeric.Natural
 
-import           Language.Dtfpl.Parser.Loc
+import           Language.Dtfpl.Parse.Loc
 import qualified Language.ECMAScript.Syntax   as JS
 
 -- | Simplification pass.
