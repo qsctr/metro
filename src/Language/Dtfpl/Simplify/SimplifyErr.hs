@@ -27,16 +27,16 @@ data SimplifyErr
     -- | An identifier being defined with the same name as an already existing
     -- one.
     = DuplicateIdentErr
-        (A Ident 'Resolved) -- ^ The duplicate identifier
-        (Either (NonEmpty ImpIdentBind) (IdentBind 'Resolved))
+        (A Ident 'NameResolved) -- ^ The duplicate identifier
+        (Either (NonEmpty ImpIdentBind) (IdentBind 'NameResolved))
             -- ^ The original identifier(s)
     -- | Unresolved identifier.
-    | UnresolvedIdentErr (A Ident 'Resolved)
+    | UnresolvedIdentErr (A Ident 'NameResolved)
     -- | Ambiguous identifier. Note that the possible identifiers it could refer
     -- to must be imported since identifiers within the current module are
     -- unique (and would otherwise cause a 'DuplicateIdentErr').
     | AmbiguousIdentErr
-        (A Ident 'Resolved) -- ^ The ambiguous reference
+        (A Ident 'NameResolved) -- ^ The ambiguous reference
         ImpIdentBind -- ^ The first identifier it could refer to
         (NonEmpty ImpIdentBind)
             -- ^ The rest of the identifiers that it could refer to
@@ -78,9 +78,9 @@ instance ErrLoc SimplifyErr where
 
 data InternalSimplifyErr
     = InternalDuplicateGenIdentErr
-        (A Ident 'Resolved)
-        (Either (NonEmpty ImpIdentBind) (IdentBind 'Resolved))
-    | InternalUnresolvedGenIdentErr (A Ident 'Resolved)
+        (A Ident 'NameResolved)
+        (Either (NonEmpty ImpIdentBind) (IdentBind 'NameResolved))
+    | InternalUnresolvedGenIdentErr (A Ident 'NameResolved)
 
 instance ErrMessage InternalSimplifyErr where
     errMessage (InternalDuplicateGenIdentErr new old) =

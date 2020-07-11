@@ -21,9 +21,9 @@ import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Simplify.AliasCase    ()
 import           Language.Dtfpl.Simplify.Curry        ()
 import           Language.Dtfpl.Simplify.InitGen      ()
+import           Language.Dtfpl.Simplify.NameResolve
 import           Language.Dtfpl.Simplify.ParseNative  ()
 import           Language.Dtfpl.Simplify.Reorder      ()
-import           Language.Dtfpl.Simplify.Resolve
 import           Language.Dtfpl.Simplify.UnDef        ()
 import           Language.Dtfpl.Simplify.UnLamMatch   ()
 
@@ -36,6 +36,6 @@ simplify mod_ = runGenIdentFull $
     >>= step
     >>= step
     >>= step
-    >>= resolve
+    >>= nameResolve
     >>= step
     >>= step

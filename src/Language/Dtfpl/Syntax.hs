@@ -80,7 +80,7 @@ $(promote [d|
         | NoDef
         | NoLamMatch
         | Curried
-        | Resolved
+        | NameResolved
         | Reordered
         | AliasCase
         deriving (Eq, Ord, Enum, Bounded)
@@ -419,7 +419,7 @@ deriving instance ForallTy Data IdentRef p => Data (IdentRef p)
 
 type IdentRefBind (p :: Pass) = When p
     U
-    '[ 'Resolved ==> T (Either ImpIdentBind) IdentBind ]
+    '[ 'NameResolved ==> T (Either ImpIdentBind) IdentBind ]
 
 class IdentBindToRef identRefBind where
     identBindToRef :: IdentRefBind p ~ identRefBind => IdentBind p -> IdentRef p

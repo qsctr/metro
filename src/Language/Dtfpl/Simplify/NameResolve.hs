@@ -13,8 +13,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 -- | Resolve identifiers.
-module Language.Dtfpl.Simplify.Resolve
-    ( resolve
+module Language.Dtfpl.Simplify.NameResolve
+    ( nameResolve
     ) where
 
 import           Data.Bifunctor
@@ -58,15 +58,15 @@ identBindToName :: CanIdentToName p => IdentBind p -> Name
 identBindToName (IdentBind (A ident _)) = identToName ident
 
 type NameMap = Map Name NameMapValue
-type NameMapValue = Either (NonEmpty ImpIdentBind) (IdentBind 'Resolved)
+type NameMapValue = Either (NonEmpty ImpIdentBind) (IdentBind 'NameResolved)
 
 type GlobalEffs = '[Reader Config, Error Err]
 
-type instance StepEffs 'Resolved = Reader NameMap ': GlobalEffs
+type instance StepEffs 'NameResolved = Reader NameMap ': GlobalEffs
 
-resolve :: Members (Reader ModuleDeps ': GlobalEffs) r
-    => A Mod (Pred 'Resolved) -> Sem r (A Mod 'Resolved)
-resolve mod_ = do
+nameResolve :: Members (Reader ModuleDeps ': GlobalEffs) r
+    => A Mod (Pred 'NameResolved) -> Sem r (A Mod 'NameResolved)
+nameResolve mod_ = do
     deps <- ask
     let depNameMap = M.map Left $ M.fromListWith (<>)
             [ (identBindToName bind, ImpIdentBind modName bind :| [])
@@ -74,12 +74,13 @@ resolve mod_ = do
     runReader depNameMap $ step mod_
 
 addName :: Member (Reader NameMap) r
-    => IdentBind 'Resolved -> Sem r a -> Sem r a
+    => IdentBind 'NameResolved -> Sem r a -> Sem r a
 addName sib = local $ M.insert (identBindToName sib) (Right sib)
 
-stepBinds :: (Step n 'Resolved, Members (StepEffs 'Resolved) r)
-    => [n (Pred 'Resolved)] -> (n 'Resolved -> Maybe (IdentBind 'Resolved))
-    -> ([n 'Resolved] -> Sem r a) -> Sem r a
+stepBinds :: (Step n 'NameResolved, Members (StepEffs 'NameResolved) r)
+    => [n (Pred 'NameResolved)]
+    -> (n 'NameResolved -> Maybe (IdentBind 'NameResolved))
+    -> ([n 'NameResolved] -> Sem r a) -> Sem r a
 stepBinds xxs getIdentBind cont = do
     (sxxs, names) <- go xxs
     local (const names) $ cont sxxs
@@ -90,30 +91,30 @@ stepBinds xxs getIdentBind cont = do
                 Just sib -> addName sib $ go xs
                 Nothing  -> go xs
 
-instance Step (T [] (A TopLevel)) 'Resolved where
+instance Step (T [] (A TopLevel)) 'NameResolved where
     step (T tls) = stepBinds binds Just \sBinds -> do
         sBodies <- traverse step bodies
         pure $ T $ zipWith3 (mapNode .: mapTLDecl .: mapNode .: const .: Let)
             sBinds sBodies tls
       where (binds, bodies) = unzip $ map splitTLDecl tls
 
-instance Step CaseAlt 'Resolved where
+instance Step CaseAlt 'NameResolved where
     step (CaseAlt (T pats) expr) = stepBinds (N.toList pats)
         \case
             A (VarPat sib) _ -> Just sib
             _ -> Nothing
         \sPats -> CaseAlt (T $ N.fromList sPats) <$> step expr
 
-instance Step Lam 'Resolved where
+instance Step Lam 'NameResolved where
     step (Lam ib expr) = do
         sib <- step ib
         Lam sib <$> addName sib (step expr)
 
 lookupIdent :: Member (Reader NameMap) r
-    => A Ident 'Resolved -> Sem r (Maybe NameMapValue)
+    => A Ident 'NameResolved -> Sem r (Maybe NameMapValue)
 lookupIdent = asks . M.lookup . identToName . node
 
-instance Step IdentBind 'Resolved where
+instance Step IdentBind 'NameResolved where
     step (IdentBind ident) = do
         si <- step ident
         let checkDupWithErr errCtor = lookupIdent si >>= \case
@@ -125,7 +126,7 @@ instance Step IdentBind 'Resolved where
                     .: InternalSimplifyErr .: InternalDuplicateGenIdentErr
         pure $ IdentBind si
 
-instance Step IdentRef 'Resolved where
+instance Step IdentRef 'NameResolved where
     step (IdentRef U ident) = do
         si <- step ident
         lookupIdent si >>= \case
