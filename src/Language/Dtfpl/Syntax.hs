@@ -30,6 +30,7 @@ module Language.Dtfpl.Syntax
     , Ann
     , Mod (..)
     , Import (..)
+    , ImportModPath
     , TopLevel (..)
     , ModName (..)
     , ModAtom (..)
@@ -68,6 +69,7 @@ import           Data.Singletons.TH
 import           Numeric.Natural
 
 import           Language.Dtfpl.Parse.Loc
+import           Language.Dtfpl.Util.EPath
 import qualified Language.ECMAScript.Syntax   as JS
 
 -- | Simplification pass.
@@ -75,6 +77,7 @@ import qualified Language.ECMAScript.Syntax   as JS
 $(promote [d|
     data Pass
         = Source
+        | ModResolved
         | ParsedNative
         | InitGen
         | NoDef
@@ -134,6 +137,11 @@ type FromInitGen (p :: Pass) t = If (p < 'InitGen) (P Void) t
 type VoidAfter (p' :: Pass) (p :: Pass) t =
     When p t '[ p' ==> P Void ]
 
+-- | Returns 'U' if the current pass is before some specified pass,
+-- otherwise returns the given type.
+type UBefore (p' :: Pass) (p :: Pass) t =
+    When p U '[ p' ==> t ]
+
 -- | Gets the children of a node at a given pass.
 -- For use with generating constraints.
 type family Children (n :: Node) (p :: Pass) :: [Node]
@@ -180,18 +188,20 @@ deriving instance Forall Show Mod p => Show (Mod p)
 deriving instance Forall Read Mod p => Read (Mod p)
 deriving instance ForallTy Data Mod p => Data (Mod p)
 
-newtype Import (p :: Pass)
+data Import (p :: Pass)
     -- | Import statement.
-    = Import (A (P ModName) p)
+    = Import (ImportModPath p p) (A (P ModName) p)
 
 type instance Children Import p =
-    '[ A (P ModName) ]
+    '[ ImportModPath p, A (P ModName) ]
 
 deriving instance Forall Eq Import p => Eq (Import p)
 deriving instance Forall Ord Import p => Ord (Import p)
 deriving instance Forall Show Import p => Show (Import p)
 deriving instance Forall Read Import p => Read (Import p)
 deriving instance ForallTy Data Import p => Data (Import p)
+
+type ImportModPath (p :: Pass) = UBefore 'ModResolved p (P EFile)
 
 newtype ModName = ModName (NonEmpty ModAtom)
     deriving (Eq, Ord, Show, Read, Data)
@@ -417,9 +427,8 @@ deriving instance Forall Show IdentRef p => Show (IdentRef p)
 deriving instance Forall Read IdentRef p => Read (IdentRef p)
 deriving instance ForallTy Data IdentRef p => Data (IdentRef p)
 
-type IdentRefBind (p :: Pass) = When p
-    U
-    '[ 'NameResolved ==> T (Either ImpIdentBind) IdentBind ]
+type IdentRefBind (p :: Pass) =
+    UBefore 'NameResolved p (T (Either ImpIdentBind) IdentBind)
 
 class IdentBindToRef identRefBind where
     identBindToRef :: IdentRefBind p ~ identRefBind => IdentBind p -> IdentRef p

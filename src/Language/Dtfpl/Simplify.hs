@@ -27,9 +27,9 @@ import           Language.Dtfpl.Simplify.Reorder      ()
 import           Language.Dtfpl.Simplify.UnDef        ()
 import           Language.Dtfpl.Simplify.UnLamMatch   ()
 
--- | Simplify a complete module from Source to Core.
+-- | Simplify a complete module from ModResolved to Core.
 simplify :: Members '[Reader ModuleDeps, Reader Config, Error Err, NodeProc] r
-    => A Mod 'Source -> Sem r (A Mod Core)
+    => A Mod 'ModResolved -> Sem r (A Mod Core)
 simplify mod_ = runGenIdentFull $
     step mod_
     >>= step

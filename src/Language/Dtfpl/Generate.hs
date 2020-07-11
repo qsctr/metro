@@ -52,7 +52,7 @@ instance ToJS Mod Program where
                 <*> pure [Left' (LiteralExpression (NumberLiteral 2))])))))
 
 instance ToJS Import ModuleDeclaration where
-    toJS (Import _) = undefined -- TODO
+    toJS (Import _ _) = undefined -- TODO
 
 instance ToJS TopLevel (Either' Statement ModuleDeclaration) where
     toJS (TLDecl Exp decl) =

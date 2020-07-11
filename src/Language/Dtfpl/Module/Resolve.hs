@@ -1,8 +1,11 @@
-{-# LANGUAGE DataKinds        #-}
-{-# LANGUAGE TypeFamilies     #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies          #-}
+
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module Language.Dtfpl.Module.Resolve
-    ( resolveModule
+    ( resolveImports
     ) where
 
 import qualified Data.List.NonEmpty              as N
@@ -16,18 +19,24 @@ import           Language.Dtfpl.Config
 import           Language.Dtfpl.Err
 import           Language.Dtfpl.Module.Load
 import           Language.Dtfpl.Module.ModuleErr
+import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Util.EPath
 
-resolveModule :: Members '[LoadModule, Reader Config, Error Err] r
-    => A (P ModName) 'Source -> Sem r EFile
-resolveModule modName = asks moduleSearchPaths >>= go
-  where go [] = throw $ ModuleErr $ UnresolvedModuleErr modName
-        go (EPath dir : dirs) = do
-            let file = dir </> modNamePath
-            exists <- moduleExists file
-            if exists
-                then pure $ EPath file
-                else go dirs
-        modNamePath = P.joinPath $ map unModAtom $ N.toList $ atoms
-        A (P (ModName atoms)) _ = modName
+type instance StepEffs 'ModResolved = '[LoadModule, Reader Config, Error Err]
+
+resolveImports :: Members (StepEffs 'ModResolved) r
+    => A Mod 'Source -> Sem r (A Mod 'ModResolved)
+resolveImports = step
+
+instance Step Import 'ModResolved where
+    step (Import U modName@(A (P (ModName atoms)) _)) =
+        asks moduleSearchPaths >>= go
+      where go [] = throw $ ModuleErr $ UnresolvedModuleErr modName
+            go (EPath dir : dirs) = do
+                let file = dir </> modNamePath
+                exists <- moduleExists file
+                if exists
+                    then Import (P $ EPath file) <$> step modName
+                    else go dirs
+            modNamePath = P.joinPath $ map unModAtom $ N.toList $ atoms

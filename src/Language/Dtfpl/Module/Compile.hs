@@ -24,19 +24,17 @@ import           Language.Dtfpl.NodeProc
 import           Language.Dtfpl.Parse
 import           Language.Dtfpl.Render
 import           Language.Dtfpl.Simplify
-import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
 
 compileModule :: Members '[LoadModule, OutputModule, Reader ModuleContext,
     Reader Config, Error Err, NodeProc] r => Sem r IMod
 compileModule = do
     src <- loadModule
-    ast <- parse src
-    deps <- M.fromList <$> for (getImports ast) \modName -> do
-        path <- resolveModule modName
+    ast <- parse src >>= resolveImports
+    deps <- M.fromList <$> for (splitImports ast) \(path, modName) -> do
         let context = ModuleContext { currentModulePath = path }
         iMod <- local (const context) compileModule
-        pure (unP $ node modName, iMod)
+        pure (modName, iMod)
     core <- runReader deps $ simplify ast
     js <- generate core >>= render
     outputModule js

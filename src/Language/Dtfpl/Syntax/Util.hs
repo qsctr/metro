@@ -5,7 +5,7 @@ module Language.Dtfpl.Syntax.Util
     ( mapNode
     , genLoc
     , absurdP
-    , getImports
+    , splitImports
     , mapTLDecl
     , getTLBinds
     , splitTLDecl
@@ -16,6 +16,7 @@ import           Data.Coerce
 import           Data.Void
 
 import           Language.Dtfpl.Syntax
+import           Language.Dtfpl.Util.EPath
 
 -- | Applies a function to the unannotated node inside an annotated node.
 mapNode :: Ann p ~ Ann p' => (n p -> n' p') -> A n p -> A n' p'
@@ -29,10 +30,10 @@ genLoc = flip A Nothing
 absurdP :: P Void p -> a
 absurdP (P x) = absurd x
 
--- | List of imported module names.
-getImports :: A Mod p -> [A (P ModName) p]
-getImports (A (Mod (T imps) _) _) = map aImpToModName imps
-  where aImpToModName (A (Import modName) _) = modName
+-- | Get imports as (path, name) pairs.
+splitImports :: ImportModPath p ~ P EFile => A Mod p -> [(EFile, ModName)]
+splitImports (A (Mod (T imps) _) _) = map splitImport imps
+  where splitImport (A (Import (P path) (A (P modName) _)) _) = (path, modName)
 
 -- | Map into the 'Decl' part of a 'TLDecl'.
 mapTLDecl :: (A Decl p -> A Decl p') -> TopLevel p -> TopLevel p'

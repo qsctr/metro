@@ -62,7 +62,7 @@ mod_ = addLoc (Mod
 
 -- | Parse an import statement.
 import_ :: (PParsec p, PIndentState p) => p (A Import 'Source)
-import_ = nonIndented scn $ addLoc $ Import <$> (lexeme1 simport *> modName)
+import_ = nonIndented scn $ addLoc $ Import U <$> (lexeme1 simport *> modName)
 
 -- | Parse a module name.
 modName :: PParsec p => p (A (P ModName) 'Source)

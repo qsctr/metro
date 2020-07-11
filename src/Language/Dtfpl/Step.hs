@@ -51,8 +51,8 @@ instance {-# OVERLAPPABLE #-} (Step n p, Traversable t) => Step (T t n) p where
 instance AutoStep Mod p => Step Mod p where
     step (Mod imps tls) = Mod <$> step imps <*> step tls
 
-instance AutoStep Import p => Step Import p where
-    step (Import m) = Import <$> step m
+instance {-# OVERLAPPABLE #-} AutoStep Import p => Step Import p where
+    step (Import path m) = Import <$> step path <*> step m
 
 instance AutoStep TopLevel p => Step TopLevel p where
     step (TLDecl expType decl) = TLDecl <$> step expType <*> step decl
