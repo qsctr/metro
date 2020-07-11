@@ -1,5 +1,4 @@
 {-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeApplications      #-}
@@ -7,12 +6,9 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
-module Language.Dtfpl.ParseNative
-    ( parseNative
-    ) where
+module Language.Dtfpl.Simplify.ParseNative () where
 
 import           Data.Aeson
-import           Polysemy
 
 import           Language.Dtfpl.NodeProc
 import           Language.Dtfpl.Step
@@ -27,6 +23,3 @@ instance Message ParseNative String Value
 instance Step Native 'ParsedNative where
     step (Native (P str)) =
         Native . P . PassthruExpression <$> send' @ParseNative str
-
-parseNative :: Member NodeProc r => A Mod 'Source -> Sem r (A Mod 'ParsedNative)
-parseNative = step

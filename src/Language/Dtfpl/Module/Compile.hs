@@ -22,7 +22,6 @@ import           Language.Dtfpl.Module.Output
 import           Language.Dtfpl.Module.Resolve
 import           Language.Dtfpl.NodeProc
 import           Language.Dtfpl.Parse
-import           Language.Dtfpl.ParseNative
 import           Language.Dtfpl.Render
 import           Language.Dtfpl.Simplify
 import           Language.Dtfpl.Syntax
@@ -38,7 +37,7 @@ compileModule = do
         let context = ModuleContext { currentModulePath = path }
         iMod <- local (const context) compileModule
         pure (unP $ node modName, iMod)
-    core <- runReader deps $ parseNative ast >>= simplify
+    core <- runReader deps $ simplify ast
     js <- generate core >>= render
     outputModule js
     pure $ generateInterface core
