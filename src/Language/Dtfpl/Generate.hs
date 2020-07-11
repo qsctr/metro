@@ -132,17 +132,17 @@ instance ToJS IdentRef Identifier where
 instance ToJS Ident Identifier where
     toJS = mkIdentifierE . convertIdent
       where convertIdent (Ident s)
-                | s `elem` reservedWords = '$' : s
+                | s `elem` reservedWords = "$r" ++ s ++ "$"
                 | otherwise = head s : concatMap convertChar (tail s)
             convertIdent (GenIdentPart (A ident _) (P n)) =
-                '_' : convertIdent ident ++ "$_" ++ show n
-            convertIdent (GenIdentFull (P n)) = '_' : show n
+                "$g" ++ convertIdent ident ++ "$p" ++ show n ++ "$"
+            convertIdent (GenIdentFull (P n)) = "$f" ++ show n ++ "$"
             convertChar '-' = "_"
-            convertChar '_' = "__"
-            convertChar '$' = "$$"
+            convertChar '_' = "$u$"
+            convertChar '$' = "$d$"
             convertChar c
                 | isValidIdentifierPart c = [c]
-                | otherwise = '$' : show (fromEnum c) ++ "_"
+                | otherwise = "$c" ++ show (fromEnum c) ++ "$"
 
 instance ToJS Lit Literal where
     toJS (NumLit n) = pure $ NumberLiteral n
