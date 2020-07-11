@@ -19,6 +19,7 @@ import           Data.Functor.Identity
 import           Data.List.NonEmpty                 (NonEmpty (..), (<|))
 import           Polysemy
 import           Polysemy.Error                     (Error, fromEither)
+import           Polysemy.Reader
 import           Text.Megaparsec                    hiding (parse, sepBy1,
                                                      sepEndBy1, some)
 import           Text.Megaparsec.Char
@@ -26,6 +27,7 @@ import           Text.Megaparsec.Char.Lexer         (indentGuard, indentLevel,
                                                      nonIndented)
 
 import           Language.Dtfpl.Err
+import           Language.Dtfpl.Module.Context
 import           Language.Dtfpl.Parse.CustomError
 import           Language.Dtfpl.Parse.Loc
 import           Language.Dtfpl.Syntax
@@ -39,9 +41,12 @@ type PIndentState = MonadState Pos
 
 -- | Parse a module into its AST representation.
 -- May throw parse errors in the error monad.
-parse :: Member (Error Err) r => FilePath -> String -> Sem r (A Mod 'Source)
-parse filename input = fromEither =<<
-    first ParseErr <$> evalStateT (runParserT mod_ filename input) pos1
+parse :: Members '[Reader ModuleContext, Error Err] r
+    => String -> Sem r (A Mod 'Source)
+parse input = do
+    filename <- asks currentModulePathString
+    fromEither =<<
+        first ParseErr <$> evalStateT (runParserT mod_ filename input) pos1
 
 -- | Parse a module into its AST representation.
 -- For testing purposes only, so we don't have to deal with monad transformers.
@@ -60,8 +65,8 @@ import_ :: (PParsec p, PIndentState p) => p (A Import 'Source)
 import_ = nonIndented scn $ addLoc $ Import <$> (lexeme1 simport *> modName)
 
 -- | Parse a module name.
-modName :: PParsec p => p (A ModName 'Source)
-modName = addLoc $ ModName . T <$> modAtom `sepBy1` dot
+modName :: PParsec p => p (A (P ModName) 'Source)
+modName = addLoc $ P . ModName <$> modAtom `sepBy1` dot
   where modAtom = ModAtom <$> takeWhile1P Nothing isModAtomChar
         isModAtomChar c = (isLower c || c == '-')
                           && c `notElem` reservedChars

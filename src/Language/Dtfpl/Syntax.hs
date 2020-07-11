@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveDataTypeable        #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE FlexibleContexts          #-}
+{-# LANGUAGE FlexibleInstances         #-}
 {-# LANGUAGE GADTs                     #-}
 {-# LANGUAGE MultiParamTypeClasses     #-}
 {-# LANGUAGE StandaloneDeriving        #-}
@@ -48,8 +49,10 @@ module Language.Dtfpl.Syntax
     , Native (..)
     , Native'
     , IdentBind (..)
+    , ImpIdentBind (..)
     , IdentRef (..)
-    , IdentBindToRef (..)
+    , IdentRefBind
+    , identBindToRef
     , Ident (..)
     , GenIdentPartPrefix
     , GenIdentPartNum
@@ -94,7 +97,7 @@ type Class = Type -> Constraint
 
 -- | Lift a regular type to a 'Node' type which ignores the current pass.
 -- Phantom type.
-newtype P t (p :: Pass) = P t deriving (Eq, Ord, Show, Read, Data)
+newtype P t (p :: Pass) = P { unP :: t } deriving (Eq, Ord, Show, Read, Data)
 
 -- | Lifted version of '()' which ignores the current pass.
 -- Specialized version of @'P' '()'@.
@@ -179,10 +182,10 @@ deriving instance ForallTy Data Mod p => Data (Mod p)
 
 newtype Import (p :: Pass)
     -- | Import statement.
-    = Import (A ModName p)
+    = Import (A (P ModName) p)
 
 type instance Children Import p =
-    '[ A ModName ]
+    '[ A (P ModName) ]
 
 deriving instance Forall Eq Import p => Eq (Import p)
 deriving instance Forall Ord Import p => Ord (Import p)
@@ -190,10 +193,10 @@ deriving instance Forall Show Import p => Show (Import p)
 deriving instance Forall Read Import p => Read (Import p)
 deriving instance ForallTy Data Import p => Data (Import p)
 
-newtype ModName (p :: Pass) = ModName (T NonEmpty ModAtom p)
+newtype ModName = ModName (NonEmpty ModAtom)
     deriving (Eq, Ord, Show, Read, Data)
 
-newtype ModAtom (p :: Pass) = ModAtom String
+newtype ModAtom = ModAtom { unModAtom :: String }
     deriving (Eq, Ord, Show, Read, Data)
 
 -- | Top level statement.
@@ -400,11 +403,13 @@ deriving instance Forall Show IdentBind p => Show (IdentBind p)
 deriving instance Forall Read IdentBind p => Read (IdentBind p)
 deriving instance ForallTy Data IdentBind p => Data (IdentBind p)
 
+data ImpIdentBind = ImpIdentBind ModName (IdentBind Core)
+    deriving (Eq, Ord, Show, Read, Data)
+
 data IdentRef (p :: Pass) = IdentRef (IdentRefBind p p) (A Ident p)
 
 type instance Children IdentRef p =
-    '[ IdentRefBind p
-     , A Ident ]
+    '[ IdentRefBind p, A Ident ]
 
 deriving instance Forall Eq IdentRef p => Eq (IdentRef p)
 deriving instance Forall Ord IdentRef p => Ord (IdentRef p)
@@ -412,7 +417,9 @@ deriving instance Forall Show IdentRef p => Show (IdentRef p)
 deriving instance Forall Read IdentRef p => Read (IdentRef p)
 deriving instance ForallTy Data IdentRef p => Data (IdentRef p)
 
-type IdentRefBind (p :: Pass) = If (p < 'Resolved) U IdentBind
+type IdentRefBind (p :: Pass) = When p
+    U
+    '[ 'Resolved ==> T (Either ImpIdentBind) IdentBind ]
 
 class IdentBindToRef identRefBind where
     identBindToRef :: IdentRefBind p ~ identRefBind => IdentBind p -> IdentRef p
@@ -420,8 +427,8 @@ class IdentBindToRef identRefBind where
 instance IdentBindToRef U where
     identBindToRef (IdentBind ident) = IdentRef U ident
 
-instance IdentBindToRef IdentBind where
-    identBindToRef ib@(IdentBind ident) = IdentRef ib ident
+instance IdentBindToRef (T (Either ImpIdentBind) IdentBind) where
+    identBindToRef ib@(IdentBind ident) = IdentRef (T $ Right ib) ident
 
 -- | Identifier.
 data Ident (p :: Pass)

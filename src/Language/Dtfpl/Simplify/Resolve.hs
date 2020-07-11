@@ -1,4 +1,5 @@
 {-# LANGUAGE BlockArguments        #-}
+{-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
@@ -17,6 +18,7 @@ module Language.Dtfpl.Simplify.Resolve
     ) where
 
 import           Data.Bifunctor
+import           Data.List.NonEmpty                  (NonEmpty (..))
 import qualified Data.List.NonEmpty                  as N
 import           Data.Map.Strict                     (Map)
 import qualified Data.Map.Strict                     as M
@@ -28,6 +30,8 @@ import           Polysemy.Reader
 
 import           Language.Dtfpl.Config
 import           Language.Dtfpl.Err
+import           Language.Dtfpl.Interface.Syntax
+import           Language.Dtfpl.Module.Deps
 import           Language.Dtfpl.Simplify.SimplifyErr
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
@@ -40,27 +44,38 @@ data Name
     | GenNameFull Natural
     deriving (Eq, Ord)
 
-identToName :: Ident 'Resolved -> Name
+type CanIdentToName p =
+    ( GenIdentPartPrefix p ~ A Ident
+    , GenIdentPartNum p ~ P Natural
+    , GenIdentFullNum p ~ P Natural )
+
+identToName :: CanIdentToName p => Ident p -> Name
 identToName (Ident s)                    = Name s
 identToName (GenIdentPart (A i _) (P n)) = GenNamePart (identToName i) n
 identToName (GenIdentFull (P n))         = GenNameFull n
 
-identBindToName :: IdentBind 'Resolved -> Name
+identBindToName :: CanIdentToName p => IdentBind p -> Name
 identBindToName (IdentBind (A ident _)) = identToName ident
 
-type NameMap = Map Name (IdentBind 'Resolved)
+type NameMap = Map Name NameMapValue
+type NameMapValue = Either (NonEmpty ImpIdentBind) (IdentBind 'Resolved)
 
 type GlobalEffs = '[Reader Config, Error Err]
 
 type instance StepEffs 'Resolved = Reader NameMap ': GlobalEffs
 
-resolve :: Members GlobalEffs r
+resolve :: Members (Reader ModuleDeps ': GlobalEffs) r
     => A Mod (Pred 'Resolved) -> Sem r (A Mod 'Resolved)
-resolve = runReader M.empty . step
+resolve mod_ = do
+    deps <- ask
+    let depNameMap = M.map Left $ M.fromListWith (<>)
+            [ (identBindToName bind, ImpIdentBind modName bind :| [])
+            | (modName, IMod binds) <- M.toList deps, bind <- binds ]
+    runReader depNameMap $ step mod_
 
 addName :: Member (Reader NameMap) r
     => IdentBind 'Resolved -> Sem r a -> Sem r a
-addName sib = local $ M.insert (identBindToName sib) sib
+addName sib = local $ M.insert (identBindToName sib) (Right sib)
 
 stepBinds :: (Step n 'Resolved, Members (StepEffs 'Resolved) r)
     => [n (Pred 'Resolved)] -> (n 'Resolved -> Maybe (IdentBind 'Resolved))
@@ -95,7 +110,7 @@ instance Step Lam 'Resolved where
         Lam sib <$> addName sib (step expr)
 
 lookupIdent :: Member (Reader NameMap) r
-    => A Ident 'Resolved -> Sem r (Maybe (IdentBind 'Resolved))
+    => A Ident 'Resolved -> Sem r (Maybe NameMapValue)
 lookupIdent = asks . M.lookup . identToName . node
 
 instance Step IdentBind 'Resolved where
@@ -119,4 +134,9 @@ instance Step IdentRef 'Resolved where
                     then SimplifyErr $ UnresolvedIdentErr si
                     else InternalErr $
                         InternalSimplifyErr $ InternalUnresolvedGenIdentErr si
-            Just ib -> pure $ IdentRef ib si
+            Just entry -> case entry of
+                Left (iib :| iibs) -> case N.nonEmpty iibs of
+                    Nothing -> pure $ IdentRef (T $ Left iib) si
+                    Just iibs' -> throw $
+                        SimplifyErr $ AmbiguousIdentErr si iib iibs'
+                Right ib -> pure $ IdentRef (T $ Right ib) si

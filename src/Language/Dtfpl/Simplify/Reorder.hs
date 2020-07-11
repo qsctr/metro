@@ -53,7 +53,7 @@ instance Step (T [] (A TopLevel)) 'Reordered where
         (tls', _) <- runOutputList $
             execState S.empty $ for_ binds $ visit []
         T <$> traverse step tls'
-      where binds = map (fst . splitTLDecl) tls
+      where binds = getTLBinds tls
             tlMap = M.fromList $ zip binds tls
             visit :: Members
                 '[ Output (A TopLevel Preordered) -- topological ordering
@@ -99,7 +99,7 @@ instance Step (T [] (A TopLevel)) 'Reordered where
                         _         -> descendM go e
                     getRefs :: Expr Preordered -> Set PIdentBind
                     getRefs e = S.fromList
-                        [ ib | IdentRef ib _ <- universeBi e
+                        [ ib | IdentRef (T (Right ib)) _ <- universeBi e
                              , M.member ib tlMap ]
                     dummyExpr :: Expr Preordered
                     dummyExpr = LitExpr $ genLoc $ NumLit 0

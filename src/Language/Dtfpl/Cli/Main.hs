@@ -4,17 +4,20 @@ module Language.Dtfpl.Cli.Main
     ( main
     ) where
 
-import qualified Data.Text.IO       as T
-import           Language.Dtfpl
 import           System.Environment
+import qualified System.Path               as P
+
+import           Language.Dtfpl
+import           Language.Dtfpl.Config
+import           Language.Dtfpl.Util.EPath
 
 main :: IO ()
 main = do
-    filename <- head <$> getArgs
-    readFile (filename ++ ".dtfpl")
-        >>= compile (Config { debug = True })
-        >>= \case
-            Left err -> putStr err
-            Right (js, inter) -> do
-                T.writeFile (filename ++ ".mjs") js
-                writeFile (filename ++ ".dtfpli") inter
+    arg <- head <$> getArgs
+    let path = P.absRel arg
+        config = Config
+            { debug = True
+            , moduleSearchPaths = [EPath $ P.takeDirectory path] }
+    compile config (EPath path) >>= \case
+        Left err -> putStr err
+        Right () -> pure ()

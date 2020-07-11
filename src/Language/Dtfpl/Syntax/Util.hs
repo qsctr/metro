@@ -5,7 +5,9 @@ module Language.Dtfpl.Syntax.Util
     ( mapNode
     , genLoc
     , absurdP
+    , getImports
     , mapTLDecl
+    , getTLBinds
     , splitTLDecl
     , isSourceIdent
     ) where
@@ -27,9 +29,19 @@ genLoc = flip A Nothing
 absurdP :: P Void p -> a
 absurdP (P x) = absurd x
 
+-- | List of imported module names.
+getImports :: A Mod p -> [A (P ModName) p]
+getImports (A (Mod (T imps) _) _) = map aImpToModName imps
+  where aImpToModName (A (Import modName) _) = modName
+
 -- | Map into the 'Decl' part of a 'TLDecl'.
 mapTLDecl :: (A Decl p -> A Decl p') -> TopLevel p -> TopLevel p'
 mapTLDecl f (TLDecl expType decl) = TLDecl (coerce expType) $ f decl
+
+-- | Get the names of the given top-level declarations.
+-- Requires all declarations to already have been simplified to 'Let's.
+getTLBinds :: DefHead p ~ P Void => [A TopLevel p] -> [IdentBind p]
+getTLBinds = map (fst . splitTLDecl)
 
 -- | Get a top-level declaration as a (name, value) pair.
 -- Requires all declarations to already have been simplified to 'Let's.

@@ -24,6 +24,7 @@ dependencies:
   - megaparsec
   - mtl
   - parser-combinators
+  - pathtype
   - polysemy
   - polysemy-plugin
   - singletons

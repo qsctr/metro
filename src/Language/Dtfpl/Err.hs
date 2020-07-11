@@ -12,6 +12,7 @@ import           Text.Megaparsec.Error
 
 import           Language.Dtfpl.Err.ErrMessage
 import           Language.Dtfpl.Generate.GenerateErr
+import           Language.Dtfpl.Module.ModuleErr
 import           Language.Dtfpl.Parse.CustomError
 import           Language.Dtfpl.Simplify.SimplifyErr
 
@@ -19,6 +20,7 @@ import           Language.Dtfpl.Simplify.SimplifyErr
 data Err
     = InternalErr InternalErr
     | ParseErr (ParseErrorBundle String CustomError)
+    | ModuleErr ModuleErr
     | SimplifyErr SimplifyErr
 
 -- | Internal errors, i.e. it's not the user's fault.

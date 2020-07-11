@@ -57,12 +57,6 @@ instance AutoStep Import p => Step Import p where
 instance AutoStep TopLevel p => Step TopLevel p where
     step (TLDecl expType decl) = TLDecl <$> step expType <*> step decl
 
-instance Step ModName p where
-    step (ModName atoms) = ModName <$> step atoms
-
-instance Step ModAtom p where
-    step (ModAtom str) = pure $ ModAtom str
-
 instance Step ExpType p where
     step Exp  = pure Exp
     step Priv = pure Priv
