@@ -15,10 +15,10 @@ import           Language.Dtfpl.Config
 import           Language.Dtfpl.Err.Format
 import           Language.Dtfpl.Module.Compile
 import           Language.Dtfpl.Module.Context
-import           Language.Dtfpl.Module.Load
 import           Language.Dtfpl.Module.Output
 import           Language.Dtfpl.NodeProc
 import           Language.Dtfpl.Util.EPath
+import           Language.Dtfpl.Util.FS
 
 compile :: Config -> EFile -> IO (Either String ())
 compile config path =
@@ -26,11 +26,11 @@ compile config path =
     & void
     & runError
     & fmap (first formatErr)
-    & runLoadModule
     & runOutputModule
     & runReader mainContext
     & runReader config
     & runNodeProc
+    & runFS
     & resourceToIOFinal
     & embedToFinal
     & runFinal

@@ -17,13 +17,13 @@ import qualified System.Path                     as P
 
 import           Language.Dtfpl.Config
 import           Language.Dtfpl.Err
-import           Language.Dtfpl.Module.Load
 import           Language.Dtfpl.Module.ModuleErr
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Util.EPath
+import           Language.Dtfpl.Util.FS
 
-type instance StepEffs 'ModResolved = '[LoadModule, Reader Config, Error Err]
+type instance StepEffs 'ModResolved = '[Reader Config, Error Err, FS]
 
 resolveImports :: Members (StepEffs 'ModResolved) r
     => A Mod 'Source -> Sem r (A Mod 'ModResolved)
@@ -35,8 +35,8 @@ instance Step Import 'ModResolved where
       where go [] = throw $ ModuleErr $ UnresolvedModuleErr modName
             go (EPath dir : dirs) = do
                 let file = dir </> modNamePath <.> "dtfpl"
-                exists <- moduleExists file
+                exists <- fsFileExists file
                 if exists
                     then Import (P $ EPath file) <$> step modName
                     else go dirs
-            modNamePath = P.joinPath $ map unModAtom $ N.toList $ atoms
+            modNamePath = P.joinPath $ map unModAtom $ N.toList atoms
