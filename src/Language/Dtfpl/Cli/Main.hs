@@ -17,7 +17,8 @@ main = do
     let path = P.absRel arg
         config = Config
             { debug = True
+            , mainModulePath = EPath path
             , moduleSearchPaths = [EPath $ P.takeDirectory path] }
-    compile config (EPath path) >>= \case
+    compile config >>= \case
         Left err -> putStr err
         Right () -> pure ()

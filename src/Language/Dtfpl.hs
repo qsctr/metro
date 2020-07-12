@@ -17,11 +17,10 @@ import           Language.Dtfpl.Module.Compile
 import           Language.Dtfpl.Module.Context
 import           Language.Dtfpl.Module.Output
 import           Language.Dtfpl.NodeProc
-import           Language.Dtfpl.Util.EPath
 import           Language.Dtfpl.Util.FS
 
-compile :: Config -> EFile -> IO (Either String ())
-compile config path =
+compile :: Config -> IO (Either String ())
+compile config =
     compileModule
     & void
     & runError
@@ -35,5 +34,4 @@ compile config path =
     & embedToFinal
     & runFinal
   where mainContext = ModuleContext
-            { currentModulePath = path
-            , isMainModule = True }
+            { currentModulePath = mainModulePath config }

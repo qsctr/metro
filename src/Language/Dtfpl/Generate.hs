@@ -26,11 +26,12 @@ import           Language.Dtfpl.Module.Output
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
 import           Language.Dtfpl.Util
+import           Language.Dtfpl.Util.FS
 import           Language.ECMAScript.Syntax
 import           Language.ECMAScript.Syntax.Util
 import           Language.ECMAScript.Syntax.Verify
 
-type GenerateEffs = '[Reader ModuleContext, Reader Config, Error Err]
+type GenerateEffs = '[Reader ModuleContext, Reader Config, Error Err, FS]
 
 generate :: Members GenerateEffs r => A Mod Core -> Sem r Program
 generate = toJS
@@ -59,7 +60,7 @@ instance ToJS Mod Program where
         jImps <- toJS imps
         jTls <- toJS tls
         let stmts = map Right' jImps ++ jTls
-        isMain <- asks isMainModule
+        isMain <- isMainModule
         Program ModuleSourceType <$>
             if isMain && hasMainFn (unT tls)
                 then do
