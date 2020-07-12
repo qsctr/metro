@@ -1,3 +1,4 @@
+{-# LANGUAGE BlockArguments        #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
@@ -9,14 +10,19 @@ module Language.Dtfpl.Generate
     ( generate
     ) where
 
+import           Data.List
 import qualified Data.List.NonEmpty                as N
 import           Data.Traversable
 import           Polysemy
 import           Polysemy.Error
 import           Polysemy.Reader
+import qualified System.Path                       as P
 
 import           Language.Dtfpl.Config
 import           Language.Dtfpl.Err
+import           Language.Dtfpl.Module.Context
+import           Language.Dtfpl.Module.Main
+import           Language.Dtfpl.Module.Output
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
 import           Language.Dtfpl.Util
@@ -24,13 +30,24 @@ import           Language.ECMAScript.Syntax
 import           Language.ECMAScript.Syntax.Util
 import           Language.ECMAScript.Syntax.Verify
 
-generate :: Members '[Reader Config, Error Err] r => A Mod Core -> Sem r Program
+type GenerateEffs = '[Reader ModuleContext, Reader Config, Error Err]
+
+generate :: Members GenerateEffs r => A Mod Core -> Sem r Program
 generate = toJS
 
 -- | Typeclass for dtfpl core node @n@ which can be converted to JS node @js@.
 class ToJS n js where
     -- | Convert a dtfpl core node to a js node.
-    toJS :: Members '[Reader Config, Error Err] r => n Core -> Sem r js
+    toJS :: Members GenerateEffs r => n Core -> Sem r js
+
+class PToJS t js where
+    pToJS :: Members GenerateEffs r => t -> Sem r js
+
+instance PToJS t js => ToJS (P t) js where
+    toJS (P x) = pToJS x
+
+instance (ToJS n js, Traversable t) => ToJS (T t n) (t js) where
+    toJS (T xs) = traverse toJS xs
 
 -- | Currently we just throw away the annotations.
 -- Might add source maps later on.
@@ -38,21 +55,46 @@ instance ToJS n js => ToJS (A n) js where
     toJS (A n _) = toJS n
 
 instance ToJS Mod Program where
-    toJS (Mod (T _) (T tls)) = Program ModuleSourceType <$> ((++)
-        <$> traverse toJS tls
-        <*> (pure . Left' . ExpressionStatement <$> (CallExpression
-            <$> (Left' . IdentifierExpression <$> mkIdentifierE "main")
-            <*> (pure . Left' <$> (CallExpression
-                <$> (Left' . MemberExpression <$> (Member
-                    <$> (Left' . MemberExpression <$> (Member
-                        <$> (Left' . IdentifierExpression
-                            <$> mkIdentifierE "process")
-                        <*> (Right' <$> mkIdentifierE "argv")))
-                    <*> (Right' <$> mkIdentifierE "slice")))
-                <*> pure [Left' (LiteralExpression (NumberLiteral 2))])))))
+    toJS (Mod imps tls) = do
+        jImps <- toJS imps
+        jTls <- toJS tls
+        let stmts = map Right' jImps ++ jTls
+        isMain <- asks isMainModule
+        Program ModuleSourceType <$>
+            if isMain && hasMainFn (unT tls)
+                then do
+                    iMain <- toJS mainFn
+                    iProcess <- mkIdentifierE "process"
+                    iArgv <- mkIdentifierE "argv"
+                    iSlice <- mkIdentifierE "slice"
+                    let mainCall = Left' $ ExpressionStatement $ CallExpression
+                            (Left' $ IdentifierExpression iMain)
+                            [Left' $ CallExpression
+                                (Left' $ MemberExpression $ Member
+                                    (Left' $ MemberExpression $ Member
+                                        (Left' $ IdentifierExpression iProcess)
+                                        (Right' iArgv))
+                                    (Right' iSlice))
+                                [Left' $ LiteralExpression $ NumberLiteral 2]]
+                    pure $ stmts ++ [mainCall]
+                else pure stmts
 
 instance ToJS Import ModuleDeclaration where
-    toJS (Import _ _) = undefined -- TODO
+    toJS (Import (P path) modName) = do
+        jModName <- toJS modName
+        pure $ withOutputPath path \outPath ->
+            let spec = P.withAbsRel
+                    (\absPath -> "file://" ++ P.toString absPath)
+                    (\relPath -> P.toString P.currentDir ++ [P.pathSeparator]
+                        ++ P.toString relPath)
+                    outPath
+            in  ImportDeclaration
+                    [Right' $ Right' $ ImportNamespaceSpecifier jModName]
+                    $ StringLiteral spec
+
+instance PToJS ModName Identifier where
+    pToJS (ModName atoms) = mkIdentifierE $ "$m_"
+        ++ intercalate "$_" (map (identifierize . unModAtom) $ N.toList atoms)
 
 instance ToJS TopLevel (Either' Statement ModuleDeclaration) where
     toJS (TLDecl Exp decl) =
@@ -61,13 +103,13 @@ instance ToJS TopLevel (Either' Statement ModuleDeclaration) where
 
 instance ToJS Decl Declaration where
     toJS (Let ident expr) = constDecl <$> toJS ident <*> toJS expr
-    toJS (Def _ _)        = undefined
+    toJS (Def defHead _)  = absurdP defHead
 
 -- | For the 'Case' expression:
 -- Converts each 'Case' into an IIFE where inside the function body there are
 -- if statements corresponding to each pattern match.
 instance ToJS Expr Expression where
-    toJS (VarExpr ident) = IdentifierExpression <$> toJS ident
+    toJS (VarExpr identRef) = toJS identRef
     toJS (LitExpr lit) = LiteralExpression <$> toJS lit
     toJS (App f x) = CallExpression
         <$> (Left' <$> toJS f) <*> (pure . Left' <$> toJS x)
@@ -124,8 +166,14 @@ instance ToJS Native Expression where
 instance ToJS IdentBind Identifier where
     toJS (IdentBind ident) = toJS ident
 
-instance ToJS IdentRef Identifier where
-    toJS (IdentRef _ ident) = toJS ident
+instance ToJS IdentRef Expression where
+    toJS (IdentRef (T refBind) _) = case refBind of
+        Left (ImpIdentBind modName identBind) -> do
+            jModName <- pToJS modName
+            jIdent <- toJS identBind
+            pure $ MemberExpression $
+                Member (Left' $ IdentifierExpression jModName) $ Right' jIdent
+        Right identBind -> IdentifierExpression <$> toJS identBind
 
 -- | Convert dtfpl 'Ident' to JS 'Identifier', trying to preserve as much of the
 -- original name as possible.
@@ -133,16 +181,20 @@ instance ToJS Ident Identifier where
     toJS = mkIdentifierE . convertIdent
       where convertIdent (Ident s)
                 | s `elem` reservedWords = "$r" ++ s ++ "$"
-                | otherwise = head s : concatMap convertChar (tail s)
+                | otherwise = identifierize s
             convertIdent (GenIdentPart (A ident _) (P n)) =
                 "$g" ++ convertIdent ident ++ "$p" ++ show n ++ "$"
             convertIdent (GenIdentFull (P n)) = "$f" ++ show n ++ "$"
-            convertChar '-' = "_"
-            convertChar '_' = "$u$"
-            convertChar '$' = "$d$"
-            convertChar c
-                | isValidIdentifierPart c = [c]
-                | otherwise = "$c" ++ show (fromEnum c) ++ "$"
+
+-- | Turn a string into a string that would be a valid JS identifier.
+identifierize :: String -> String
+identifierize = concatMap convertChar
+  where convertChar '-' = "_"
+        convertChar '_' = "$u$"
+        convertChar '$' = "$d$"
+        convertChar c
+            | isValidIdentifierPart c = [c]
+            | otherwise = "$c" ++ show (fromEnum c) ++ "$"
 
 instance ToJS Lit Literal where
     toJS (NumLit n) = pure $ NumberLiteral n

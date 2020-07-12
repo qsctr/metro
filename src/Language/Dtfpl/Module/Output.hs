@@ -4,12 +4,14 @@
 {-# LANGUAGE GADTs               #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE PolyKinds           #-}
+{-# LANGUAGE RankNTypes          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell     #-}
 
 module Language.Dtfpl.Module.Output
     ( OutputModule
     , outputModule
+    , withOutputPath
     , runOutputModule
     ) where
 
@@ -18,6 +20,7 @@ import qualified Data.Text.IO                  as TIO
 import           Polysemy
 import           Polysemy.Reader
 import qualified System.Path                   as P
+import qualified System.Path.PartClass         as PC
 
 import           Language.Dtfpl.Module.Context
 import           Language.Dtfpl.Util.EPath
@@ -27,10 +30,13 @@ data OutputModule m a where
 
 makeSem ''OutputModule
 
+withOutputPath :: EFile -> (forall ar. PC.AbsRel ar => P.File ar -> a) -> a
+withOutputPath (EPath path) f = f $ P.replaceExtension path "mjs"
+
 runOutputModule :: Members '[Reader ModuleContext, Embed IO] r
     => InterpreterFor OutputModule r
 runOutputModule = interpret \case
     OutputModule js -> do
-        EPath path <- asks currentModulePath
-        let outFile = P.toString $ P.replaceExtension path "mjs"
-        embed $ TIO.writeFile outFile js
+        path <- asks currentModulePath
+        withOutputPath path \outPath ->
+            embed $ TIO.writeFile (P.toString outPath) js

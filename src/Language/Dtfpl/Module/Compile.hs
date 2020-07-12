@@ -32,7 +32,9 @@ compileModule = do
     src <- loadModule
     ast <- parse src >>= resolveImports
     deps <- M.fromList <$> for (splitImports ast) \(path, modName) -> do
-        let context = ModuleContext { currentModulePath = path }
+        let context = ModuleContext
+                { currentModulePath = path
+                , isMainModule = False }
         iMod <- local (const context) compileModule
         pure (modName, iMod)
     core <- runReader deps $ simplify ast

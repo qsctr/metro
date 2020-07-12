@@ -28,9 +28,12 @@ compile config path =
     & fmap (first formatErr)
     & runLoadModule
     & runOutputModule
-    & runReader ModuleContext { currentModulePath = path }
+    & runReader mainContext
     & runReader config
     & runNodeProc
     & resourceToIOFinal
     & embedToFinal
     & runFinal
+  where mainContext = ModuleContext
+            { currentModulePath = path
+            , isMainModule = True }

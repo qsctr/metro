@@ -10,7 +10,8 @@ import qualified System.Path               as P
 import           Language.Dtfpl.Util.EPath
 
 data ModuleContext = ModuleContext {
-    currentModulePath :: EFile
+    currentModulePath :: EFile,
+    isMainModule      :: Bool
 }
 
 currentModulePathString :: ModuleContext -> String
