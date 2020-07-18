@@ -57,7 +57,7 @@ _testParse input = first errorBundlePretty $
 -- | Parse a module.
 mod_ :: (PParsec p, PIndentState p) => p (A Mod 'Source)
 mod_ = addLoc (Mod
-    <$> (T <$> many (import_ <* scn))
+    <$> (T <$> many (try import_ <* scn))
     <*> (T <$> many (nonIndented scn tlDecl <* scn))) <* eof
 
 -- | Parse an import statement.
