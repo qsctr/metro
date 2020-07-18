@@ -1,6 +1,6 @@
 # Language Reference
 
-Dtfpl is a functional language with a syntax similar to Haskell. However, unlike Haskell, dtfpl is not a pure functional language.
+Dtfpl is a functional language with a syntax similar to Haskell. However, unlike Haskell, dtfpl is not a pure functional language and is strictly evaluated.
 
 Currently, dtfpl does not have a standard library or any built-in functions. However, you can define bindings to JavaScript functions yourself.
 
@@ -129,9 +129,37 @@ case a, b of
     3, 4 -> "three and four"
 ```
 
-## Main function
+## Modules
 
-The `main` function will be automatically executed when the compiled JS program is run with node. It takes one argument which is an array of arguments passed to the program at the command line. If your program does not use this then you can use `_` as the pattern.
+Modules correspond to source files. Module names should only contain lowercase characters or `-`. The file corresponding to a given module is the module name with `.dtfpl` appended. The module name is not mentioned explicitly in the source code in the file. The main module is the module that the compiler was invoked on.
+
+### Export
+
+Declarations in a module can be exported by putting `exp` before the declaration.
+
+```
+exp def id
+    x -> x
+
+exp let n = 42
+```
+
+This works for native bindings as well. Declarations which are not prefixed with `exp` are not exported.
+
+### Import
+
+Modules can contain a series of `import` statements before any declarations. Each `import` statement names a module and brings the exported declarations from the module into scope for the current module.
+
+```
+import foo
+import bar.baz
+```
+
+Module names are resolved into source files by replacing `.` with `/` then looking for the corresponding source file in the directory of the main module. For example, if the main module is `./main.dtfpl`, then the statements above will import the declarations from `./foo.dtfpl` and `./bar/baz.dtfpl`.
+
+### Main function
+
+The main module can contain a function named `main`. It will be automatically called when the compiled JS program is run with node. It takes one argument which is an array of arguments passed to the program at the command line. If your program does not use this then you can use `_` as the pattern.
 
 ```
 let native print = console.log
