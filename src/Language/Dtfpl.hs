@@ -34,4 +34,5 @@ compile config =
     & embedToFinal
     & runFinal
   where mainContext = ModuleContext
-            { currentModulePath = mainModulePath config }
+            { currentModulePath = mainModulePath config
+            , importStack = [] }

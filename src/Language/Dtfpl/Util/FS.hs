@@ -12,9 +12,12 @@ module Language.Dtfpl.Util.FS
     , fsReadFile
     , fsFileExists
     , fsCanonicalizePath
+    , pathEq
     , runFS
     ) where
 
+import           Control.Applicative
+import           Data.Function
 import           Polysemy
 
 import qualified System.Path               as P
@@ -30,6 +33,9 @@ data FS m a where
     FsCanonicalizePath :: PC.FileDir fd => EPath fd -> FS m (P.Abs fd)
 
 makeSem ''FS
+
+pathEq :: (Member FS r, PC.FileDir fd) => EPath fd -> EPath fd -> Sem r Bool
+pathEq = liftA2 (==) `on` fsCanonicalizePath
 
 runFS :: Member (Embed IO) r => InterpreterFor FS r
 runFS = interpret \case

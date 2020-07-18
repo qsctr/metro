@@ -13,16 +13,25 @@ import           Data.List
 import qualified Data.List.NonEmpty         as N
 import           Data.Void
 import           Numeric.Natural
+import qualified System.Path                as P
+import qualified System.Path.PartClass      as PC
 import           Text.Megaparsec.Pos
 
 import           Language.Dtfpl.Parse.Loc
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
+import           Language.Dtfpl.Util.EPath
 
 -- | AST nodes that can be formatted
 class Format a where
     -- | Format an AST node into a string, e.g. for displaying in error messages
     format :: a -> String
+
+instance (PC.AbsRel ar, PC.FileDir fd) => Format (P.Path ar fd) where
+    format = P.toString
+
+instance PC.FileDir fd => Format (EPath fd) where
+    format (EPath path) = format path
 
 instance Format Loc where
     format Loc {..} = sourceName start ++ " "

@@ -17,6 +17,7 @@ import           Language.Dtfpl.Generate
 import           Language.Dtfpl.Interface.Generate
 import           Language.Dtfpl.Interface.Syntax
 import           Language.Dtfpl.Module.Context
+import           Language.Dtfpl.Module.Cycle
 import           Language.Dtfpl.Module.Output
 import           Language.Dtfpl.Module.Resolve
 import           Language.Dtfpl.NodeProc
@@ -29,13 +30,16 @@ import           Language.Dtfpl.Util.FS
 compileModule :: Members '[OutputModule, Reader ModuleContext,
     Reader Config, Error Err, NodeProc, FS] r => Sem r IMod
 compileModule = do
+    checkImportCycle
     src <- asks currentModulePath >>= fsReadFile
     ast <- parse src >>= resolveImports
-    deps <- M.fromList <$> for (splitImports ast) \(path, modName) -> do
-        let context = ModuleContext
-                { currentModulePath = path }
-        iMod <- local (const context) compileModule
-        pure (modName, iMod)
+    deps <- M.fromList <$> for (getImports ast) \imp -> do
+            let (path, modName) = splitImport imp
+                newContext ctx = ModuleContext
+                    { currentModulePath = path
+                    , importStack = imp : importStack ctx }
+            iMod <- local newContext compileModule
+            pure (modName, iMod)
     core <- runReader deps $ simplify ast
     js <- generate core >>= render
     outputModule js

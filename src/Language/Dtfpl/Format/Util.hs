@@ -1,5 +1,7 @@
 module Language.Dtfpl.Format.Util
     ( formatQuote
+    , parens
+    , formatParens
     , parensLoc
     ) where
 
@@ -12,6 +14,12 @@ import           Language.Dtfpl.Parse.Loc
 formatQuote :: Format a => a -> String
 formatQuote = errQuote . format
 
+parens :: String -> String
+parens s = " (" ++ s ++ ")"
+
+formatParens :: Format a => a -> String
+formatParens = parens . format
+
 parensLoc :: Maybe Loc -> String
-parensLoc (Just loc) = " (" ++ format loc ++ ")"
+parensLoc (Just loc) = formatParens loc
 parensLoc Nothing    = ""

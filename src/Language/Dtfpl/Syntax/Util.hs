@@ -5,7 +5,8 @@ module Language.Dtfpl.Syntax.Util
     ( mapNode
     , genLoc
     , absurdP
-    , splitImports
+    , getImports
+    , splitImport
     , mapTLDecl
     , getTLBinds
     , splitTLDecl
@@ -30,10 +31,14 @@ genLoc = flip A Nothing
 absurdP :: P Void p -> a
 absurdP (P x) = absurd x
 
--- | Get imports as (path, name) pairs.
-splitImports :: ImportModPath p ~ P EFile => A Mod p -> [(EFile, ModName)]
-splitImports (A (Mod (T imps) _) _) = map splitImport imps
-  where splitImport (A (Import (P path) (A (P modName) _)) _) = (path, modName)
+-- | Get imports of a module
+getImports :: A Mod p -> [A Import p]
+getImports (A (Mod (T imps) _) _) = imps
+
+-- | Get an import as a (path, name) pair.
+-- Requires paths to have already been resolved.
+splitImport :: ImportModPath p ~ P EFile => A Import p -> (EFile, ModName)
+splitImport (A (Import (P path) (A (P modName) _)) _) = (path, modName)
 
 -- | Map into the 'Decl' part of a 'TLDecl'.
 mapTLDecl :: (A Decl p -> A Decl p') -> TopLevel p -> TopLevel p'
