@@ -1,4 +1,4 @@
-module Language.Dtfpl.Interface.Parser
+module Language.Dtfpl.Interface.Parse
     ( parseInterface
     ) where
 
