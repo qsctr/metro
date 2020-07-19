@@ -15,7 +15,7 @@ import           Language.Dtfpl.Config
 import           Language.Dtfpl.Err.Format
 import           Language.Dtfpl.Module.Compile
 import           Language.Dtfpl.Module.Context
-import           Language.Dtfpl.Module.Output
+import           Language.Dtfpl.Module.ModFS
 import           Language.Dtfpl.NodeProc
 import           Language.Dtfpl.Util.FS
 
@@ -23,9 +23,9 @@ compile :: Config -> IO (Either String ())
 compile config =
     compileModule
     & void
+    & runModFS
     & runError
     & fmap (first formatErr)
-    & runOutputModule
     & runReader mainContext
     & runReader config
     & runNodeProc

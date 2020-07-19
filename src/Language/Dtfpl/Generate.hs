@@ -84,15 +84,16 @@ instance ToJS Mod Program where
 instance ToJS Import ModuleDeclaration where
     toJS (Import (P path) modName) = do
         jModName <- toJS modName
-        pure $ withExt outExt path \outPath ->
-            let spec = P.withAbsRel
-                    (\absPath -> "file://" ++ P.toString absPath)
-                    (\relPath -> P.toString P.currentDir ++ [P.pathSeparator]
-                        ++ P.toString relPath)
-                    outPath
-            in  ImportDeclaration
-                    [Right' $ Right' $ ImportNamespaceSpecifier jModName]
-                    $ StringLiteral spec
+        pure $ case replaceExt outExt path of
+            EPath outPath -> 
+                let spec = P.withAbsRel
+                        (\absPath -> "file://" ++ P.toString absPath)
+                        (\relPath -> P.toString P.currentDir
+                            ++ [P.pathSeparator] ++ P.toString relPath)
+                        outPath
+                in  ImportDeclaration
+                        [Right' $ Right' $ ImportNamespaceSpecifier jModName]
+                        $ StringLiteral spec
 
 instance PToJS ModName Identifier where
     pToJS (ModName atoms) = mkIdentifierE $ "$m_"

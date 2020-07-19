@@ -4,4 +4,4 @@ module Language.Dtfpl.Interface.Syntax
 
 import           Language.Dtfpl.Syntax
 
-newtype IMod = IMod [IdentBind Core] deriving (Show, Read)
+newtype IMod = IMod [IdentBind Core] deriving (Eq, Show, Read)

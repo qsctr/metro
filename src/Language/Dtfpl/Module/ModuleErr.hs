@@ -14,9 +14,13 @@ import           Language.Dtfpl.Err.ErrMessage
 import           Language.Dtfpl.Format
 import           Language.Dtfpl.Format.Util
 import           Language.Dtfpl.Syntax
+import           Language.Dtfpl.Util.EPath
 
 data ModuleErr
     = UnresolvedModuleErr (A (P ModName) 'Source)
+    | LoadModuleErr
+        EFile -- ^ The module to load
+        IOError -- ^ The error
     | CyclicImportErr
         (NonEmpty (A Import 'ModResolved))
             -- ^ "Import stack" containing the cycle
@@ -26,6 +30,9 @@ data ModuleErr
 instance ErrMessage ModuleErr where
     errMessage (UnresolvedModuleErr modName) =
         [ "Could not find module " ++ format modName ]
+    errMessage (LoadModuleErr path ioe) =
+        [ "Could not load module " ++ format path
+        , show ioe ]
     {-
     A (Import a.dtfpl a) (b.dtfpl pos)
     A (Import b.dtfpl b) (c.dtfpl pos)
@@ -56,4 +63,5 @@ instance ErrMessage ModuleErr where
 
 instance ErrLoc ModuleErr where
     errLoc (UnresolvedModuleErr modName) = Just $ ann modName
+    errLoc (LoadModuleErr _ _)           = Nothing
     errLoc (CyclicImportErr imps)        = Just $ ann $ N.head imps

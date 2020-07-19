@@ -29,6 +29,7 @@ dependencies:
   - polysemy-plugin
   - singletons
   - text
+  - time
   - typed-process
   - uniplate
 ghc-options:
