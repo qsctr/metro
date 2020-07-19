@@ -21,11 +21,12 @@ import qualified System.Path                       as P
 import           Language.Dtfpl.Config
 import           Language.Dtfpl.Err
 import           Language.Dtfpl.Module.Context
+import           Language.Dtfpl.Module.Extensions
 import           Language.Dtfpl.Module.Main
-import           Language.Dtfpl.Module.Output
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
 import           Language.Dtfpl.Util
+import           Language.Dtfpl.Util.EPath
 import           Language.Dtfpl.Util.FS
 import           Language.ECMAScript.Syntax
 import           Language.ECMAScript.Syntax.Util
@@ -83,7 +84,7 @@ instance ToJS Mod Program where
 instance ToJS Import ModuleDeclaration where
     toJS (Import (P path) modName) = do
         jModName <- toJS modName
-        pure $ withOutputPath path \outPath ->
+        pure $ withExt outExt path \outPath ->
             let spec = P.withAbsRel
                     (\absPath -> "file://" ++ P.toString absPath)
                     (\relPath -> P.toString P.currentDir ++ [P.pathSeparator]

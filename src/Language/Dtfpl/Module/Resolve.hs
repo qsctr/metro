@@ -8,15 +8,16 @@ module Language.Dtfpl.Module.Resolve
     ( resolveImports
     ) where
 
-import qualified Data.List.NonEmpty              as N
+import qualified Data.List.NonEmpty               as N
 import           Polysemy
 import           Polysemy.Error
 import           Polysemy.Reader
-import           System.Path                     ((<.>), (</>))
-import qualified System.Path                     as P
+import           System.Path                      ((<.>), (</>))
+import qualified System.Path                      as P
 
 import           Language.Dtfpl.Config
 import           Language.Dtfpl.Err
+import           Language.Dtfpl.Module.Extensions
 import           Language.Dtfpl.Module.ModuleErr
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
@@ -34,7 +35,7 @@ instance Step Import 'ModResolved where
         asks moduleSearchPaths >>= go
       where go [] = throw $ ModuleErr $ UnresolvedModuleErr modName
             go (EPath dir : dirs) = do
-                let file = dir </> modNamePath <.> "dtfpl"
+                let file = dir </> modNamePath <.> srcExt
                 exists <- fsFileExists file
                 if exists
                     then Import (P $ EPath file) <$> step modName
