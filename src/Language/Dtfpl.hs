@@ -13,6 +13,7 @@ import           Polysemy.Resource
 
 import           Language.Dtfpl.Config
 import           Language.Dtfpl.Err.Format
+import           Language.Dtfpl.Module.Cache
 import           Language.Dtfpl.Module.Compile
 import           Language.Dtfpl.Module.Context
 import           Language.Dtfpl.Module.ModFS
@@ -24,6 +25,7 @@ compile config =
     compileModule
     & void
     & runModFS
+    & runModuleCache
     & runError
     & fmap (first formatErr)
     & runReader mainContext

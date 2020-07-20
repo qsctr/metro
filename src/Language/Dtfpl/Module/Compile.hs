@@ -19,6 +19,7 @@ import           Language.Dtfpl.Generate
 import           Language.Dtfpl.Interface.Changed
 import           Language.Dtfpl.Interface.Generate
 import           Language.Dtfpl.Interface.Syntax
+import           Language.Dtfpl.Module.Cache
 import           Language.Dtfpl.Module.Context
 import           Language.Dtfpl.Module.Cycle
 import           Language.Dtfpl.Module.ModFS
@@ -30,9 +31,9 @@ import           Language.Dtfpl.Simplify
 import           Language.Dtfpl.Syntax.Util
 import           Language.Dtfpl.Util.FS
 
-compileModule :: Members '[ModFS, Reader ModuleContext,
+compileModule :: Members '[ModFS, ModuleCache, Reader ModuleContext,
     Reader Config, Error Err, NodeProc, FS] r => Sem r (IMod, IChanged)
-compileModule = do
+compileModule = withModuleCache do
     checkImportCycle
     src <- loadSource
     ast <- parse src >>= resolveImports
