@@ -15,13 +15,10 @@ module Language.Dtfpl.Util.FS
     , fsFileExists
     , fsGetModifyTime
     , fsCanonicalizePath
-    , pathEq
     , runFS
     ) where
 
-import           Control.Applicative
 import           Control.Exception
-import           Data.Function
 import           Data.Text                 (Text)
 import qualified Data.Text.IO              as TIO
 import           Data.Time.Clock
@@ -44,9 +41,6 @@ data FS m a where
     FsCanonicalizePath :: PC.FileDir fd => EPath fd -> FS m (P.Abs fd)
 
 makeSem ''FS
-
-pathEq :: (Member FS r, PC.FileDir fd) => EPath fd -> EPath fd -> Sem r Bool
-pathEq = liftA2 (==) `on` fsCanonicalizePath
 
 runFS :: Member (Embed IO) r => InterpreterFor FS r
 runFS = interpret \case

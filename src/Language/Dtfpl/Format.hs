@@ -20,6 +20,7 @@ import           Text.Megaparsec.Pos
 import           Language.Dtfpl.Parse.Loc
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
+import           Language.Dtfpl.Util.CEPath
 import           Language.Dtfpl.Util.EPath
 
 -- | AST nodes that can be formatted
@@ -32,6 +33,9 @@ instance (PC.AbsRel ar, PC.FileDir fd) => Format (P.Path ar fd) where
 
 instance PC.FileDir fd => Format (EPath fd) where
     format (EPath path) = format path
+
+instance PC.FileDir fd => Format (CEPath fd) where
+    format = format . ePath
 
 instance Format Loc where
     format Loc {..} = sourceName start ++ " "

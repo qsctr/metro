@@ -69,7 +69,7 @@ import           Data.Singletons.TH
 import           Numeric.Natural
 
 import           Language.Dtfpl.Parse.Loc
-import           Language.Dtfpl.Util.EPath
+import           Language.Dtfpl.Util.CEPath
 import qualified Language.ECMAScript.Syntax   as JS
 
 -- | Simplification pass.
@@ -201,7 +201,7 @@ deriving instance Forall Show Import p => Show (Import p)
 deriving instance Forall Read Import p => Read (Import p)
 deriving instance ForallTy Data Import p => Data (Import p)
 
-type ImportModPath (p :: Pass) = UBefore 'ModResolved p (P EFile)
+type ImportModPath (p :: Pass) = UBefore 'ModResolved p (P CEFile)
 
 newtype ModName = ModName (NonEmpty ModAtom)
     deriving (Eq, Ord, Show, Read, Data)

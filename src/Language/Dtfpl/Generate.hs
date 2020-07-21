@@ -26,6 +26,7 @@ import           Language.Dtfpl.Module.Main
 import           Language.Dtfpl.Syntax
 import           Language.Dtfpl.Syntax.Util
 import           Language.Dtfpl.Util
+import           Language.Dtfpl.Util.CEPath
 import           Language.Dtfpl.Util.EPath
 import           Language.Dtfpl.Util.FS
 import           Language.ECMAScript.Syntax
@@ -84,8 +85,8 @@ instance ToJS Mod Program where
 instance ToJS Import ModuleDeclaration where
     toJS (Import (P path) modName) = do
         jModName <- toJS modName
-        pure $ case replaceExt outExt path of
-            EPath outPath -> 
+        pure $ case replaceExt outExt (ePath path) of
+            EPath outPath ->
                 let spec = P.withAbsRel
                         (\absPath -> "file://" ++ P.toString absPath)
                         (\relPath -> P.toString P.currentDir

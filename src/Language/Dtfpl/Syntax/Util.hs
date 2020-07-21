@@ -17,7 +17,7 @@ import           Data.Coerce
 import           Data.Void
 
 import           Language.Dtfpl.Syntax
-import           Language.Dtfpl.Util.EPath
+import           Language.Dtfpl.Util.CEPath
 
 -- | Applies a function to the unannotated node inside an annotated node.
 mapNode :: Ann p ~ Ann p' => (n p -> n' p') -> A n p -> A n' p'
@@ -37,7 +37,7 @@ getImports (A (Mod (T imps) _) _) = imps
 
 -- | Get an import as a (path, name) pair.
 -- Requires paths to have already been resolved.
-splitImport :: ImportModPath p ~ P EFile => A Import p -> (EFile, ModName)
+splitImport :: ImportModPath p ~ P CEFile => A Import p -> (CEFile, ModName)
 splitImport (A (Import (P path) (A (P modName) _)) _) = (path, modName)
 
 -- | Map into the 'Decl' part of a 'TLDecl'.

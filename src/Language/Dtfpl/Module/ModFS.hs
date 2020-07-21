@@ -37,6 +37,7 @@ import           Language.Dtfpl.Interface.Syntax
 import           Language.Dtfpl.Module.Context
 import           Language.Dtfpl.Module.Extensions
 import           Language.Dtfpl.Module.ModuleErr
+import           Language.Dtfpl.Util.CEPath
 import           Language.Dtfpl.Util.EPath
 import           Language.Dtfpl.Util.FS
 
@@ -54,10 +55,10 @@ runModFS :: Members '[Reader ModuleContext, Error Err, FS] r
     => InterpreterFor ModFS r
 runModFS = interpret \case
     LoadSource -> do
-        path <- asks currentModulePath
+        path <- asks $ ePath . currentModulePath
         fsReadFile path >>= fromEither . first (ModuleErr . LoadModuleErr path)
     SourceChanged -> do
-        path <- asks currentModulePath
+        path <- asks $ ePath . currentModulePath
         fmap (fromRight True) $ runError $
             (liftA2 (>) `on` fromEither <=< fsGetModifyTime) path $
                 replaceExt outExt path
@@ -70,10 +71,10 @@ runModFS = interpret \case
                 | oldIMod == iMod -> pure ISame
             _ -> writeIFile iPath iMod $> IChanged
     OutputModule js -> do
-        path <- asks currentModulePath
+        path <- asks $ ePath . currentModulePath
         fsWriteFileText (replaceExt outExt path) js
   where getIPath :: Member (Reader ModuleContext) r => Sem r EFile
-        getIPath = replaceExt iExt <$> asks currentModulePath
+        getIPath = replaceExt iExt <$> asks (ePath . currentModulePath)
         readIFile :: Member FS r => EFile -> Sem r (Maybe IMod)
         readIFile = fmap (fromRight Nothing . fmap parseInterface) . fsReadFile
         writeIFile :: Member FS r => EFile -> IMod -> Sem r ()

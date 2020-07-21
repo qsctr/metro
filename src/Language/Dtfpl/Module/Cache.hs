@@ -24,6 +24,7 @@ import qualified System.Path                      as P
 import           Language.Dtfpl.Interface.Changed
 import           Language.Dtfpl.Interface.Syntax
 import           Language.Dtfpl.Module.Context
+import           Language.Dtfpl.Util.CEPath
 import           Language.Dtfpl.Util.FS
 
 data ModuleCache m a where
@@ -45,10 +46,8 @@ runModuleCache :: Members '[Reader ModuleContext, FS] r
     => InterpreterFor ModuleCache r
 runModuleCache = evalState @(Map P.AbsFile (IMod, IChanged)) M.empty
     . reinterpret \case
-        LookupModuleCache -> getCanonicalizedPath >>= gets . M.lookup
+        LookupModuleCache ->
+            asks (cPath . currentModulePath) >>= gets . M.lookup
         InsertModuleCache res -> do
-            path <- getCanonicalizedPath
+            path <- asks $ cPath . currentModulePath
             modify' $ M.insert path res
-  where getCanonicalizedPath :: Members '[Reader ModuleContext, FS] r
-            => Sem r P.AbsFile
-        getCanonicalizedPath = asks currentModulePath >>= fsCanonicalizePath

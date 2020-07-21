@@ -21,6 +21,7 @@ import           Language.Dtfpl.Module.Extensions
 import           Language.Dtfpl.Module.ModuleErr
 import           Language.Dtfpl.Step
 import           Language.Dtfpl.Syntax
+import           Language.Dtfpl.Util.CEPath
 import           Language.Dtfpl.Util.EPath
 import           Language.Dtfpl.Util.FS
 
@@ -38,6 +39,8 @@ instance Step Import 'ModResolved where
                 let file = dir </> modNamePath <.> srcExt
                 exists <- fsFileExists file
                 if exists
-                    then Import (P $ EPath file) <$> step modName
+                    then do
+                        cePath <- mkCEPath $ EPath file
+                        Import (P cePath) <$> step modName
                     else go dirs
             modNamePath = P.joinPath $ map unModAtom $ N.toList atoms

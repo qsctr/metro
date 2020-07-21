@@ -5,19 +5,21 @@ module Language.Dtfpl.Cli.Main
     ) where
 
 import           System.Environment
-import qualified System.Path               as P
+import qualified System.Path                as P
 
 import           Language.Dtfpl
 import           Language.Dtfpl.Config
+import           Language.Dtfpl.Util.CEPath
 import           Language.Dtfpl.Util.EPath
 
 main :: IO ()
 main = do
     arg <- head <$> getArgs
     let path = P.absRel arg
-        config = Config
+    cePath <- mkCEPathIO $ EPath path
+    let config = Config
             { debug = True
-            , mainModulePath = EPath path
+            , mainModulePath = cePath
             , moduleSearchPaths = [EPath $ P.takeDirectory path] }
     compile config >>= \case
         Left err -> putStr err
