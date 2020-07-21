@@ -5,6 +5,7 @@ module Language.Dtfpl.Cli.Main
     ) where
 
 import           System.Environment
+import           System.Exit
 import           System.IO
 import qualified System.Path                as P
 
@@ -23,5 +24,7 @@ main = do
             , mainModulePath = cePath
             , moduleSearchPaths = [EPath $ P.takeDirectory path] }
     compile config >>= \case
-        Left err -> hPutStr stderr err
+        Left err -> do
+            hPutStr stderr err
+            exitFailure
         Right () -> pure ()
