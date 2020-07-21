@@ -7,6 +7,7 @@ module Language.Dtfpl.Module.Compile
     ( compileModule
     ) where
 
+import           Colog.Polysemy
 import qualified Data.Map.Strict                   as M
 import           Data.Traversable
 import           Polysemy
@@ -19,6 +20,7 @@ import           Language.Dtfpl.Generate
 import           Language.Dtfpl.Interface.Changed
 import           Language.Dtfpl.Interface.Generate
 import           Language.Dtfpl.Interface.Syntax
+import           Language.Dtfpl.Log
 import           Language.Dtfpl.Module.Cache
 import           Language.Dtfpl.Module.Context
 import           Language.Dtfpl.Module.Cycle
@@ -32,7 +34,8 @@ import           Language.Dtfpl.Syntax.Util
 import           Language.Dtfpl.Util.FS
 
 compileModule :: Members '[ModFS, ModuleCache, Reader ModuleContext,
-    Reader Config, Error Err, NodeProc, FS] r => Sem r (IMod, IChanged)
+    Reader Config, Error Err, NodeProc, FS, Log LogMsg] r
+    => Sem r (IMod, IChanged)
 compileModule = withModuleCache do
     checkImportCycle
     src <- loadSource
@@ -45,6 +48,8 @@ compileModule = withModuleCache do
         (iMod, iChanged) <- local newContext compileModule
         pure ((modName, iMod), iChanged)
     let compile = do
+            path <- asks currentModulePathString
+            logMsg V1 $ "Compiling " ++ path
             core <- runReader (M.fromList deps) $ simplify ast
             js <- generate core >>= render
             outputModule js

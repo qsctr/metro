@@ -3,9 +3,12 @@ module Language.Dtfpl
     ( compile
     ) where
 
+import           Colog.Core.IO
+import           Colog.Polysemy
 import           Data.Bifunctor
 import           Data.Function
 import           Data.Functor
+import           Data.Functor.Contravariant
 import           Polysemy
 import           Polysemy.Error
 import           Polysemy.Reader
@@ -13,6 +16,7 @@ import           Polysemy.Resource
 
 import           Language.Dtfpl.Config
 import           Language.Dtfpl.Err.Format
+import           Language.Dtfpl.Log
 import           Language.Dtfpl.Module.Cache
 import           Language.Dtfpl.Module.Compile
 import           Language.Dtfpl.Module.Context
@@ -32,6 +36,7 @@ compile config =
     & runReader config
     & runNodeProc
     & runFS
+    & runLogAction (contramap formatLogMsg logStringStdout)
     & resourceToIOFinal
     & embedToFinal
     & runFinal
