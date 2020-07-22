@@ -62,8 +62,12 @@ instance Step ExpType p where
     step Priv = pure Priv
 
 instance {-# OVERLAPPABLE #-} AutoStep Decl p => Step Decl p where
-    step (Def name alts) = Def <$> step name <*> step alts
-    step (Let name expr) = Let <$> step name <*> step expr
+    step (Def nat name alts) = Def <$> step nat <*> step name <*> step alts
+    step (Let nat name expr) = Let <$> step nat <*> step name <*> step expr
+
+instance Step IsNative p where
+    step IsNative = pure IsNative
+    step NotNative = pure NotNative
 
 instance AutoStep DefAlt p => Step DefAlt p where
     step (DefAlt pats expr) = DefAlt <$> step pats <*> step expr

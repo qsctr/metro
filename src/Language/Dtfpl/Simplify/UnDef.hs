@@ -54,7 +54,7 @@ type instance StepEffs 'NoDef = '[]
 -- parameter name for that parameter. If there is no 'VarPat' in that column,
 -- a 'GenIdentPart' based on the name of the function will be used.
 instance Step Decl 'NoDef where
-    step (Def name (T alts)) = do
+    step (Def _ name (T alts)) = do
         sName <- step name
         let (patRows, exprs) = N.unzip $
                 N.map (\(A (DefAlt (T pats) expr) _) -> (pats, expr)) alts
@@ -78,9 +78,10 @@ instance Step Decl 'NoDef where
                 let caseAlts = [ A (CaseAlt (T pats) expr) loc
                         | pats <- sRows | expr <- sExprs | A _ loc <- alts ]
                 pure $ genLoc $ Case caseHead $ T caseAlts
-        pure $ Let sName $ genLoc $ LamExpr $ Lam (T lamParams) lamBody
+        pure $ Let NotNative sName $
+            genLoc $ LamExpr $ Lam (T lamParams) lamBody
       where nodeIsVarPat (A (VarPat _) _) = True
             nodeIsVarPat _                = False
             varPatToWildPat (VarPat _) = WildPat
             varPatToWildPat pat        = pat
-    step (Let name expr) = Let <$> step name <*> step expr
+    step (Let nat name expr) = Let <$> step nat <*> step name <*> step expr

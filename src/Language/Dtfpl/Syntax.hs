@@ -36,6 +36,7 @@ module Language.Dtfpl.Syntax
     , ModAtom (..)
     , ExpType (..)
     , Decl (..)
+    , IsNative (..)
     , DefHead
     , DefBody
     , DefAlt (..)
@@ -233,9 +234,9 @@ data ExpType (p :: Pass)
 -- | Declaration.
 data Decl (p :: Pass)
     -- | @def@ function declaration.
-    = Def (DefHead p p) (DefBody p p)
+    = Def (IsNative p) (DefHead p p) (DefBody p p)
     -- | @let@ variable declaration.
-    | Let (IdentBind p) (A Expr p)
+    | Let (IsNative p) (IdentBind p) (A Expr p)
 
 type instance Children Decl p =
     '[ DefHead p, DefBody p
@@ -246,6 +247,11 @@ deriving instance Forall Ord Decl p => Ord (Decl p)
 deriving instance Forall Show Decl p => Show (Decl p)
 deriving instance Forall Read Decl p => Read (Decl p)
 deriving instance ForallTy Data Decl p => Data (Decl p)
+
+data IsNative (p :: Pass)
+    = IsNative
+    | NotNative
+    deriving (Eq, Ord, Show, Read, Data)
 
 -- | Head of the 'Def' declaration at the given pass.
 type DefHead (p :: Pass) = VoidAfter 'NoDef p IdentBind

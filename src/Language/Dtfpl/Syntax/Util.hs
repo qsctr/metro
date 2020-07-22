@@ -53,8 +53,8 @@ getTLBinds = map (fst . splitTLDecl)
 -- Requires all declarations to already have been simplified to 'Let's.
 splitTLDecl :: DefHead p ~ P Void => A TopLevel p -> (IdentBind p, A Expr p)
 splitTLDecl (A (TLDecl _ (A decl _)) _) = case decl of
-    Let bind body -> (bind, body)
-    Def bind _    -> absurdP bind
+    Let _ bind body -> (bind, body)
+    Def _ bind _    -> absurdP bind
 
 -- | Returns 'True' if the identifier is not compiler-generated.
 isSourceIdent :: Ident p -> Bool

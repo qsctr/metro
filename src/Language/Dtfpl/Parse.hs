@@ -80,14 +80,18 @@ decl :: (PParsec p, PIndentState p) => p (A Decl 'Source)
 decl = def <|> let_
   where def = addLoc $ do
             lexeme1 sdef
-            pAltBody <- snativeToExprBody
-            Def <$> (IdentBind <$> ident) <*> indentBlock' (defAlt pAltBody)
+            isNative <- snativeToIsNative
+            Def isNative <$> (IdentBind <$> ident)
+                <*> indentBlock' (defAlt $ isNativeToExprBody isNative)
         let_ = addLoc $ do
             lexeme1 slet
-            pBody <- snativeToExprBody
-            blockStart pBody $ Let <$> lexeme1 (IdentBind <$> ident) <* equals
-        snativeToExprBody = maybe expr (const nativeExpr) <$>
-            optional (lexeme1 snative)
+            isNative <- snativeToIsNative
+            blockStart (isNativeToExprBody isNative) $
+                Let isNative <$> lexeme1 (IdentBind <$> ident) <* equals
+        snativeToIsNative =
+            maybe NotNative (const IsNative) <$> optional (lexeme1 snative)
+        isNativeToExprBody IsNative  = nativeExpr
+        isNativeToExprBody NotNative = expr
 
 -- | Parse a def alternative, given a parser for the body of the alternative
 -- (either dtfpl expr or JS native expr)

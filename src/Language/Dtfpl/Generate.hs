@@ -106,8 +106,8 @@ instance ToJS TopLevel (Either' Statement ModuleDeclaration) where
     toJS (TLDecl Priv decl) = Left' . DeclarationStatement <$> toJS decl
 
 instance ToJS Decl Declaration where
-    toJS (Let ident expr) = constDecl <$> toJS ident <*> toJS expr
-    toJS (Def defHead _)  = absurdP defHead
+    toJS (Let _ ident expr) = constDecl <$> toJS ident <*> toJS expr
+    toJS (Def _ defHead _)  = absurdP defHead
 
 -- | For the 'Case' expression:
 -- Converts each 'Case' into an IIFE where inside the function body there are

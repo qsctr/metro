@@ -75,8 +75,8 @@ instance ErrMessage SimplifyErr where
             depends x = "  depends on " ++ nameLoc x
             nameLoc :: A Decl (Pred 'Reordered) -> String
             nameLoc (A decl a) = case decl of
-                Let bind _ -> formatQuote bind ++ parensLoc a
-                Def bind _ -> absurdP bind
+                Let _ bind _ -> formatQuote bind ++ parensLoc a
+                Def _ bind _ -> absurdP bind
 
 instance ErrLoc SimplifyErr where
     errLoc (ParseNativeErr _ _)          = Nothing
