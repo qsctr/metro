@@ -25,6 +25,7 @@ dependencies:
   - containers
   - megaparsec
   - mtl
+  - optparse-applicative
   - parser-combinators
   - pathtype
   - polysemy
