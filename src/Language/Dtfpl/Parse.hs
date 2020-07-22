@@ -201,7 +201,7 @@ nativeExpr = addLoc . fmap NativeExpr . native
 -- expression. The expression is parsed using a JS parser in the ParseNative
 -- step.
 native :: PParsec p => Pos -> p (Native 'Source)
-native i = Native . P <$> nativeString
+native i = fmap Native $ addLoc $ P <$> nativeString
   where nativeString = do
             line <- takeWhile1P Nothing (`notElem` ['\r', '\n'])
             option line $ try $ do

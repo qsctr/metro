@@ -13,7 +13,17 @@ rl.on('line', input => {
     process.stdout.write(JSON.stringify((() => {
         switch (req.type) {
             case 'ParseNative':
-                return parseExpressionAt(req.value);
+                try {
+                    return {
+                        tag: 'ParseNativeSuccess',
+                        contents: parseExpressionAt(req.value)
+                    };
+                } catch (e) {
+                    return {
+                        tag: 'ParseNativeError',
+                        contents: [e.message, e.loc]
+                    };
+                }
             case 'Render':
                 return generate(req.value);
         }

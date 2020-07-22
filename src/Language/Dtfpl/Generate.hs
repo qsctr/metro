@@ -165,7 +165,7 @@ instance ToJS Expr Expression where
     toJS (NativeExpr native) = toJS native
 
 instance ToJS Native Expression where
-    toJS (Native (P expr)) = pure expr
+    toJS (Native (A (P expr) _)) = pure expr
 
 instance ToJS IdentBind Identifier where
     toJS (IdentBind ident) = toJS ident

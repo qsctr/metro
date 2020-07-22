@@ -39,9 +39,14 @@ instance PC.FileDir fd => Format (CEPath fd) where
 
 instance Format Loc where
     format Loc {..} = sourceName start ++ " "
-        ++ formatSourcePos start ++ "-" ++ formatSourcePos end
-      where formatSourcePos SourcePos {..} =
-                show (unPos sourceLine) ++ ":" ++ show (unPos sourceColumn)
+        ++ formatLineCol start ++ "-" ++ formatLineCol end
+
+instance Format SourcePos where
+    format sourcePos = sourceName sourcePos ++ " " ++ formatLineCol sourcePos
+
+formatLineCol :: SourcePos -> String
+formatLineCol SourcePos {..} =
+    show (unPos sourceLine) ++ ":" ++ show (unPos sourceColumn)
 
 instance Format t => Format (P t p) where
     format (P x) = format x

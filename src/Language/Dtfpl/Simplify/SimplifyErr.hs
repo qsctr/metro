@@ -13,6 +13,7 @@ module Language.Dtfpl.Simplify.SimplifyErr
 import           Data.List.NonEmpty            (NonEmpty (..))
 import qualified Data.List.NonEmpty            as N
 import           Data.Singletons.Prelude.Enum
+import           Text.Megaparsec.Pos
 
 import           Language.Dtfpl.Err.ErrLoc
 import           Language.Dtfpl.Err.ErrMessage
@@ -24,9 +25,12 @@ import           Language.Dtfpl.Syntax.Util
 
 -- | Error during simplify phase
 data SimplifyErr
+    = ParseNativeErr
+        String -- ^ Error message
+        SourcePos -- ^ Error position
     -- | An identifier being defined with the same name as an already existing
     -- one.
-    = DuplicateIdentErr
+    | DuplicateIdentErr
         (A Ident 'NameResolved) -- ^ The duplicate identifier
         (Either (NonEmpty ImpIdentBind) (IdentBind 'NameResolved))
             -- ^ The original identifier(s)
@@ -46,6 +50,10 @@ data SimplifyErr
         (NonEmpty (A Decl (Pred 'Reordered))) -- ^ "Call stack" of declarations
 
 instance ErrMessage SimplifyErr where
+    errMessage (ParseNativeErr msg pos) =
+        [ "Error while parsing native code"
+        , format pos
+        , msg ]
     errMessage (DuplicateIdentErr new old) =
         ("Duplicate identifier " ++ formatQuote new)
         : duplicateIdentMessage old
@@ -71,6 +79,7 @@ instance ErrMessage SimplifyErr where
                 Def bind _ -> absurdP bind
 
 instance ErrLoc SimplifyErr where
+    errLoc (ParseNativeErr _ _)          = Nothing
     errLoc (DuplicateIdentErr new _)     = ann new
     errLoc (UnresolvedIdentErr ident)    = ann ident
     errLoc (AmbiguousIdentErr ident _ _) = ann ident

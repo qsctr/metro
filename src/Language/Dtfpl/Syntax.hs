@@ -386,10 +386,10 @@ type LamHead (p :: Pass) = When p
      , 'Curried ==> IdentBind ]
 
 -- | Native JS expression.
-newtype Native (p :: Pass) = Native (Native' p p)
+newtype Native (p :: Pass) = Native (A (Native' p) p)
 
 type instance Children Native p =
-    '[ Native' p ]
+    '[ A (Native' p) ]
 
 deriving instance Forall Eq Native p => Eq (Native p)
 deriving instance Forall Ord Native p => Ord (Native p)
