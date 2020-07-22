@@ -49,7 +49,7 @@ compileModule = withModuleCache do
         pure ((modName, iMod), iChanged)
     let compile = do
             path <- asks currentModulePathString
-            logMsg V1 $ "Compiling " ++ path
+            logMsg 1 $ "Compiling " ++ path
             core <- runReader (M.fromList deps) $ simplify ast
             js <- generate core >>= render
             outputModule js

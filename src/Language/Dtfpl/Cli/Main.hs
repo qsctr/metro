@@ -13,11 +13,13 @@ import qualified System.Path                as P
 
 import           Language.Dtfpl
 import           Language.Dtfpl.Config
+import           Language.Dtfpl.Log.Verb
 import           Language.Dtfpl.Util.CEPath
 import           Language.Dtfpl.Util.EPath
 
 data Options = Options
     { file          :: P.AbsRelFile
+    , verbosity     :: Verb
     , internalDebug :: Bool }
 
 main :: IO ()
@@ -27,7 +29,8 @@ main = do
     let config = Config
             { debug = internalDebug
             , mainModulePath = cePath
-            , moduleSearchPaths = [EPath $ P.takeDirectory file] }
+            , moduleSearchPaths = [EPath $ P.takeDirectory file]
+            , .. }
     compile config >>= \case
         Left err -> do
             hPutStr stderr err
@@ -44,6 +47,13 @@ options = do
     file <- fmap P.absRel $ strArgument $
         metavar "FILE"
         <> help "Source file to compile"
+    verbosity <- option auto $
+        long "verbosity"
+        <> short 'v'
+        <> metavar "V"
+        <> value 1
+        <> help "Set verbosity level V (higher = more output)"
+        <> showDefault
     internalDebug <- switch $
         long "internal-debug"
         <> help "Enable internal checks in the compiler"
