@@ -79,6 +79,7 @@ $(promote [d|
         = Source
         | ModResolved
         | ParsedNative
+        | CheckedNativeParams
         | InitGen
         | NoDef
         | NoLamMatch

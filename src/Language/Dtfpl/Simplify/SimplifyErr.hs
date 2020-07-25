@@ -28,6 +28,7 @@ data SimplifyErr
     = ParseNativeErr
         String -- ^ Error message
         SourcePos -- ^ Error position
+    | InvalidNativeArgErr (IdentBind (Pred 'CheckedNativeParams))
     -- | An identifier being defined with the same name as an already existing
     -- one.
     | DuplicateIdentErr
@@ -54,6 +55,10 @@ instance ErrMessage SimplifyErr where
         [ "Error while parsing native code"
         , format pos
         , msg ]
+    errMessage (InvalidNativeArgErr ident) =
+        [ "Invalid native function parameter name " ++ formatQuote ident
+        , "Native function parameter names must be valid ECMAScript identifiers"
+        , "  and must not contain `$` or `_`" ]
     errMessage (DuplicateIdentErr new old) =
         ("Duplicate identifier " ++ formatQuote new)
         : duplicateIdentMessage old
@@ -80,6 +85,7 @@ instance ErrMessage SimplifyErr where
 
 instance ErrLoc SimplifyErr where
     errLoc (ParseNativeErr _ _)          = Nothing
+    errLoc (InvalidNativeArgErr ib)      = Just $ ann $ unIdentBind ib
     errLoc (DuplicateIdentErr new _)     = ann new
     errLoc (UnresolvedIdentErr ident)    = ann ident
     errLoc (AmbiguousIdentErr ident _ _) = ann ident
