@@ -11,15 +11,16 @@ module Language.Dtfpl.Generate
     ) where
 
 import           Data.List
-import qualified Data.List.NonEmpty                as N
+import qualified Data.List.NonEmpty                 as N
 import           Data.Traversable
 import           Polysemy
 import           Polysemy.Error
 import           Polysemy.Reader
-import qualified System.Path                       as P
+import qualified System.Path                        as P
 
 import           Language.Dtfpl.Config
 import           Language.Dtfpl.Err
+import           Language.Dtfpl.Generate.Identifier
 import           Language.Dtfpl.Module.Context
 import           Language.Dtfpl.Module.Extensions
 import           Language.Dtfpl.Module.Main
@@ -189,16 +190,6 @@ instance ToJS Ident Identifier where
             convertIdent (GenIdentPart (A ident _) (P n)) =
                 "$g" ++ convertIdent ident ++ "$p" ++ show n ++ "$"
             convertIdent (GenIdentFull (P n)) = "$f" ++ show n ++ "$"
-
--- | Turn a string into a string that would be a valid JS identifier.
-identifierize :: String -> String
-identifierize = concatMap convertChar
-  where convertChar '-' = "_"
-        convertChar '_' = "$u$"
-        convertChar '$' = "$d$"
-        convertChar c
-            | isValidIdentifierPart c = [c]
-            | otherwise = "$c" ++ show (fromEnum c) ++ "$"
 
 instance ToJS Lit Literal where
     toJS (NumLit n) = pure $ NumberLiteral n
