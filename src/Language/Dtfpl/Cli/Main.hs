@@ -6,6 +6,7 @@ module Language.Dtfpl.Cli.Main
     ( main
     ) where
 
+import           Data.Version
 import           Options.Applicative
 import           System.Exit
 import           System.IO
@@ -16,31 +17,38 @@ import           Language.Dtfpl.Config
 import           Language.Dtfpl.Log.Verb
 import           Language.Dtfpl.Util.CEPath
 import           Language.Dtfpl.Util.EPath
+import           Paths_dtfpl
 
-data Options = Options
-    { file          :: P.AbsRelFile
-    , verbosity     :: Verb
-    , internalDebug :: Bool }
+data Options
+    = Options
+        { file          :: P.AbsRelFile
+        , verbosity     :: Verb
+        , internalDebug :: Bool }
+    | GetVersion
 
 main :: IO ()
-main = do
-    Options {..} <- execParser opts
-    cePath <- mkCEPathIO $ EPath file
-    let config = Config
-            { debug = internalDebug
-            , mainModulePath = cePath
-            , moduleSearchPaths = [EPath $ P.takeDirectory file]
-            , .. }
-    compile config >>= \case
-        Left err -> do
-            hPutStr stderr err
-            exitFailure
-        Right () -> pure ()
+main = execParser opts >>= \case
+    Options {..} -> do
+        cePath <- mkCEPathIO $ EPath file
+        let config = Config
+                { debug = internalDebug
+                , mainModulePath = cePath
+                , moduleSearchPaths = [EPath $ P.takeDirectory file]
+                , .. }
+        compile config >>= \case
+            Left err -> do
+                hPutStr stderr err
+                exitFailure
+            Right () -> pure ()
+    GetVersion -> putStrLn $ name ++ " version " ++ showVersion version
+
+name :: String
+name = "dtfpl compiler"
 
 opts :: ParserInfo Options
-opts = info (options <**> helper) $
+opts = info ((options <|> getVersion) <**> helper) $
     fullDesc
-    <> header "dtfpl compiler"
+    <> header name
 
 options :: Parser Options
 options = do
@@ -58,3 +66,8 @@ options = do
         long "internal-debug"
         <> help "Enable internal checks in the compiler"
     pure Options {..}
+
+getVersion :: Parser Options
+getVersion = flag' GetVersion $
+    long "version"
+    <> help "Print version and exit"
