@@ -1,5 +1,5 @@
 name: dtfpl
-version: 0.1.0
+version: 0.3.1
 synopsis: Dynamically typed functional programming language
 description: A dynamically typed functional programming language that compiles to JavaScript, with a syntax similar to Haskell.
 category: Language
