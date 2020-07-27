@@ -24,7 +24,8 @@ import           Text.Megaparsec                    hiding (parse, sepBy1,
                                                      sepEndBy1, some)
 import           Text.Megaparsec.Char
 import           Text.Megaparsec.Char.Lexer         (indentGuard, indentLevel,
-                                                     nonIndented)
+                                                     nonIndented,
+                                                     skipLineComment)
 
 import           Language.Dtfpl.Err
 import           Language.Dtfpl.Module.Context
@@ -307,10 +308,13 @@ lambda = symbol "\\"
 wildcard :: PParsec p => p ()
 wildcard = symbol "_"
 
+lineCommentPrefix :: String
+lineCommentPrefix = "# "
+
 -- | Characters which cannot be used in identifiers.
 {-# ANN reservedChars "HLint: ignore Use String" #-}
 reservedChars :: [Char]
-reservedChars = "()[]{}.,:;\\\""
+reservedChars = "#()[]{}.,:;\\\""
 
 -- | Run a parser inside parentheses.
 parens :: PParsec p => p a -> p a
@@ -388,9 +392,12 @@ scn1 = scnWith space1
 scnWith :: (PParsec p, PIndentState p) => p () -> p ()
 scnWith p = do
     s <- getSourcePos
-    hidden p
+    hidden spaceOrComment
     e <- getSourcePos
     when (sourceLine s /= sourceLine e) $ put $ sourceColumn e
+  where spaceOrComment = p *> void (optional lineComment) <|> lineComment
+        lineComment = skipLineComment lineCommentPrefix
+            <* optional spaceOrComment
 
 -- | Space consumer which only consumes newlines if the next line is indented
 -- further than the given column.
