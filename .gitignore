@@ -1,4 +1,4 @@
 .stack-work
 node_modules
 .vscode
-dtfpl.cabal
+metro.cabal

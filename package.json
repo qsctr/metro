@@ -1,8 +1,8 @@
 {
-  "name": "dtfpl",
+  "name": "metro",
   "version": "1.0.0",
   "license": "MIT",
-  "repository": "qsctr/dtfpl",
+  "repository": "qsctr/metro",
   "dependencies": {
     "acorn": "^7.1.1",
     "astring": "^1.4.3"

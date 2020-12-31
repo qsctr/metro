@@ -1,3 +1,3 @@
-# Dtfpl docs
+# Metro docs
 
-Documentation for the dtfpl language and compiler.
+Documentation for the metro language and compiler.

@@ -10,10 +10,10 @@ import           Polysemy
 import           Polysemy.Error
 import           Polysemy.Reader
 
-import           Language.Dtfpl.Config
-import           Language.Dtfpl.Err
-import           Language.Dtfpl.Err.Util
-import           Language.Dtfpl.Generate.GenerateErr
+import           Language.Metro.Config
+import           Language.Metro.Err
+import           Language.Metro.Err.Util
+import           Language.Metro.Generate.GenerateErr
 import           Language.ECMAScript.Syntax
 
 -- | @const \<ident> = \<expr>;@

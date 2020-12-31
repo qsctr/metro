@@ -1,8 +1,8 @@
 # Language Reference
 
-Dtfpl is a functional language with a syntax similar to Haskell. However, unlike Haskell, dtfpl is not a pure functional language and is strictly evaluated.
+Metro is a functional language with a syntax similar to Haskell. However, unlike Haskell, metro is not a pure functional language and is strictly evaluated.
 
-Currently, dtfpl does not have a standard library or any built-in functions. However, you can define bindings to JavaScript functions yourself.
+Currently, metro does not have a standard library or any built-in functions. However, you can define bindings to JavaScript functions yourself.
 
 ## Declarations
 
@@ -83,7 +83,7 @@ let native pi = Math.PI
 
 As with native functions, there can be any valid JS expression in the body.
 
-In the first line, we are defining the dtfpl variable `true` to be equal to the JS value `true`, since `true` is not a built-in expression in dtfpl.
+In the first line, we are defining the metro variable `true` to be equal to the JS value `true`, since `true` is not a built-in expression in metro.
 
 You can also use `let native` to bind to JS functions directly. However, these functions will not be automatically curried, so you should only do this when the function takes only one argument.
 
@@ -131,7 +131,7 @@ case a, b of
 
 ## Modules
 
-Modules correspond to source files. Module names should only contain lowercase characters or `-`. The file corresponding to a given module is the module name with `.dtfpl` appended. The module name is not mentioned explicitly in the source code in the file. The main module is the module that the compiler was invoked on.
+Modules correspond to source files. Module names should only contain lowercase characters or `-`. The file corresponding to a given module is the module name with `.metro` appended. The module name is not mentioned explicitly in the source code in the file. The main module is the module that the compiler was invoked on.
 
 ### Export
 
@@ -155,7 +155,7 @@ import foo
 import bar.baz
 ```
 
-Module names are resolved into source files by replacing `.` with `/` then looking for the corresponding source file in the directory of the main module. For example, if the main module is `./main.dtfpl`, then the statements above will import the declarations from `./foo.dtfpl` and `./bar/baz.dtfpl`.
+Module names are resolved into source files by replacing `.` with `/` then looking for the corresponding source file in the directory of the main module. For example, if the main module is `./main.metro`, then the statements above will import the declarations from `./foo.metro` and `./bar/baz.metro`.
 
 ### Main function
 

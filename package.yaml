@@ -1,4 +1,4 @@
-name: dtfpl
+name: metro
 version: 0.3.1
 synopsis: Dynamically typed functional programming language
 description: A dynamically typed functional programming language that compiles to JavaScript, with a syntax similar to Haskell.
@@ -7,7 +7,7 @@ author: Bretton Chen
 maintainer: Bretton Chen
 copyright: (c) 2017-20 Bretton Chen
 license: MIT
-github: qsctr/dtfpl
+github: qsctr/metro
 extra-source-files:
   - package.json
   - stack.yaml
@@ -54,11 +54,11 @@ ghc-options:
 
 library:
   source-dirs: src
-  generated-other-modules: Paths_dtfpl
+  generated-other-modules: Paths_metro
 
 executable:
   source-dirs: app
   main: Main.hs
   dependencies:
-    - dtfpl
+    - metro
   ghc-options: -threaded
