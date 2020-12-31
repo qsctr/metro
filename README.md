@@ -19,7 +19,3 @@ The only way to use the metro compiler at the moment is to build it from source.
 3. Run `stack install` to build the compiler.
 
 Now you should have an executable named `metro`.
-
-## About the name
-
-Metro is just a temporary name that stands for "dynamically typed functional programming language". Very creative, I know.
