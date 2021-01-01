@@ -1,7 +1,7 @@
 name: metro
 version: 0.3.1
-synopsis: Dynamically typed functional programming language
-description: A dynamically typed functional programming language that compiles to JavaScript, with a syntax similar to Haskell.
+synopsis: A functional programming language
+description: A strict, non-pure functional programming language that compiles to JavaScript.
 category: Language
 author: Bretton Chen
 maintainer: Bretton Chen
