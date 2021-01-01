@@ -1,8 +1,32 @@
 # Language Reference
 
-Metro is a functional language with a syntax similar to Haskell. However, unlike Haskell, metro is not a pure functional language and is strictly evaluated.
+Metro is a strictly evaluated, non-pure functional language. Currently, metro does not have a standard library or any built-in functions. However, you can define bindings to JavaScript functions yourself.
 
-Currently, metro does not have a standard library or any built-in functions. However, you can define bindings to JavaScript functions yourself.
+## Basic Syntax
+
+### Identifiers
+
+Identifiers must begin with a letter but can contain almost any character afterwards (specifically, characters that are printable, not a separator, and not one of `#()[]{}.,:;\"`). The convention is to use kebab-case, like `this-is-an-identifier`.
+
+### Function Application
+
+Function application is denoted with whitespace.
+
+```
+f x
+```
+
+Application is left-associative to allow for easy use of curried functions.
+
+### Comments
+
+Line comments start with a `#`.
+
+```
+# this is a comment
+```
+
+Note that inside native expressions (explained below), you should use the JavaScript syntax for comments instead.
 
 ## Declarations
 
@@ -100,6 +124,8 @@ Lambda expressions are anonymous functions. They are most useful when used as hi
 ```
 apply-twice (\x -> plus x 20) 2
 ```
+
+You can also use multi-argument lambdas or pattern match in lambda parameters.
 
 ### If-then-else
 
