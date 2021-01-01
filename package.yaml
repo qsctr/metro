@@ -5,7 +5,7 @@ description: A strict, non-pure functional programming language that compiles to
 category: Language
 author: Bretton Chen
 maintainer: Bretton Chen
-copyright: (c) 2017-20 Bretton Chen
+copyright: (c) 2017-21 Bretton Chen
 license: MIT
 github: qsctr/metro
 extra-source-files:
